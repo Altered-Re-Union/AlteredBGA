@@ -93,7 +93,7 @@ class Cards extends \ALT\Helpers\CachedPieces
 
   public static function isAlternateArt($uid)
   {
-    return explode('_', $uid)[2] == 'A' || in_array(explode('_', $uid)[1],  ['DUSTERTOP', 'DUSTERCB', 'DUSTEROP', 'TCS3', 'WCS25', 'MUSUBI']) || explode("_", $uid)[2] == 'P';
+    return explode('_', $uid)[2] == 'A' || in_array(explode('_', $uid)[1],  ['DUSTERTOP', 'DUSTERCB', 'DUSTEROP', 'TCS3', 'WCS25', 'MUSUBI']) || explode("_", $uid)[2] == 'P' || isset(MANUAL_ALT_ART[$uid]);
   }
 
   public static function getNextPlayedState()
@@ -128,12 +128,17 @@ class Cards extends \ALT\Helpers\CachedPieces
 
   public static function getMainUid($uid)
   {
+    if (isset(MANUAL_ALT_ART[$uid])) {
+      return MANUAL_ALT_ART[$uid];
+    }
     $expUid = explode('_', $uid);
     if (in_array($expUid[1], ['DUSTEROP', 'DUSTERCB', 'DUSTERTOP'])) {
       if ($expUid[4] < 25) {
         $expUid[1] = 'CORE';
       } elseif ($expUid[4] < 45) {
         $expUid[1] = 'ALIZE';
+      } elseif ($expUid[4] < 85) {
+        $expUid[1] = 'CYCLONE';
       } else {
         $expUid[1] = 'DUSTER';
       }
@@ -187,6 +192,7 @@ class Cards extends \ALT\Helpers\CachedPieces
     if (isset(UID_MAPPING[$uid])) {
       $uid = UID_MAPPING[$uid];
     }
+    $origUid = $uid;
 
     $ks = self::isKS($uid);
     $alternate = self::isAlternateArt($uid);
@@ -221,9 +227,17 @@ class Cards extends \ALT\Helpers\CachedPieces
     }
 
     if ($ks || $alternate) {
-      if (isset(self::getAltArt()[$altUid])) {
-        $altArt = self::getAltArt()[$altUid];
-        $cardO->setFlavorText($altArt['flavorText']);
+      $altArt = isset(self::getAltArt()[$altUid]) ? self::getAltArt()[$altUid] : null;
+      // Standard alternate-art prints (the A/B art variants, e.g. ALT_CORE_A_BR_31_C)
+      // with no specific override data still carry their own art.
+      if (is_null($altArt) && $alternate && (explode('_', $altUid)[2] == 'A' || isset(MANUAL_ALT_ART[$origUid]))) {
+        $altArt = [];
+      }
+      if (!is_null($altArt)) {
+        if (isset($altArt['flavorText'])) {
+          $cardO->setFlavorText($altArt['flavorText']);
+        }
+        $unsuffixedAltUid = $altUid;
         if ($cardO->getRarity() == RARITY_RARE) {
           $cardO->setAsset($altUid . '_R');
           $altUid .= '_R';
@@ -238,8 +252,12 @@ class Cards extends \ALT\Helpers\CachedPieces
           $altUid .= '_U';
         }
 
-        if (isset(self::getAltArt()[$altUid]['mainAsset'])) {
-          $cardO->setMainAsset(self::getAltArt()[$altUid]['mainAsset']);
+        if (isset(self::getAltArt()[$unsuffixedAltUid]['mainAsset'])) {
+          $cardO->setMainAsset(self::getAltArt()[$unsuffixedAltUid]['mainAsset']);
+        } elseif (isset(self::getAltArt()[$unsuffixedAltUid]['framedBase'])) {
+          $cardO->setMainAsset(self::getAltArt()[$unsuffixedAltUid]['framedBase'] . substr($altUid, strlen($unsuffixedAltUid)));
+        } elseif (isset($altArt['fullArt'])) {
+          $cardO->setMainAsset(self::getMainUid($unsuffixedAltUid) . substr($altUid, strlen($unsuffixedAltUid)));
         } else {
           $cardO->setMainAsset($altUid);
         }
@@ -961,12 +979,6 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_BISE_A_MU_62' => ['flavorText' => ''],
       'ALT_BISE_A_OR_63' => ['flavorText' => ''],
       'ALT_BISE_A_YZ_62' => ['flavorText' => ''],
-      'ALT_ALIZE_A_AX_35' => ['flavorText' => ''],
-      'ALT_ALIZE_A_BR_37' => ['flavorText' => ''],
-      'ALT_ALIZE_A_LY_34' => ['flavorText' => ''],
-      'ALT_ALIZE_A_MU_35' => ['flavorText' => ''],
-      'ALT_ALIZE_A_OR_38' => ['flavorText' => ''],
-      'ALT_ALIZE_A_YZ_36' => ['flavorText' => ''],
       'ALT_BISE_A_AX_56' => ['flavorText' => ''],
       'ALT_BISE_A_BR_58' => ['flavorText' => ''],
       'ALT_BISE_A_LY_53' => ['flavorText' => ''],
@@ -979,6 +991,12 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_CYCLONE_A_MU_74' => ['flavorText' => ''],
       'ALT_CYCLONE_A_OR_74' => ['flavorText' => ''],
       'ALT_CYCLONE_A_YZ_73' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_AX_76' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_LY_78' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_YZ_76' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_OR_78' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_MU_79' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_BR_79' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_AX_93' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_AX_97' => ['flavorText' => ''],
       'ALT_TCS3_P_AX_53' => ['flavorText' => ''],
@@ -1008,7 +1026,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_DUSTERTOP_P_AX_04' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_AX_20' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_BR_19' => ['flavorText' => '', 'fullArt' => true],
-      'ALT_DUSTERTOP_P_BR_30' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_DUSTERTOP_P_BR_30' => ['flavorText' => '', 'fullArt' => true, 'framedBase' => 'ALT_CORE_B_BR_30'],
       'ALT_DUSTERTOP_P_LY_07' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_LY_04' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_MU_13' => ['flavorText' => '', 'fullArt' => true],
@@ -1066,7 +1084,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_DUSTER_A_OR_97' => ['flavorText' => ''],
       'ALT_DUSTER_A_YZ_94' => ['flavorText' => ''],
       'ALT_DUSTERCB_P_AX_01' => ['flavorText' => '', 'fullArt' => true],
-      'ALT_DUSTERCB_P_BR_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_DUSTERCB_P_BR_01' => ['flavorText' => ''],
       'ALT_DUSTERCB_P_LY_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERCB_P_MU_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERCB_P_OR_01' => ['flavorText' => '', 'fullArt' => true],
@@ -1101,8 +1119,6 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_CORE_P_YZ_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_CORE_P_YZ_02' => ['flavorText' => '', 'fullArt' => true],
       'ALT_CORE_P_YZ_03' => ['flavorText' => '', 'fullArt' => true],
-      'ALT_DUSTEROP_P_AX_93' => ['flavorText' => ''],
-      'ALT_DUSTEROP_P_AX_97' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_BR_94' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_BR_95' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_LY_87' => ['flavorText' => ''],
@@ -1126,6 +1142,12 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_WCQ25_P_MU_16' => ['flavorText' => ''],
       'ALT_WCQ25_P_OR_05' => ['flavorText' => ''],
       'ALT_WCQ25_P_YZ_05' => ['flavorText' => ''],
+      'ALT_WCS26_P_AX_95_E' => ['flavorText' => ''],
+      'ALT_WCS26_P_BR_98_E' => ['flavorText' => ''],
+      'ALT_WCS26_P_LY_98_E' => ['flavorText' => ''],
+      'ALT_WCS26_P_MU_96_E' => ['flavorText' => ''],
+      'ALT_WCS26_P_OR_97_E' => ['flavorText' => ''],
+      'ALT_WCS26_P_YZ_94_E' => ['flavorText' => ''],
     ];
   }
 

@@ -432,6 +432,41 @@ const UID_MAPPING = [
   'ALT_ALIZE_B_YZ_03_C' => 'ALT_CORE_B_YZ_03_C',
 ];
 
+const MANUAL_ALT_ART = [
+  //Booda
+  'ALT_CORE_A_BR_31_C' => 'ALT_CORE_B_BR_31_C',
+  'ALT_ALIZE_B_BR_31_C' => 'ALT_CORE_B_BR_31_C',
+  'ALT_DUSTEROP_B_BR_31_C' => 'ALT_CORE_B_BR_31_C',
+  //Halua
+  'ALT_DUSTER_B_BR_83_C' => 'ALT_CYCLONE_B_BR_83_C',
+  //Woollyback
+  'ALT_EOLE_B_MU_83_C' => 'ALT_CYCLONE_B_MU_83_C',
+  'ALT_DUSTEROP_A_MU_83_C' => 'ALT_CYCLONE_B_MU_83_C',
+  //Ordis Recruit
+  'ALT_CORE_A_OR_31_C' => 'ALT_CORE_B_OR_31_C',
+  'ALT_CORE_B_OR_32_C' => 'ALT_CORE_B_OR_31_C',
+  'ALT_ALIZE_B_OR_31_C' => 'ALT_CORE_B_OR_31_C',
+  'ALT_BISE_B_OR_31_C' => 'ALT_CORE_B_OR_31_C',
+  'ALT_DUSTER_B_OR_31_C' => 'ALT_CORE_B_OR_31_C',
+  'ALT_EOLE_B_OR_31_C' => 'ALT_CORE_B_OR_31_C',
+    //Brassbug
+  'ALT_CORE_A_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_ALIZE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_BISE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_CYCLONE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_WCS26_P_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_WCS26_A_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  //Mana Moth
+  'ALT_BISE_B_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  'ALT_CYCLONE_B_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  'ALT_DUSTER_B_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  'ALT_EOLE_B_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  'ALT_WCS26_A_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  //Maw
+  'ALT_CORE_A_YZ_31_C' => 'ALT_CORE_B_YZ_31_C',
+
+];
+
 /******************
  ****** STATS ******
  ******************/
