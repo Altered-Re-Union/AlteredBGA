@@ -93,7 +93,7 @@ class Cards extends \ALT\Helpers\CachedPieces
 
   public static function isAlternateArt($uid)
   {
-    return explode('_', $uid)[2] == 'A' || in_array(explode('_', $uid)[1],  ['DUSTERTOP', 'DUSTERCB', 'DUSTEROP', 'TCS3', 'WCS25', 'MUSUBI']) || explode("_", $uid)[2] == 'P';
+    return explode('_', $uid)[2] == 'A' || in_array(explode('_', $uid)[1],  ['DUSTERTOP', 'DUSTERCB', 'DUSTEROP', 'TCS3', 'WCS25', 'MUSUBI']) || explode("_", $uid)[2] == 'P' || isset(MANUAL_ALT_ART[$uid]);
   }
 
   public static function getNextPlayedState()
@@ -128,19 +128,26 @@ class Cards extends \ALT\Helpers\CachedPieces
 
   public static function getMainUid($uid)
   {
+    if (isset(MANUAL_ALT_ART[$uid])) {
+      return MANUAL_ALT_ART[$uid];
+    }
     $expUid = explode('_', $uid);
     if (in_array($expUid[1], ['DUSTEROP', 'DUSTERCB', 'DUSTERTOP'])) {
       if ($expUid[4] < 25) {
         $expUid[1] = 'CORE';
       } elseif ($expUid[4] < 45) {
         $expUid[1] = 'ALIZE';
+      } elseif ($expUid[4] < 85) {
+        $expUid[1] = 'CYCLONE';
       } else {
         $expUid[1] = 'DUSTER';
       }
     } elseif (in_array($expUid[1], ['TCS3'])) {
       $expUid[1] = 'BISE';
-    } elseif (in_array($expUid[1], ['WCQ25', 'WCS25', 'MUSUBI'])) {
+    } elseif (in_array($expUid[1], ['WCQ25', 'WCS25', 'WCF25', 'MUSUBI'])) {
       $expUid[1] = 'CORE';
+    } elseif (in_array($expUid[1], ['WCS26'])) {
+      $expUid[1] = 'DUSTER';
     }
     $expUid[2] = 'B';
     $coreUid = implode('_', $expUid);
@@ -183,10 +190,21 @@ class Cards extends \ALT\Helpers\CachedPieces
   public static function getCardClass($uid)
   {
     require_once dirname(__FILE__) . '/../Cards/cards.inc.php';
+    // Serialized prints sent by the deck API (numbered copies e.g.
+    // ALT_DUSTERCB_P_AX_85_C_001 ... _030, and their ..._XXX placeholder) each
+    // carry their own art: strip the serial to resolve the base card identity,
+    // then restore it to the asset below so the per-copy image is used.
+    $serial = null;
+    if (preg_match('/_(?:XXX|\d{3})$/', $uid, $serialMatch)) {
+      $serial = $serialMatch[0];
+      $serialBaseUid = preg_replace('/_(?:XXX|\d{3})$/', '', $uid);
+      $uid = $serialBaseUid;
+    }
     // Mapping done for heroes for example
     if (isset(UID_MAPPING[$uid])) {
       $uid = UID_MAPPING[$uid];
     }
+    $origUid = $uid;
 
     $ks = self::isKS($uid);
     $alternate = self::isAlternateArt($uid);
@@ -221,9 +239,17 @@ class Cards extends \ALT\Helpers\CachedPieces
     }
 
     if ($ks || $alternate) {
-      if (isset(self::getAltArt()[$altUid])) {
-        $altArt = self::getAltArt()[$altUid];
-        $cardO->setFlavorText($altArt['flavorText']);
+      $altArt = isset(self::getAltArt()[$altUid]) ? self::getAltArt()[$altUid] : null;
+      // Standard alternate-art prints (the A/B art variants, e.g. ALT_CORE_A_BR_31_C)
+      // with no specific override data still carry their own art.
+      if (is_null($altArt) && $alternate && (explode('_', $altUid)[2] == 'A' || isset(MANUAL_ALT_ART[$origUid]))) {
+        $altArt = [];
+      }
+      if (!is_null($altArt)) {
+        if (isset($altArt['flavorText'])) {
+          $cardO->setFlavorText($altArt['flavorText']);
+        }
+        $unsuffixedAltUid = $altUid;
         if ($cardO->getRarity() == RARITY_RARE) {
           $cardO->setAsset($altUid . '_R');
           $altUid .= '_R';
@@ -238,8 +264,12 @@ class Cards extends \ALT\Helpers\CachedPieces
           $altUid .= '_U';
         }
 
-        if (isset(self::getAltArt()[$altUid]['mainAsset'])) {
-          $cardO->setMainAsset(self::getAltArt()[$altUid]['mainAsset']);
+        if (isset(self::getAltArt()[$unsuffixedAltUid]['mainAsset'])) {
+          $cardO->setMainAsset(self::getAltArt()[$unsuffixedAltUid]['mainAsset']);
+        } elseif (isset(self::getAltArt()[$unsuffixedAltUid]['framedBase'])) {
+          $cardO->setMainAsset(self::getAltArt()[$unsuffixedAltUid]['framedBase'] . substr($altUid, strlen($unsuffixedAltUid)));
+        } elseif (isset($altArt['fullArt'])) {
+          $cardO->setMainAsset(self::getMainUid($unsuffixedAltUid) . substr($altUid, strlen($unsuffixedAltUid)));
         } else {
           $cardO->setMainAsset($altUid);
         }
@@ -247,6 +277,17 @@ class Cards extends \ALT\Helpers\CachedPieces
         if (isset($altArt['fullArt'])) {
           $cardO->setFullArt(true);
         }
+      }
+    }
+    // Each serialized copy displays its own art (e.g. ALT_DUSTERCB_P_AX_85_C_014).
+    if (!is_null($serial)) {
+      $cardO->setAsset($serialBaseUid . $serial);
+      if (strpos($serialBaseUid, 'ALT_DUSTERCB_P_') === 0) {
+        $cardO->setMainAsset(self::getMainUid($serialBaseUid));
+        $cardO->setFullArt(true);
+      }
+      if (preg_match('/^_\d{3}$/', $serial)) {
+        $cardO->setProperty('serial', ltrim($serial, '_'));
       }
     }
     return $cardO;
@@ -961,12 +1002,6 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_BISE_A_MU_62' => ['flavorText' => ''],
       'ALT_BISE_A_OR_63' => ['flavorText' => ''],
       'ALT_BISE_A_YZ_62' => ['flavorText' => ''],
-      'ALT_ALIZE_A_AX_35' => ['flavorText' => ''],
-      'ALT_ALIZE_A_BR_37' => ['flavorText' => ''],
-      'ALT_ALIZE_A_LY_34' => ['flavorText' => ''],
-      'ALT_ALIZE_A_MU_35' => ['flavorText' => ''],
-      'ALT_ALIZE_A_OR_38' => ['flavorText' => ''],
-      'ALT_ALIZE_A_YZ_36' => ['flavorText' => ''],
       'ALT_BISE_A_AX_56' => ['flavorText' => ''],
       'ALT_BISE_A_BR_58' => ['flavorText' => ''],
       'ALT_BISE_A_LY_53' => ['flavorText' => ''],
@@ -979,6 +1014,12 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_CYCLONE_A_MU_74' => ['flavorText' => ''],
       'ALT_CYCLONE_A_OR_74' => ['flavorText' => ''],
       'ALT_CYCLONE_A_YZ_73' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_AX_76' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_LY_78' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_YZ_76' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_OR_78' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_MU_79' => ['flavorText' => ''],
+      'ALT_CYCLONE_A_BR_79' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_AX_93' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_AX_97' => ['flavorText' => ''],
       'ALT_TCS3_P_AX_53' => ['flavorText' => ''],
@@ -1008,7 +1049,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_DUSTERTOP_P_AX_04' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_AX_20' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_BR_19' => ['flavorText' => '', 'fullArt' => true],
-      'ALT_DUSTERTOP_P_BR_30' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_DUSTERTOP_P_BR_30' => ['flavorText' => '', 'fullArt' => true, 'framedBase' => 'ALT_CORE_B_BR_30'],
       'ALT_DUSTERTOP_P_LY_07' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_LY_04' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_MU_13' => ['flavorText' => '', 'fullArt' => true],
@@ -1066,7 +1107,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_DUSTER_A_OR_97' => ['flavorText' => ''],
       'ALT_DUSTER_A_YZ_94' => ['flavorText' => ''],
       'ALT_DUSTERCB_P_AX_01' => ['flavorText' => '', 'fullArt' => true],
-      'ALT_DUSTERCB_P_BR_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_DUSTERCB_P_BR_01' => ['flavorText' => ''],
       'ALT_DUSTERCB_P_LY_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERCB_P_MU_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERCB_P_OR_01' => ['flavorText' => '', 'fullArt' => true],
@@ -1101,8 +1142,6 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_CORE_P_YZ_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_CORE_P_YZ_02' => ['flavorText' => '', 'fullArt' => true],
       'ALT_CORE_P_YZ_03' => ['flavorText' => '', 'fullArt' => true],
-      'ALT_DUSTEROP_P_AX_93' => ['flavorText' => ''],
-      'ALT_DUSTEROP_P_AX_97' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_BR_94' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_BR_95' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_LY_87' => ['flavorText' => ''],
@@ -1126,6 +1165,20 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_WCQ25_P_MU_16' => ['flavorText' => ''],
       'ALT_WCQ25_P_OR_05' => ['flavorText' => ''],
       'ALT_WCQ25_P_YZ_05' => ['flavorText' => ''],
+      'ALT_WCS26_P_AX_95' => ['flavorText' => ''],
+      'ALT_WCS26_P_BR_98' => ['flavorText' => ''],
+      'ALT_WCS26_P_LY_98' => ['flavorText' => ''],
+      'ALT_WCS26_P_MU_96' => ['flavorText' => ''],
+      'ALT_WCS26_P_OR_97' => ['flavorText' => ''],
+      'ALT_WCS26_P_YZ_94' => ['flavorText' => ''],
+      'ALT_EOLEOP_P_LY_111' => ['flavorText' => ''],
+      'ALT_EOLETOP_P_OR_54' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_BR_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_LY_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_MU_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_YZ_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_OR_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_AX_01' => ['flavorText' => '', 'fullArt' => true],
     ];
   }
 
