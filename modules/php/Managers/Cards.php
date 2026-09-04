@@ -241,6 +241,10 @@ class Cards extends \ALT\Helpers\CachedPieces
 
         if (isset(self::getAltArt()[$unsuffixedAltUid]['mainAsset'])) {
           $cardO->setMainAsset(self::getAltArt()[$unsuffixedAltUid]['mainAsset']);
+        } elseif (isset(self::getAltArt()[$unsuffixedAltUid]['framedBase'])) {
+          $cardO->setMainAsset(self::getAltArt()[$unsuffixedAltUid]['framedBase'] . substr($altUid, strlen($unsuffixedAltUid)));
+        } elseif (isset($altArt['fullArt'])) {
+          $cardO->setMainAsset(self::getMainUid($unsuffixedAltUid) . substr($altUid, strlen($unsuffixedAltUid)));
         } else {
           $cardO->setMainAsset($altUid);
         }
@@ -1003,7 +1007,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_DUSTERTOP_P_AX_04' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_AX_20' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_BR_19' => ['flavorText' => '', 'fullArt' => true],
-      'ALT_DUSTERTOP_P_BR_30' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_DUSTERTOP_P_BR_30' => ['flavorText' => '', 'fullArt' => true, 'framedBase' => 'ALT_CORE_B_BR_30'],
       'ALT_DUSTERTOP_P_LY_07' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_LY_04' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERTOP_P_MU_13' => ['flavorText' => '', 'fullArt' => true],
@@ -1061,7 +1065,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_DUSTER_A_OR_97' => ['flavorText' => ''],
       'ALT_DUSTER_A_YZ_94' => ['flavorText' => ''],
       'ALT_DUSTERCB_P_AX_01' => ['flavorText' => '', 'fullArt' => true],
-      'ALT_DUSTERCB_P_BR_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_DUSTERCB_P_BR_01' => ['flavorText' => ''],
       'ALT_DUSTERCB_P_LY_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERCB_P_MU_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_DUSTERCB_P_OR_01' => ['flavorText' => '', 'fullArt' => true],

@@ -1576,7 +1576,10 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
 
       if (fullArt == false) {
         tplData += `
-          <div class='card-frame' data-faction='${p.faction}' data-type='hero'></div>
+          <div class='card-frame' data-faction='${p.faction}' data-type='hero'></div>`;
+      }
+      if (fullArt == false || (fullArt && !tooltip)) {
+        tplData += `
           <div class='card-name' style="font-size:${i.nameFontSize}">${_(p.name)}</div>
           <div class='card-typeline'>${_(p.typeline)}</div>
 
@@ -1645,6 +1648,8 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
         p.mainAsset = p.asset;
       }
 
+      let showFrame = this.settings.displayFullArt == '0' || fullArt == false || mini;
+      let showContent = showFrame || (fullArt && !tooltip);
       let changed = (name) => (p.changedStats && p.changedStats.includes(name) ? ' altered' : '');
       tplData = `<div id="card-${card.id}${tooltip ? 'tooltip' : ''}" data-id="${card.id}" 
         class='altered-card card-character ${p.hasOwnProperty('token') ? 'card-token' : ''} ${
@@ -1652,7 +1657,7 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
         }' data-boost='${i.boost}' ${counter}>
         <div class='altered-card-wrapper' data-asset='${(mini || (this.settings.displayFullArt == '0' && fullArt)) && p.hasOwnProperty('mainAsset') ? p.mainAsset.replace('_R1', '_R') : p.asset.replace('_R1', '_R')}'>`;
 
-      if (this.settings.displayFullArt == '0' || fullArt == false || mini) {
+      if (showFrame) {
         tplData += `<div class='card-frame' data-size='${i.frameSize}' data-faction='${p.faction}' 
               data-rarity='${p.rarity}' data-support='${p.supportDesc ? 1 : 0}' data-type='${
                 p.hasOwnProperty('token') ? 'token' : 'character'
@@ -1660,14 +1665,17 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
           `;
 
         if (!p.hasOwnProperty('token')) {
-          tplData += ` <div class='rarity-gem' data-rarity='${p.rarity}'></div>
-        <div class='card-hand-cost ${changed('costHand')}'>${p.costHand}</div>
-          <div class='card-reserve-cost ${changed('costReserve')}'>${p.costReserve}</div>
-          <div class='card-costs-bg' data-faction='${p.faction}'></div>`;
+          tplData += ` <div class='rarity-gem' data-rarity='${p.rarity}'></div>`;
         }
       }
+      if (showContent && !p.hasOwnProperty('token')) {
+        tplData += `
+          <div class='card-costs-bg' data-faction='${p.faction}'></div>
+          <div class='card-hand-cost ${changed('costHand')}'>${p.costHand}</div>
+          <div class='card-reserve-cost ${changed('costReserve')}'>${p.costReserve}</div>`;
+      }
 
-      if (this.settings.displayFullArt == '0' || fullArt == false || mini) {
+      if (showContent) {
         tplData += `
 
           <div class='card-name' style="font-size:${i.nameFontSize}">${_(p.name)}</div>
@@ -1698,7 +1706,7 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
             data-initial='' data-boost='${i.boost}'> 
           </div>`;
       }
-      if (this.settings.displayFullArt == '0' || fullArt == false) {
+      if (showContent) {
         tplData += `
           <div class='card-text' style="font-size:${i.textFontSize}">
             <div class='card-qrcode-container'>
@@ -1816,20 +1824,24 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
       }
 
       let changed = (name) => (p.changedStats && p.changedStats.includes(name) ? ' altered' : '');
+      let showFrame = this.settings.displayFullArt == '0' || fullArt == false || mini;
+      let showContent = showFrame || (fullArt && !tooltip);
 
       tplData = `<div id="card-${card.id}${tooltip ? 'tooltip' : ''}" data-id="${card.id}" 
         class='altered-card card-spell ${mini ? 'mini-card' : ''}' ${counter}>
         <div class='altered-card-wrapper' data-asset='${(mini || (this.settings.displayFullArt == '0' && fullArt)) && p.hasOwnProperty('mainAsset') ? p.mainAsset.replace('_R1', '_R') : p.asset.replace('_R1', '_R')}'>`;
 
-      if (this.settings.displayFullArt == '0' || fullArt == false || mini) {
+      if (showFrame) {
         tplData += `
           <div class='card-frame' data-size='${i.frameSize}' data-faction='${p.faction}' 
               data-rarity='${p.rarity}' data-support='${p.supportDesc ? 1 : 0}' data-type='spell'></div>
-          <div class='rarity-gem' data-rarity='${p.rarity}'></div>
+          <div class='rarity-gem' data-rarity='${p.rarity}'></div>`;
+      }
+      if (showContent) {
+        tplData += `
+          <div class='card-costs-bg' data-faction='${p.faction}'></div>
           <div class='card-hand-cost ${changed('costHand')}'>${p.costHand}</div>
           <div class='card-reserve-cost ${changed('costReserve')}'>${p.costReserve}</div>
-          <div class='card-costs-bg' data-faction='${p.faction}'></div>
-
           <div class='card-name'style="font-size:${i.nameFontSize}">${_(p.name)}</div>
           <div class='card-typeline'>${_(p.typeline)}</div>
 
@@ -1892,24 +1904,32 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
         counter = ` data-counter='${p.extraDatas.counter}'`;
       }
 
+      let showFrame = this.settings.displayFullArt == '0' || fullArt == false || mini;
+      let showContent = showFrame || (fullArt && !tooltip);
+
       tplData = `<div id="card-${card.id}${tooltip ? 'tooltip' : ''}" data-id="${card.id}" 
         class='altered-card card-permanent ${p.hasOwnProperty('token') ? 'card-token' : ''} ${
           mini ? 'mini-card' : ''
         }' ${counter}>
         <div class='altered-card-wrapper' data-asset='${(mini || (this.settings.displayFullArt == '0' && fullArt)) && p.hasOwnProperty('mainAsset') ? p.mainAsset.replace('_R1', '_R') : p.asset.replace('_R1', '_R')}'>`;
 
-      if (this.settings.displayFullArt == '0' || fullArt == false || mini) {
+      if (showFrame) {
         tplData += `<div class='card-frame' data-size='${i.frameSize}' data-faction='${p.faction}' 
               data-rarity='${p.rarity}' data-support='${p.supportDesc ? 1 : 0}' data-isfeat='${isFeat ? 1 : 0}' data-type='${
                 isLandmark ? (p.hasOwnProperty('token') ? 'permanent' : 'permanent') : 'gear'
               }'></div>
           `;
         if (!p.hasOwnProperty('token')) {
-          tplData += ` <div class='rarity-gem' data-rarity='${p.rarity}'></div>
-        <div class='card-hand-cost ${changed('costHand')}'>${p.costHand}</div>
-          <div class='card-reserve-cost ${changed('costReserve')}'>${p.costReserve}</div>
-          <div class='card-costs-bg' data-faction='${p.faction}'></div>`;
+          tplData += ` <div class='rarity-gem' data-rarity='${p.rarity}'></div>`;
         }
+      }
+      if (showContent && !p.hasOwnProperty('token')) {
+        tplData += `
+          <div class='card-costs-bg' data-faction='${p.faction}'></div>
+          <div class='card-hand-cost ${changed('costHand')}'>${p.costHand}</div>
+          <div class='card-reserve-cost ${changed('costReserve')}'>${p.costReserve}</div>`;
+      }
+      if (showContent) {
         tplData += `
           <div class='card-name' style="font-size:${i.nameFontSize}">${_(p.name)}</div>
           <div class='card-typeline'>${_(p.typeline)}</div>
@@ -2034,7 +2054,8 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
       };
 
       if (!isEffectSizeOk()) {
-        oCard.querySelector('.card-frame').dataset.size = 2;
+        let oFrame = oCard.querySelector('.card-frame');
+        if (oFrame) oFrame.dataset.size = 2;
         oCard.offsetHeight;
         for (let i = 13; i >= 10 && !isEffectSizeOk(); i--) {
           oCard.querySelector('.card-text').style.fontSize = `${i}px`;
