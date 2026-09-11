@@ -1783,6 +1783,13 @@
 
        this.addCard({ id: '-hero', properties: deck.cards.hero.card.properties }, 'deck-hero');
        $(`card--hero`).insertAdjacentHTML('beforeend', `<div class='faction-banner' data-faction='${deck.faction}'></div>`);
+       let heroCardEl = $(`card--hero`);
+       if (!heroCardEl.querySelector('.card-frame')) {
+         heroCardEl.querySelector('.altered-card-wrapper').insertAdjacentHTML(
+           'afterbegin',
+           `<div class='card-frame' data-fullart='1' data-faction='${deck.cards.hero.card.properties.faction}' data-type='hero'></div>`
+         );
+       }
 
        Object.entries(deck.cards).forEach(([i, card]) => {
          if (i == 'hero') return;
