@@ -9,7 +9,7 @@ const STARTER_NEVENKA = [
   'LY_Common_RekaGuide' => 2,
   'LY_Common_Hathor' => 2,
   'LY_Common_Tanuki' => 2,
-  'LY_Rare_Dapeng' => 2,
+  'LY_Rare_FragrantMeerkat' => 2,
   'LY_Rare_MagicalTraining' => 2,
   'LY_Common_TwinkleTwinkle' => 2,
   'LY_Common_LyraSignet' => 2,
@@ -17,6 +17,6 @@ const STARTER_NEVENKA = [
   'LY_Common_ClothCocoon' => 2,
   'LY_Rare_ParliamentofAshes' => 2,
   'LY_Common_OuroborosTrickster' => 3,
-  'LY_Common_Esmeralda' => 2,
+  'LY_Common_LyraChronicler' => 2,
 ];
 ?>
