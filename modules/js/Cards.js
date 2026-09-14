@@ -2170,14 +2170,14 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
         if (card.properties.hasOwnProperty('effectDesc')) {
           explanation += `<div class='explanation'>
             <p>
-              ${this.formatString(card.properties.effectDesc)}
+              ${this.formatString(this.replaceKeyWordsAndGetReminders(_(card.properties.effectDesc)))}
             </p>
           </div>`;
         }
         if (card.properties.hasOwnProperty('supportDesc')) {
           explanation += `<div class='explanation'>
             <p>
-              ${this.formatString(card.properties.supportDesc)}
+              ${this.formatString(this.replaceKeyWordsAndGetReminders(_(card.properties.supportDesc)))}
             </p>
           </div>`;
         }
@@ -2235,8 +2235,8 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
       // Separate unique effects
       if (str == '<BR>') return '<br />';
 
-      // Ensure markers are using []
-      str = str.replaceAll('<', '[').replaceAll('>', ']').replaceAll('\\', '');
+      // Remove escaping backslashes without tampering with non-keyword content
+      str = str.replaceAll('\\', '');
 
       const KEYWORDS = {
         AFTER_YOU: {
@@ -2488,6 +2488,10 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
           text: _('Ascended'),
           reminder: _("Until Rest, it can move forward even if matched in its region's terrains by the opponent's Expedition."),
         },
+        ASCENDED_P: {
+          text: _('Ascended'),
+          reminder: _("Until Rest, it can move forward even if matched in its region's terrains by the opponent's Expedition."),
+        },
         DUE_TO_ASCENSION: {
           text: _('Due to Ascension'),
           reminder: _('if it moved forward due to at least one matched stat.'),
@@ -2495,7 +2499,7 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
       };
 
       const regexParentheses = /\(([^)]+)\)/;
-      const regex = new RegExp('\\$\\[([^\\]]+)\\]', 'g');
+      const regex = /\$\[([^\]]+)\]|\$<([^>]+)>/g;
 
       if (str.match(regex) !== null) {
         const matches = [...str.matchAll(regex)];
@@ -2503,7 +2507,7 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
           const match = matches[i];
           const index = match.index;
 
-          const keyword = match[1];
+          const keyword = match[1] ?? match[2];
           if (!KEYWORDS[keyword]) {
             console.error('Cant substitute keyword, should not happen :', keyword);
             continue;
@@ -2535,7 +2539,7 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
       }
 
       Object.keys(KEYWORDS).forEach((keyword) => {
-        const regex2 = new RegExp('\\[' + keyword + '\\]', 'g');
+        const regex2 = new RegExp('<' + keyword + '>|\\[' + keyword + '\\]', 'g');
         str = str.replaceAll(regex2, `<span class="keyword ${keyword}">${KEYWORDS[keyword].text}</span>`);
       });
 
