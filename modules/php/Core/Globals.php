@@ -23,6 +23,7 @@ class Globals extends \ALT\Helpers\DB_Manager
     'playerDecks' => 'obj',
     'deckOptions' => 'str',
     'deckContent' => 'obj',
+    'tokenStyles' => 'obj', // pId => tokenType => ['asset', 'mainAsset', 'fullArt']
     'undo' => 'bool',
     'statMapping' => 'obj',
     'deckFormat' => 'str',

@@ -1793,6 +1793,7 @@
 
        Object.entries(deck.cards).forEach(([i, card]) => {
          if (i == 'hero') return;
+         if (card.card.properties.token) return;
 
           let id = 'preview-' + i;
           let props = card.card.properties;

@@ -388,6 +388,7 @@ trait SetupTrait
     /////////////////////////////////////////
 
     $deckContent[HERO] = ['card' => Cards::getCardClass($deck[HERO]), 'n' => 1];
+    $tokenStyles = Globals::getTokenStyles();
     foreach ($deck['cards'] as $cardRef => $card) {
       if (isset($card['content'])) {
         //it's a unique!
@@ -406,10 +407,25 @@ trait SetupTrait
 
         $deckContent[] = ['card' => ['properties' => Cards::generateUnique($card['content'])], 'n' => 1];
       } else {
-        $cProp = Cards::getCardClass($cardRef)->getProperties();
-        $deckContent[] = ['card' => ['properties' => $cProp], 'n' => $card['quantity']];
+        $cardObj = Cards::getCardClass($cardRef);
+        if ($cardObj->isToken()) {
+          // Tokens are not part of the deck: they are references to know which
+          // art variant of each token the player chose on the deck builder.
+          // Keep the styling so tokens invoked in game can render with it.
+          $style = ['asset' => $cardObj->getAsset()];
+          if ($cardObj->getMainAsset() != '') {
+            $style['mainAsset'] = $cardObj->getMainAsset();
+          }
+          if ($cardObj->getFullArt() === true) {
+            $style['fullArt'] = true;
+          }
+          $tokenStyles[Players::getCurrentId()][(new \ReflectionClass($cardObj))->getShortName()] = $style;
+          continue;
+        }
+        $deckContent[] = ['card' => ['properties' => $cardObj->getProperties()], 'n' => $card['quantity']];
       }
     }
+    Globals::setTokenStyles($tokenStyles);
     $deck['cards'] = $deckContent;
     $gContent = Globals::getDeckContent();
     $gContent[Players::getCurrentId()] = $deck;

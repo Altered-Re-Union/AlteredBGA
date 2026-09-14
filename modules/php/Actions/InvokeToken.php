@@ -254,11 +254,27 @@ class InvokeToken extends \ALT\Models\Action
 
     for ($i = 0; $i < $this->getN(); $i++) {
       $card = $this->getToken();
+      $props = $card->getProperties();
+
+      // Use the art variant chosen by the invoking player on the deck builder
+      $tokenType = $this->getCtxArg('tokenType');
+      $tokenStyles = Globals::getTokenStyles();
+      if (isset($tokenStyles[$invokePId][$tokenType])) {
+        $style = $tokenStyles[$invokePId][$tokenType];
+        $props['asset'] = $style['asset'] ?? $props['asset'];
+        if (isset($style['mainAsset'])) {
+          $props['mainAsset'] = $style['mainAsset'];
+        }
+        if (isset($style['fullArt'])) {
+          $props['fullArt'] = $style['fullArt'];
+        }
+      }
+
       $card = Cards::singleCreate([
         'player_id' => $invokePId,
         'location' => $location,
         'nbr' => 1,
-        'properties' => $card->getProperties(),
+        'properties' => $props,
       ]);
 
       Notifications::invokeToken($player, $card, $this->getSource());
