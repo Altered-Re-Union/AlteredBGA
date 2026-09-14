@@ -1,5 +1,5 @@
 <?php
-const DEMO_ROC_SAM = [
+const STARTER_SAM = [
   'YZ_Common_SamSpook' => 1,
   'YZ_Common_StudiousDisciple' => 2,
   'YZ_Common_CorruptedToothFairy' => 2,

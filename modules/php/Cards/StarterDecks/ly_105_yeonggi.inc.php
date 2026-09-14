@@ -1,5 +1,5 @@
 <?php
-const DEMO_ROC_YEONGGI = [
+const STARTER_YEONGGI = [
   'LY_Common_YeongGiEmber' => 1,
   'LY_Rare_LakshmisOwl' => 3,
   'LY_Common_RekaThurifer' => 3,
