@@ -10,11 +10,13 @@ require_once (dirname(__FILE__)) . '/StarterDecks/br_1_kojo.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/br_2_atsadi.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/br_3_basira.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/br_65_sol.inc.php';
+require_once (dirname(__FILE__)) . '/StarterDecks/br_105_gretel.inc.php';
 
 require_once (dirname(__FILE__)) . '/StarterDecks/ly_1_nevenka.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/ly_2_auraq.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/ly_3_fen.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/ly_65_nadir.inc.php';
+require_once (dirname(__FILE__)) . '/StarterDecks/ly_105_yeonggi.inc.php';
 
 require_once (dirname(__FILE__)) . '/StarterDecks/mu_1_teija.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/mu_2_arjun.inc.php';
@@ -32,6 +34,7 @@ require_once (dirname(__FILE__)) . '/StarterDecks/yz_1_akesha.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/yz_2_lindiwe.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/yz_3_afanas.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/yz_65_moyo.inc.php';
+require_once (dirname(__FILE__)) . '/StarterDecks/yz_105_sam.inc.php';
 
 require_once (dirname(__FILE__)) . '/DemoDecks/isaree.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/gretel.roc.php';
