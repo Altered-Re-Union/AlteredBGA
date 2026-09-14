@@ -128,7 +128,7 @@ const STARTER_DECKS = array(
   array(
     'faction' => FACTION_BR,
     'deckId' => 'gretel.roc',
-    'contents' => DEMO_ROC_GRETEL,
+    'contents' => STARTER_GRETEL,
   ),
 
   // LYRA
@@ -155,7 +155,7 @@ const STARTER_DECKS = array(
   array(
     'faction' => FACTION_LY,
     'deckId' => 'yeonggi.roc',
-    'contents' => DEMO_ROC_YEONGGI,
+    'contents' => STARTER_YEONGGI,
   ),
 
   // MUNA
@@ -236,7 +236,7 @@ const STARTER_DECKS = array(
   array(
     'faction' => FACTION_YZ,
     'deckId' => 'sam.roc',
-    'contents' => DEMO_ROC_SAM,
+    'contents' => STARTER_SAM,
   ),
 );
 
