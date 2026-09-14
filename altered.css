@@ -2990,6 +2990,11 @@ html {
 .altered-card.mini-card .altered-card-wrapper[data-asset=ALT_DUSTER_B_BR_65_C] {
   background-image: url("img/illustrations/BR/ALT_DUSTER_B_BR_65_C.jpg");
 }
+.altered-card .altered-card-wrapper[data-asset=ALT_DUSTER_B_BR_83_C],
+.altered-card.mini-card .altered-card-wrapper[data-asset=ALT_DUSTER_B_BR_83_C] {
+  background-image: url("img/illustrations/BR/ALT_DUSTER_B_BR_83_C.jpg");
+}
+
 .altered-card .altered-card-wrapper[data-asset=ALT_DUSTER_B_BR_86_C],
 .altered-card.mini-card .altered-card-wrapper[data-asset=ALT_DUSTER_B_BR_86_C] {
   background-image: url("img/illustrations/BR/ALT_DUSTER_B_BR_86_C.jpg");
