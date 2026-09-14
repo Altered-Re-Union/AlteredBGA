@@ -93,7 +93,7 @@ class Cards extends \ALT\Helpers\CachedPieces
 
   public static function isAlternateArt($uid)
   {
-    return explode('_', $uid)[2] == 'A' || in_array(explode('_', $uid)[1],  ['DUSTERTOP', 'DUSTERCB', 'DUSTEROP', 'TCS3', 'WCS25', 'MUSUBI']) || explode("_", $uid)[2] == 'P';
+    return explode('_', $uid)[2] == 'A' || in_array(explode('_', $uid)[1],  ['DUSTERTOP', 'DUSTERCB', 'DUSTEROP', 'TCS3', 'WCS25', 'MUSUBI']) || explode("_", $uid)[2] == 'P' || isset(MANUAL_ALT_ART[$uid]);
   }
 
   public static function getNextPlayedState()
@@ -128,6 +128,9 @@ class Cards extends \ALT\Helpers\CachedPieces
 
   public static function getMainUid($uid)
   {
+    if (isset(MANUAL_ALT_ART[$uid])) {
+      return MANUAL_ALT_ART[$uid];
+    }
     $expUid = explode('_', $uid);
     if (in_array($expUid[1], ['DUSTEROP', 'DUSTERCB', 'DUSTERTOP'])) {
       if ($expUid[4] < 25) {

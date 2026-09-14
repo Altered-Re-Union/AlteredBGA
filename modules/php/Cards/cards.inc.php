@@ -1706,7 +1706,6 @@ const MAP_REFS_CLASSES = [
   'ALT_DUSTER_B_AX_102_R1' => 'AX/AX_Rare_TheConsortium',
   'ALT_DUSTER_B_AX_102_R2' => 'OD/OD_Rare_TheConsortium',
   'ALT_DUSTER_B_BR_65_C' => 'BR/BR_Common_SolHalua',
-  'ALT_DUSTER_B_BR_83_C' => 'BR/BR_Common_Halua',
   'ALT_DUSTER_B_BR_86_C' => 'BR/BR_Common_FlyingSquirrel',
   'ALT_DUSTER_B_BR_86_R1' => 'BR/BR_Rare_FlyingSquirrel',
   'ALT_DUSTER_B_BR_86_R2' => 'LY/LY_Rare_FlyingSquirrel',
