@@ -433,7 +433,6 @@ const UID_MAPPING = [
 ];
 
 const MANUAL_ALT_ART = [
-  'ALT_DUSTER_B_BR_83_C' => 'ALT_CYCLONE_B_BR_83_C',
   'ALT_BISE_B_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C'
 ];
 
