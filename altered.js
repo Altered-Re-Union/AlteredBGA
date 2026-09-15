@@ -57,7 +57,7 @@
 
   function renderDeckDifficultyStars(stars) {
     const filledCount = Math.max(0, Math.min(5, Number(stars) || 0));
-    return `<div class="deck-details-stars"><p>${_('Difficulty:')}</p> ${Array.from({ length: 5 }, (_unused, index) =>
+    return `<div class="deck-details-stars"><p>${_('Complexity:')}</p> ${Array.from({ length: 5 }, (_unused, index) =>
       `<span class="deck-star${index < filledCount ? ' filled' : ''}"></span>`
     ).join('')}</div>`;
   }
