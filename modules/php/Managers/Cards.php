@@ -192,6 +192,7 @@ class Cards extends \ALT\Helpers\CachedPieces
     if (isset(UID_MAPPING[$uid])) {
       $uid = UID_MAPPING[$uid];
     }
+    $origUid = $uid;
 
     $ks = self::isKS($uid);
     $alternate = self::isAlternateArt($uid);
@@ -229,7 +230,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       $altArt = isset(self::getAltArt()[$altUid]) ? self::getAltArt()[$altUid] : null;
       // Standard alternate-art prints (the A/B art variants, e.g. ALT_CORE_A_BR_31_C)
       // with no specific override data still carry their own art.
-      if (is_null($altArt) && $alternate && explode('_', $altUid)[2] == 'A') {
+      if (is_null($altArt) && $alternate && (explode('_', $altUid)[2] == 'A' || isset(MANUAL_ALT_ART[$origUid]))) {
         $altArt = [];
       }
       if (!is_null($altArt)) {
