@@ -8887,6 +8887,10 @@ html {
 .altered-card.mini-card .altered-card-wrapper[data-asset=ALT_COREKS_B_YZ_17_U] {
   background-image: url("img/illustrations/YZ/ALT_COREKS_B_YZ_17_U.jpg");
 }
+.altered-card .altered-card-wrapper[data-asset=ALT_BISE_B_YZ_47_C],
+.altered-card.mini-card .altered-card-wrapper[data-asset=ALT_BISE_B_YZ_47_C] {
+  background-image: url("img/illustrations/YZ/ALT_BISE_B_YZ_47_C.jpg");
+}
 .altered-card .altered-card-wrapper[data-asset=ALT_BISE_B_YZ_49_C],
 .altered-card.mini-card .altered-card-wrapper[data-asset=ALT_BISE_B_YZ_49_C] {
   background-image: url("img/illustrations/YZ/ALT_BISE_B_YZ_49_C.jpg");
