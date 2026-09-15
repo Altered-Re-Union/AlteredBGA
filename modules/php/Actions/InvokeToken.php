@@ -259,8 +259,8 @@ class InvokeToken extends \ALT\Models\Action
       // Use the art variant chosen by the invoking player on the deck builder
       $tokenType = $this->getCtxArg('tokenType');
       $tokenStyles = Globals::getTokenStyles();
-      if (isset($tokenStyles[$invokePId][$tokenType])) {
-        $style = $tokenStyles[$invokePId][$tokenType];
+      if (isset($tokenStyles[$player->getId()][$tokenType])) {
+        $style = $tokenStyles[$player->getId()][$tokenType];
         $props['asset'] = $style['asset'] ?? $props['asset'];
         if (isset($style['mainAsset'])) {
           $props['mainAsset'] = $style['mainAsset'];
