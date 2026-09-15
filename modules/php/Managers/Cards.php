@@ -137,6 +137,8 @@ class Cards extends \ALT\Helpers\CachedPieces
         $expUid[1] = 'CORE';
       } elseif ($expUid[4] < 45) {
         $expUid[1] = 'ALIZE';
+      } elseif ($expUid[4] < 85) {
+        $expUid[1] = 'CYCLONE';
       } else {
         $expUid[1] = 'DUSTER';
       }
@@ -1147,6 +1149,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_WCS26_P_YZ_94_E' => ['flavorText' => ''],
       'ALT_CORE_A_BR_31_C' => ['flavorText' => ''],
       'ALT_DUSTEROP_A_MU_83_C' => ['flavorText' => ''],
+      
       'ALT_DUSTER_B_BR_83_C' => ['flavorText' => ''],
       'ALT_BISE_B_YZ_47_C' => ['flavorText' => ''],
     ];
