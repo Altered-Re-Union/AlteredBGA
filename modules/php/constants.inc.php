@@ -434,6 +434,7 @@ const UID_MAPPING = [
 
 const MANUAL_ALT_ART = [
   'ALT_DUSTER_B_BR_83_C' => 'ALT_CYCLONE_B_BR_83_C',
+  'ALT_DUSTEROP_A_MU_83_C' => 'ALT_EOLE_B_MU_108_C'
 ];
 
 /******************
