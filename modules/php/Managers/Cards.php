@@ -1149,8 +1149,10 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_WCS26_P_YZ_94_E' => ['flavorText' => ''],
       'ALT_CORE_A_BR_31_C' => ['flavorText' => ''],
       'ALT_DUSTEROP_A_MU_83_C' => ['flavorText' => ''],
+      
       'ALT_DUSTER_B_BR_83_C' => ['flavorText' => ''],
       'ALT_BISE_B_YZ_47_C' => ['flavorText' => ''],
+      'ALT_EOLE_B_MU_83_C' => ['flavorText' => ''],
     ];
   }
 
