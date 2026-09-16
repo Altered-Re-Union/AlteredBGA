@@ -464,6 +464,8 @@ const MANUAL_ALT_ART = [
   'ALT_WCS26_A_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
   //Maw
   'ALT_CORE_A_YZ_31_C' => 'ALT_CORE_B_YZ_31_C',
+  //Aerolith
+  'ALT_WCS26_P_NE_03_C' => 'ALT_CYCLONE_B_NE_03_C',
 
 ];
 

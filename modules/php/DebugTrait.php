@@ -721,11 +721,43 @@ trait DebugTrait
 
   // change this function content if you need a specific setup requiring more than 1 card to test a scenario, 
   // like adding specific cards on the board or in hand
-  // function debug_setup()
-  // {
-  //   $this->addCard('LY_Rare_TheEmbassy', 'landmark');
-  //   $this->addCard('LY_Common_RomanticEncounter', 'hand');
-  // }
+  function debug_setup()
+  {
+    $player = Players::getCurrent();
+    $pId = $player->getId();
+
+    // Alt-art variant chosen for each token on the deck builder (setup of tokenStyles).
+    // The cards below invoke these tokens; playing them must spawn the alt art.
+    $tests = [
+      'YZ_Common_ManaMoth' => 'ALT_BISE_B_YZ_47_C',
+      'MU_Common_Woollyback' => 'ALT_EOLE_B_MU_83_C',
+      'AX_Common_Brassbug' => 'ALT_CYCLONE_B_AX_31_C',
+      'OD_Common_OrdisRecruit' => 'ALT_ALIZE_B_OR_31_C',
+    ];
+
+    // Mirror SetupTrait::actGetDeckInfos: store the art variant per token type.
+    $tokenStyles = Globals::getTokenStyles();
+    $styles = [];
+    foreach ($tests as $tokenType => $altUid) {
+      $card = Cards::getCardClass($altUid);
+      $style = ['asset' => $card->getAsset()];
+      if ($card->getMainAsset() != '') {
+        $style['mainAsset'] = $card->getMainAsset();
+      }
+      if ($card->getFullArt() === true) {
+        $style['fullArt'] = true;
+      }
+      $styles[$tokenType] = $style;
+    }
+    $tokenStyles[$pId] = $styles;
+    Globals::setTokenStyles($tokenStyles);
+
+    // Cards that invoke the above tokens when played from hand.
+    $this->addCard('YZ_Common_MothDecoy', 'hand'); // -> ManaMoth
+    $this->addCard('MU_Common_CountingSheep', 'hand'); // -> Woollyback x2
+    $this->addCard('AX_Common_BugOutBag', 'hand'); // -> Brassbug
+    $this->addCard('OD_Rare_SunisaOrdisBodyguard', 'hand'); // -> OrdisRecruit
+  }
   
   // Function used to forcibly clean up an entire location (deck, hand, reserve or both).
   // Sends all cards in given location to discard pile, and refreshes UI. Useful for testing specific scenarios.
