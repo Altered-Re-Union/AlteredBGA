@@ -1119,6 +1119,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_CORE_P_YZ_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_CORE_P_YZ_02' => ['flavorText' => '', 'fullArt' => true],
       'ALT_CORE_P_YZ_03' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_DUSTEROP_B_BR_31_C' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_BR_94' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_BR_95' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_LY_87' => ['flavorText' => ''],

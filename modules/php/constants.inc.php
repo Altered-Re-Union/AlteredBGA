@@ -436,7 +436,6 @@ const MANUAL_ALT_ART = [
   //Booda
   'ALT_CORE_A_BR_31_C' => 'ALT_CORE_B_BR_31_C',
   'ALT_ALIZE_B_BR_31_C' => 'ALT_CORE_B_BR_31_C',
-  'ALT_DUSTEROP_B_BR_31_C' => 'ALT_CORE_B_BR_31_C',
   //Halua
   'ALT_DUSTER_B_BR_83_C' => 'ALT_CYCLONE_B_BR_83_C',
   //Woollyback
