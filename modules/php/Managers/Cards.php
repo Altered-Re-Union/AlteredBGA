@@ -1121,7 +1121,6 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_CORE_P_YZ_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_CORE_P_YZ_02' => ['flavorText' => '', 'fullArt' => true],
       'ALT_CORE_P_YZ_03' => ['flavorText' => '', 'fullArt' => true],
-      'ALT_DUSTEROP_B_BR_31_C' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_BR_94' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_BR_95' => ['flavorText' => ''],
       'ALT_DUSTEROP_P_LY_87' => ['flavorText' => ''],
@@ -1151,6 +1150,8 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_WCS26_P_MU_96' => ['flavorText' => ''],
       'ALT_WCS26_P_OR_97' => ['flavorText' => ''],
       'ALT_WCS26_P_YZ_94' => ['flavorText' => ''],
+      'ALT_EOLEOP_P_LY_111' => ['flavorText' => ''],
+      'ALT_EOLETOP_P_OR_54' => ['flavorText' => '', 'fullArt' => true],
     ];
   }
 

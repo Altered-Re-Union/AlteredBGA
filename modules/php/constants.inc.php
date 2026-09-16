@@ -436,6 +436,7 @@ const MANUAL_ALT_ART = [
   //Booda
   'ALT_CORE_A_BR_31_C' => 'ALT_CORE_B_BR_31_C',
   'ALT_ALIZE_B_BR_31_C' => 'ALT_CORE_B_BR_31_C',
+  'ALT_DUSTEROP_B_BR_31_C' => 'ALT_CORE_B_BR_31_C',
   //Halua
   'ALT_DUSTER_B_BR_83_C' => 'ALT_CYCLONE_B_BR_83_C',
   //Woollyback
@@ -453,6 +454,7 @@ const MANUAL_ALT_ART = [
   'ALT_ALIZE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
   'ALT_BISE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
   'ALT_CYCLONE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_CYCLONE_B_AX_31_R' => 'ALT_CORE_B_AX_31_R',
   'ALT_WCS26_P_AX_31_C' => 'ALT_CORE_B_AX_31_C',
   'ALT_WCS26_A_AX_31_C' => 'ALT_CORE_B_AX_31_C',
   //Mana Moth
