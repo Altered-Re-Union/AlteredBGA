@@ -314,6 +314,8 @@ trait SetupTrait
         'format' => Globals::getDeckFormat(),
         'tableId' => $tableId,
         'tournamentName' => $tournamentInfo['name'] ?? null,
+        'tournamentParentId' => $tournamentInfo['tournament_parent_id'] ?? null,
+        'tournamentGroup' => $tournamentInfo['tournament_group'] ?? null,
       ],
     ]));
 

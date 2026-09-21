@@ -71,6 +71,8 @@ trait EndGameTrait
             'tournamentId' => $tournamentInfo['id'] ?? null,
             'tournamentName' => $tournamentInfo['name'] ?? null,
             'tournamentSeed' => $tournamentSeeds['tournament_seed'] ?? null,
+            'tournamentParentId' => $tournamentInfo['tournament_parent_id'] ?? null,
+            'tournamentGroup' => $tournamentInfo['tournament_group'] ?? null,
             'env' => $this->getGameName(),
             'players' => $players,
             'winningId' => $winningId,
