@@ -1257,6 +1257,31 @@
             }
         }
 
+        // Deck preview and invalid-deck screens, built by altered.js
+        // (_addBackToDeckListButton and around it). These rules used to live
+        // only in the compiled altered.css with no source here, so every
+        // recompile silently dropped them and the screens rendered unstyled --
+        // which is exactly what happened during the alteredbrancha merge.
+        #overlay-deck-preview,
+        #invalid-fetched-deck {
+            display: flex;
+            flex-flow: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        #deck-preview-actions {
+            display: flex;
+            flex-flow: row;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+
+            .action-button {
+                margin: 0;
+            }
+        }
+
         #overlay-APIdeck-details {
             --cardScale: 1;
 
