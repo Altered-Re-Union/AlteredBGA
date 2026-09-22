@@ -1152,6 +1152,12 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_WCS26_P_YZ_94' => ['flavorText' => ''],
       'ALT_EOLEOP_P_LY_111' => ['flavorText' => ''],
       'ALT_EOLETOP_P_OR_54' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_BR_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_LY_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_MU_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_YZ_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_OR_01' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_WCF25_P_AX_01' => ['flavorText' => '', 'fullArt' => true],
     ];
   }
 
