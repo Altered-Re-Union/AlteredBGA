@@ -55,46 +55,57 @@ trait EndGameTrait
       }
     }
 
-    if (!Globals::getZombie() || Globals::getDay() >= 4) {
-      //$valid = self::getGenericGameInfos('push_adventure_pass', $request);
+    // Every finished game is reported, with no exception. This used to be
+    // guarded by `!Globals::getZombie() || Globals::getDay() >= 4`, which
+    // silently dropped any game ending on a zombie turn before day 4 -- and a
+    // player whose clock runs out is expelled through zombieTurn(), so every
+    // timeout loss before day 4 vanished: no call sent, therefore nothing on
+    // the receiving side to retry or even notice. Tournament standings were
+    // wrong because of it.
+    //
+    // Nothing else reads Globals::getZombie(), so dropping the guard here
+    // costs nothing elsewhere. It is not a replay guard either: a replay would
+    // re-post games that end normally too, which are the vast majority, and
+    // the receiving end keys games on tableId -- a duplicate is rejected and
+    // recorded rather than stored twice.
+    //$valid = self::getGenericGameInfos('push_adventure_pass', $request);
 
-      Notifications::message(
-        clienttranslate('The game has ended.'),
-        []
-      );
-      $result = $this->getGenericGameInfos('register_game', [
-        'player1Id' => $players[0]['id'],
-        'player2Id' => $players[1]['id'],
-        'payload' => [
-            'format' => Globals::getDeckFormat(),
-            'tableId' => $tableId,
-            'tournamentId' => $tournamentInfo['id'] ?? null,
-            'tournamentName' => $tournamentInfo['name'] ?? null,
-            'tournamentSeed' => $tournamentSeeds['tournament_seed'] ?? null,
-            'env' => $this->getGameName(),
-            'players' => $players,
-            'winningId' => $winningId,
-        ],
-      ]);
-      // if ($valid['success'] == 1 && isset($valid['winner_bga_adventure_pass_progress']) && !is_null($valid['winner_bga_adventure_pass_progress'])) {
-      //   Notifications::message(
-      //     clienttranslate('${player_name} increased the BGA Adventure pass to ${pass}'),
-      //     [
-      //       'player' => Players::get($request['winner']['id']),
-      //       'pass' => $valid['winner_bga_adventure_pass_progress']
-      //     ]
-      //   );
-      // }
-      // if ($valid['success'] == 1 && isset($valid['loser_bga_adventure_pass_progress']) && !is_null($valid['loser_bga_adventure_pass_progress'])) {
-      //   Notifications::message(
-      //     clienttranslate('${player_name} increased the BGA Adventure pass to ${pass}'),
-      //     [
-      //       'player' => Players::get($request['loser']['id']),
-      //       'pass' => $valid['loser_bga_adventure_pass_progress']
-      //     ]
-      //   );
-      // }
-    }
+    Notifications::message(
+      clienttranslate('The game has ended.'),
+      []
+    );
+    $result = $this->getGenericGameInfos('register_game', [
+      'player1Id' => $players[0]['id'],
+      'player2Id' => $players[1]['id'],
+      'payload' => [
+          'format' => Globals::getDeckFormat(),
+          'tableId' => $tableId,
+          'tournamentId' => $tournamentInfo['id'] ?? null,
+          'tournamentName' => $tournamentInfo['name'] ?? null,
+          'tournamentSeed' => $tournamentSeeds['tournament_seed'] ?? null,
+          'env' => $this->getGameName(),
+          'players' => $players,
+          'winningId' => $winningId,
+      ],
+    ]);
+    // if ($valid['success'] == 1 && isset($valid['winner_bga_adventure_pass_progress']) && !is_null($valid['winner_bga_adventure_pass_progress'])) {
+    //   Notifications::message(
+    //     clienttranslate('${player_name} increased the BGA Adventure pass to ${pass}'),
+    //     [
+    //       'player' => Players::get($request['winner']['id']),
+    //       'pass' => $valid['winner_bga_adventure_pass_progress']
+    //     ]
+    //   );
+    // }
+    // if ($valid['success'] == 1 && isset($valid['loser_bga_adventure_pass_progress']) && !is_null($valid['loser_bga_adventure_pass_progress'])) {
+    //   Notifications::message(
+    //     clienttranslate('${player_name} increased the BGA Adventure pass to ${pass}'),
+    //     [
+    //       'player' => Players::get($request['loser']['id']),
+    //       'pass' => $valid['loser_bga_adventure_pass_progress']
+    //     ]
+    //   );
+    // }
     // throw new \feException(print_r($valid));
     // TODO remove in alpha
     // [success] => 1
