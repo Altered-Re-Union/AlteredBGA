@@ -13028,16 +13028,15 @@ body.focus-board #altered-main-container #altered-board-resizable #altered-board
   left: 266px;
   border: 1px solid #d4a743;
   border-radius: 7px;
-  display: none;
-}
-body.focus-board .altered-player-board .player-board-infos {
-  display: flex;
-}
-.altered-player-board .player-board-infos {
+  display: none; 
   justify-content: space-between;
   align-items: center;
   box-shadow: 0px 0px 4px black;
 }
+body.focus-board .altered-player-board .player-board-infos {
+  display: flex;
+}
+
 .altered-player-board .player-board-infos .player-board-name {
   color: #d4a743;
   font-weight: bold;
@@ -13094,16 +13093,14 @@ body.focus-board .altered-player-board .player-board-infos {
   display: flex;
   justify-content: center;
   align-items: center;
+  border: 2px solid transparent;
+  border-radius: 5px;
 }
 .altered-player-board .player-board-storm.storm-left {
   left: 289px;
 }
 .altered-player-board .player-board-storm.storm-right {
   left: 871px;
-}
-.altered-player-board .player-board-storm {
-  border: 2px solid transparent;
-  border-radius: 5px;
 }
 .altered-player-board .player-board-storm.selectable, .altered-player-board .player-board-storm.droppable {
   border: 2px solid rgb(89, 172, 68);
@@ -13402,7 +13399,6 @@ body.focus-board .altered-player-board .player-board-infos {
   height: 150px;
   z-index: 1;
 }
-.altered-player-board .player-board-discard-zone .player-board-discard .altered-card,
 .altered-player-board .player-board-discard-zone .player-board-discard .altered-card {
   position: absolute;
   z-index: 1;
@@ -13563,12 +13559,10 @@ body.focus-board .altered-player-board .player-board-infos {
 .altered-player-board .player-board-grass .player-board-reserve .altered-card {
   z-index: 30;
   margin-left: 10px;
+  transition: left 0.2s ease-in, top 0.2s ease-in;
 }
 .altered-player-board .player-board-grass .player-board-reserve .altered-card.selected {
   margin-left: 8px;
-}
-.altered-player-board .player-board-grass .player-board-reserve .altered-card {
-  transition: left 0.2s ease-in, top 0.2s ease-in;
 }
 .altered-player-board .player-board-grass .player-board-reserve .altered-card[data-animation-speed=none] {
   transition: none;
@@ -13683,13 +13677,11 @@ body.focus-board .altered-player-board .player-board-infos {
   justify-content: center;
   align-items: center;
   font-size: 40px;
+  animation: pulse-animation 1.2s infinite;
 }
 .altered-player-board .player-board-hand .player-board-limbo #btnLaunchSpell.on-mini-card {
   left: 50px;
   bottom: -30px;
-}
-.altered-player-board .player-board-hand .player-board-limbo #btnLaunchSpell {
-  animation: pulse-animation 1.2s infinite;
 }
 @keyframes pulse-animation {
   0% {
@@ -13962,12 +13954,10 @@ body.focus-board .altered-player-board .player-board-infos {
   display: flex;
   justify-content: center;
   align-items: center;
+  cursor: pointer;
 }
 #player_config #show-settings:hover {
   color: grey;
-}
-#player_config #show-settings {
-  cursor: pointer;
 }
 #player_config #show-settings svg {
   width: auto;
@@ -14752,12 +14742,10 @@ body.focus-board .altered-player-board .player-board-infos {
 }
 #altered-board-overlay #altered-overlay-content #overlay-hand-container {
   max-width: calc(0.9 * (100vw - 250px) / var(--boardScale));
+  --cardScale: 0.5;  
 }
 .mobile_version #altered-board-overlay #altered-overlay-content #overlay-hand-container, .focus-board #altered-board-overlay #altered-overlay-content #overlay-hand-container {
   max-width: calc(90vw / var(--boardScale));
-}
-#altered-board-overlay #altered-overlay-content #overlay-hand-container {
-  --cardScale: 0.5;
 }
 #altered-board-overlay #altered-overlay-content #overlay-hand-container .player-hand {
   display: flex;
@@ -15714,6 +15702,23 @@ body.focus-board .altered-player-board .player-board-infos {
 #altered-board-overlay #altered-overlay-content #overlay-deck-container .altered-card.selectable:hover,
 #altered-board-overlay #altered-overlay-content #overlay-deck-container .altered-card.mini-card.selectable:hover {
   transform: none;
+}
+#altered-board-overlay #altered-overlay-content #overlay-deck-preview,
+#altered-board-overlay #altered-overlay-content #invalid-fetched-deck {
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  position: relative;
+}
+#altered-board-overlay #altered-overlay-content #deck-preview-actions {
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+#altered-board-overlay #altered-overlay-content #deck-preview-actions .action-button {
+  margin: 0;
 }
 #altered-board-overlay #altered-overlay-content #overlay-APIdeck-details {
   --cardScale: 1;
