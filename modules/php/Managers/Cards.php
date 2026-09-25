@@ -144,7 +144,7 @@ class Cards extends \ALT\Helpers\CachedPieces
       }
     } elseif (in_array($expUid[1], ['TCS3'])) {
       $expUid[1] = 'BISE';
-    } elseif (in_array($expUid[1], ['WCQ25', 'WCS25', 'MUSUBI'])) {
+    } elseif (in_array($expUid[1], ['WCQ25', 'WCS25', 'WCF25', 'MUSUBI'])) {
       $expUid[1] = 'CORE';
     } elseif (in_array($expUid[1], ['WCS26'])) {
       $expUid[1] = 'DUSTER';
@@ -190,6 +190,18 @@ class Cards extends \ALT\Helpers\CachedPieces
   public static function getCardClass($uid)
   {
     require_once dirname(__FILE__) . '/../Cards/cards.inc.php';
+    // Serialized prints sent by the deck API (numbered copies e.g.
+    // ALT_DUSTERCB_P_AX_85_C_001 ... _030, and their ..._XXX placeholder) are
+    // alt-art variants of the same card: drop the serial before resolving.
+    $serialized = preg_match('/_(?:XXX|\d{3})$/', $uid);
+    $uid = preg_replace('/_(?:XXX|\d{3})$/', '', $uid);
+    // Serialized DUSTERCB prints are the DUSTER "A" art variant of their base card.
+    if ($serialized && strpos($uid, 'ALT_DUSTERCB_P_') === 0) {
+      $expUid = explode('_', $uid);
+      $expUid[1] = 'DUSTER';
+      $expUid[2] = 'A';
+      $uid = implode('_', $expUid);
+    }
     // Mapping done for heroes for example
     if (isset(UID_MAPPING[$uid])) {
       $uid = UID_MAPPING[$uid];
