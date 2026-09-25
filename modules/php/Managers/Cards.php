@@ -282,6 +282,10 @@ class Cards extends \ALT\Helpers\CachedPieces
     // Each serialized copy displays its own art (e.g. ALT_DUSTERCB_P_AX_85_C_014).
     if (!is_null($serial)) {
       $cardO->setAsset($serialBaseUid . $serial);
+      if (strpos($serialBaseUid, 'ALT_DUSTERCB_P_') === 0) {
+        $cardO->setMainAsset(self::getMainUid($serialBaseUid));
+        $cardO->setFullArt(true);
+      }
       if (preg_match('/^_\d{3}$/', $serial)) {
         $cardO->setProperty('serial', ltrim($serial, '_'));
       }
