@@ -191,16 +191,14 @@ class Cards extends \ALT\Helpers\CachedPieces
   {
     require_once dirname(__FILE__) . '/../Cards/cards.inc.php';
     // Serialized prints sent by the deck API (numbered copies e.g.
-    // ALT_DUSTERCB_P_AX_85_C_001 ... _030, and their ..._XXX placeholder) are
-    // alt-art variants of the same card: drop the serial before resolving.
-    $serialized = preg_match('/_(?:XXX|\d{3})$/', $uid);
-    $uid = preg_replace('/_(?:XXX|\d{3})$/', '', $uid);
-    // Serialized DUSTERCB prints are the DUSTER "A" art variant of their base card.
-    if ($serialized && strpos($uid, 'ALT_DUSTERCB_P_') === 0) {
-      $expUid = explode('_', $uid);
-      $expUid[1] = 'DUSTER';
-      $expUid[2] = 'A';
-      $uid = implode('_', $expUid);
+    // ALT_DUSTERCB_P_AX_85_C_001 ... _030, and their ..._XXX placeholder) each
+    // carry their own art: strip the serial to resolve the base card identity,
+    // then restore it to the asset below so the per-copy image is used.
+    $serial = null;
+    if (preg_match('/_(?:XXX|\d{3})$/', $uid, $serialMatch)) {
+      $serial = $serialMatch[0];
+      $serialBaseUid = preg_replace('/_(?:XXX|\d{3})$/', '', $uid);
+      $uid = $serialBaseUid;
     }
     // Mapping done for heroes for example
     if (isset(UID_MAPPING[$uid])) {
@@ -279,6 +277,13 @@ class Cards extends \ALT\Helpers\CachedPieces
         if (isset($altArt['fullArt'])) {
           $cardO->setFullArt(true);
         }
+      }
+    }
+    // Each serialized copy displays its own art (e.g. ALT_DUSTERCB_P_AX_85_C_014).
+    if (!is_null($serial)) {
+      $cardO->setAsset($serialBaseUid . $serial);
+      if (preg_match('/^_\d{3}$/', $serial)) {
+        $cardO->setProperty('serial', ltrim($serial, '_'));
       }
     }
     return $cardO;

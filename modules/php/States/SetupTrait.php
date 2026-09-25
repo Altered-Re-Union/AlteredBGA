@@ -329,7 +329,7 @@ trait SetupTrait
 
     // Add infos to the deck
     foreach ($content['decks'] as &$deck) {
-      $card = Cards::getCardClass($this->normalizeDeckCardRef($deck['hero']));
+      $card = Cards::getCardClass($deck['hero']);
       $deck['heroName'] = $card->getName();
       $deck['heroThumbnail'] = $card->getThumbnail();
     }
@@ -387,7 +387,7 @@ trait SetupTrait
     // Changing all alt-art into basic art
     /////////////////////////////////////////
 
-    $deckContent[HERO] = ['card' => Cards::getCardClass($this->normalizeDeckCardRef($deck[HERO])), 'n' => 1];
+    $deckContent[HERO] = ['card' => Cards::getCardClass($deck[HERO]), 'n' => 1];
     $tokenStyles = Globals::getTokenStyles();
     foreach ($deck['cards'] as $cardRef => $card) {
       if (isset($card['content'])) {
@@ -407,7 +407,7 @@ trait SetupTrait
 
         $deckContent[] = ['card' => ['properties' => Cards::generateUnique($card['content'])], 'n' => 1];
       } else {
-        $cardObj = Cards::getCardClass($this->normalizeDeckCardRef($cardRef));
+        $cardObj = Cards::getCardClass($cardRef);
         if ($cardObj->isToken()) {
           // Tokens are not part of the deck: they are references to know which
           // art variant of each token the player chose on the deck builder.
@@ -519,17 +519,6 @@ trait SetupTrait
     //    Notifications::setupCards(Cards::getUiData());
 
     $this->gamestate->nextState('');
-  }
-
-  /**
-   * Serialized numbered prints sent by the deck API (e.g. ALT_DUSTERCB_P_AX_85_C_001
-   * up to ..._030, one per physical copy) are alt-art variants of the same card.
-   * Replace the serial number with the canonical placeholder used for serialized
-   * prints; Cards::getCardClass then resolves it to the matching alt-art variant.
-   */
-  private function normalizeDeckCardRef(string $cardRef): string
-  {
-    return preg_replace('/_\d{3}$/', '_XXX', $cardRef);
   }
 
   /////////////////////////////////////////////////////////
