@@ -54,7 +54,6 @@ trait EndGameTrait
         $winningId = $pId;
       }
     }
-
     // Every finished game is reported, with no exception. This used to be
     // guarded by `!Globals::getZombie() || Globals::getDay() >= 4`, which
     // silently dropped any game ending on a zombie turn before day 4 -- and a
@@ -68,8 +67,7 @@ trait EndGameTrait
     // re-post games that end normally too, which are the vast majority, and
     // the receiving end keys games on tableId -- a duplicate is rejected and
     // recorded rather than stored twice.
-    //$valid = self::getGenericGameInfos('push_adventure_pass', $request);
-
+      //$valid = self::getGenericGameInfos('push_adventure_pass', $request);
       Notifications::message(
         clienttranslate('The game has ended.'),
         []
@@ -108,7 +106,6 @@ trait EndGameTrait
       //     ]
       //   );
       // }
-    }
     // throw new \feException(print_r($valid));
     // TODO remove in alpha
     // [success] => 1
