@@ -54,10 +54,20 @@ trait EndGameTrait
         $winningId = $pId;
       }
     }
-
-    if (!Globals::getZombie() || Globals::getDay() >= 4) {
+    // Every finished game is reported, with no exception. This used to be
+    // guarded by `!Globals::getZombie() || Globals::getDay() >= 4`, which
+    // silently dropped any game ending on a zombie turn before day 4 -- and a
+    // player whose clock runs out is expelled through zombieTurn(), so every
+    // timeout loss before day 4 vanished: no call sent, therefore nothing on
+    // the receiving side to retry or even notice. Tournament standings were
+    // wrong because of it.
+    //
+    // Nothing else reads Globals::getZombie(), so dropping the guard here
+    // costs nothing elsewhere. It is not a replay guard either: a replay would
+    // re-post games that end normally too, which are the vast majority, and
+    // the receiving end keys games on tableId -- a duplicate is rejected and
+    // recorded rather than stored twice.
       //$valid = self::getGenericGameInfos('push_adventure_pass', $request);
-
       Notifications::message(
         clienttranslate('The game has ended.'),
         []
@@ -96,7 +106,6 @@ trait EndGameTrait
       //     ]
       //   );
       // }
-    }
     // throw new \feException(print_r($valid));
     // TODO remove in alpha
     // [success] => 1

@@ -9,7 +9,7 @@ class BR_Common_Booda extends \ALT\Models\Card
     parent::__construct($row);
     $this->properties = [
       'uid' => 'ALT_CORE_B_BR_31_C',
-      'asset' => 'ALT_ALIZE_B_BR_31_C',
+      'asset' => 'ALT_CORE_B_BR_31_C',
 
       'faction' => FACTION_BR,
       'rarity' => RARITY_COMMON,
