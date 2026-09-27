@@ -243,6 +243,8 @@ class SpecialEffect extends \ALT\Models\Action
         return clienttranslate('Sacrifice highest opponent character');
       case 'sacrificeHighestCharacterPermanent':
         return clienttranslate('Sacrifice highest opponent character or permanent');
+       case 'boostXAnimalsMax2':
+        return clienttranslate('1 Boost per other Animal (max 2)');
         // EOLE
       case 'nextCharacterAsleep':
         return clienttranslate('Next character gains <ASLEEP>');

@@ -392,7 +392,7 @@ abstract class FlowConvertor
       804 => [
         'description' => clienttranslate('When you put a card from your hand in Reserve —'),
         'trigger' => 'Discard',
-        'condition' => ['isMe', 'isDiscarded:hand:reserve'],
+        'condition' => ['isMe', 'isInStorms', 'isDiscarded:hand:reserve'],
       ],
       805 => [
         'description' => clienttranslate('When I leave an <ASCENDED_S> Expedition —'),

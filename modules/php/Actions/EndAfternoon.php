@@ -55,8 +55,11 @@ class EndAfternoon extends \ALT\Models\Action
       ['pass']
     ));
     if ($reaction !== null) {
+      // When multiple "when you pass" effects trigger simultaneously, let the player choose the order
+      // per game rules (similar to ChooseAssignment handling of simultaneous effects).
       $this->insertAsChild([
         'type' => NODE_PARALLEL,
+        'noIndependent' => count($reaction) > 1,
         'childs' => $reaction,
       ]);
     }

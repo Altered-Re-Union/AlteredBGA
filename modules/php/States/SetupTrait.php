@@ -306,7 +306,12 @@ trait SetupTrait
       $tournamentInfo = $this->bga->tournament->getInfo();
     }
     $ratingMode = $this->tableOptions->get(201);
-    $request['eventFormat'] = base64_encode(json_encode([
+    // eventFormat goes in a separate array on purpose: it must never be echoed back in
+    // $content['request'], because the client replays that request verbatim on pagination
+    // and faction changes, and its base64 alphabet (+ / =) is rejected by the
+    // validateJSonAlphaNum() guard in altered.action.php. Keep it server-side only.
+    $apiRequest = $request;
+    $apiRequest['eventFormat'] = base64_encode(json_encode([
       'v' => 1,
       'env' => $this->getGameName(),
       'mode' => $ratingMode,
@@ -314,13 +319,15 @@ trait SetupTrait
         'format' => Globals::getDeckFormat(),
         'tableId' => $tableId,
         'tournamentName' => $tournamentInfo['name'] ?? null,
+        'tournamentParentId' => $tournamentInfo['tournament_parent_id'] ?? null,
+        'tournamentGroup' => $tournamentInfo['tournament_group'] ?? null,
       ],
     ]));
 
     // STANDARD, NO_UNIQUE, SINGLETON
-    // throw new \feException(print_r($request));
+    // throw new \feException(print_r($apiRequest));
     // Fetch them from MS
-    $response = self::getGenericGameInfos('get_player_decks', $request);
+    $response = self::getGenericGameInfos('get_player_decks', $apiRequest);
     if ($response['success'] != 1) {
       throw new \Bga\GameFramework\VisibleSystemException("API ERROR###" . $response['message'] . "###");
     }

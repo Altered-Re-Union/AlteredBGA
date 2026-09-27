@@ -809,12 +809,14 @@ class ChooseAssignment extends \ALT\Models\Action
                   $newEffect[] = FT::GAIN($card->getId(), BOOST);
                 }
           
+                // Boost from Fab Lab Unit rare (etc.) must run after the chosen {R}, not as an XOR option
+                $afterEffects = [];
                 if (($addEffect['boost'] ?? 0) > 0) {
-                  $newEffect[] = FT::GAIN($card->getId(), BOOST, $addEffect['boost']);
+                  $afterEffects[] = FT::GAIN($card->getId(), BOOST, $addEffect['boost']);
                 }
           
                 if ($matchCount > 1) {
-                  $effects[] = [
+                  $choice = [
                     'type' => NODE_OR,
                     'args' => ['n' => $matchCount],
                     'pId' => $player->getId(),
@@ -822,8 +824,10 @@ class ChooseAssignment extends \ALT\Models\Action
                     'childs' => $newEffect
                   ];
                 } else {
-                  $effects[] = FT::XOR(...$newEffect);
+                  $choice = FT::XOR(...$newEffect);
                 }
+
+                $effects[] = empty($afterEffects) ? $choice : FT::SEQ($choice, ...$afterEffects);
               } else {
                 if (!empty($newEffect)) {
                   $newEffect = [$newEffect];
@@ -903,7 +907,10 @@ class ChooseAssignment extends \ALT\Models\Action
           $this->updateAfterFinishingChilds(['noIndependent' => true]);
         }
       }
+      // Track if the played card has its own effects that were pushed
+      $hasCardEffects = !empty($effects);
     } else {
+      $hasCardEffects = false;
       Notifications::message(clienttranslate('Effects are not triggered, due to an effect in the opponent\'s expedition'), []);
     }
 
@@ -923,6 +930,10 @@ class ChooseAssignment extends \ALT\Models\Action
         'stealOwnership' => $stealOwnership,
       ]);
 
+      // Count children before adding passives
+      $afterFinishingNode = Engine::getAfterFinishingNode();
+      $childCountBefore = count($afterFinishingNode->getChilds());
+
       $this->checkAfterListeners($player, [
         'playCard' => true,
         'cardId' => $cardId,
@@ -939,6 +950,13 @@ class ChooseAssignment extends \ALT\Models\Action
         'token' => $card->isToken(),
         'stealOwnership' => $stealOwnership,
       ]);
+
+      // If the card has its own effects AND passives from other cards were added,
+      // force manual choice for effect ordering (per game rules: player chooses order of simultaneous effects)
+      $childCountAfter = count($afterFinishingNode->getChilds());
+      if ($hasCardEffects && $childCountAfter > $childCountBefore) {
+        $this->updateAfterFinishingChilds(['noIndependent' => true]);
+      }
 
       if (in_array($card->getUid(), ['ALT_ALIZE_B_BR_45_C', 'ALT_ALIZE_B_BR_45_R1', 'ALT_ALIZE_B_BR_45_R2'])) {
         $this->checkAfterListeners($player, [

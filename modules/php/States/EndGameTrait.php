@@ -70,42 +70,45 @@ trait EndGameTrait
     // recorded rather than stored twice.
     //$valid = self::getGenericGameInfos('push_adventure_pass', $request);
 
-    Notifications::message(
-      clienttranslate('The game has ended.'),
-      []
-    );
-    $result = $this->getGenericGameInfos('register_game', [
-      'player1Id' => $players[0]['id'],
-      'player2Id' => $players[1]['id'],
-      'payload' => [
-          'format' => Globals::getDeckFormat(),
-          'tableId' => $tableId,
-          'tournamentId' => $tournamentInfo['id'] ?? null,
-          'tournamentName' => $tournamentInfo['name'] ?? null,
-          'tournamentSeed' => $tournamentSeeds['tournament_seed'] ?? null,
-          'env' => $this->getGameName(),
-          'players' => $players,
-          'winningId' => $winningId,
-      ],
-    ]);
-    // if ($valid['success'] == 1 && isset($valid['winner_bga_adventure_pass_progress']) && !is_null($valid['winner_bga_adventure_pass_progress'])) {
-    //   Notifications::message(
-    //     clienttranslate('${player_name} increased the BGA Adventure pass to ${pass}'),
-    //     [
-    //       'player' => Players::get($request['winner']['id']),
-    //       'pass' => $valid['winner_bga_adventure_pass_progress']
-    //     ]
-    //   );
-    // }
-    // if ($valid['success'] == 1 && isset($valid['loser_bga_adventure_pass_progress']) && !is_null($valid['loser_bga_adventure_pass_progress'])) {
-    //   Notifications::message(
-    //     clienttranslate('${player_name} increased the BGA Adventure pass to ${pass}'),
-    //     [
-    //       'player' => Players::get($request['loser']['id']),
-    //       'pass' => $valid['loser_bga_adventure_pass_progress']
-    //     ]
-    //   );
-    // }
+      Notifications::message(
+        clienttranslate('The game has ended.'),
+        []
+      );
+      $result = $this->getGenericGameInfos('register_game', [
+        'player1Id' => $players[0]['id'],
+        'player2Id' => $players[1]['id'],
+        'payload' => [
+            'format' => Globals::getDeckFormat(),
+            'tableId' => $tableId,
+            'tournamentId' => $tournamentInfo['id'] ?? null,
+            'tournamentName' => $tournamentInfo['name'] ?? null,
+            'tournamentSeed' => $tournamentSeeds['tournament_seed'] ?? null,
+            'tournamentParentId' => $tournamentInfo['tournament_parent_id'] ?? null,
+            'tournamentGroup' => $tournamentInfo['tournament_group'] ?? null,
+            'env' => $this->getGameName(),
+            'players' => $players,
+            'winningId' => $winningId,
+        ],
+      ]);
+      // if ($valid['success'] == 1 && isset($valid['winner_bga_adventure_pass_progress']) && !is_null($valid['winner_bga_adventure_pass_progress'])) {
+      //   Notifications::message(
+      //     clienttranslate('${player_name} increased the BGA Adventure pass to ${pass}'),
+      //     [
+      //       'player' => Players::get($request['winner']['id']),
+      //       'pass' => $valid['winner_bga_adventure_pass_progress']
+      //     ]
+      //   );
+      // }
+      // if ($valid['success'] == 1 && isset($valid['loser_bga_adventure_pass_progress']) && !is_null($valid['loser_bga_adventure_pass_progress'])) {
+      //   Notifications::message(
+      //     clienttranslate('${player_name} increased the BGA Adventure pass to ${pass}'),
+      //     [
+      //       'player' => Players::get($request['loser']['id']),
+      //       'pass' => $valid['loser_bga_adventure_pass_progress']
+      //     ]
+      //   );
+      // }
+    }
     // throw new \feException(print_r($valid));
     // TODO remove in alpha
     // [success] => 1
