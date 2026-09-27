@@ -126,6 +126,21 @@ class Cards extends \ALT\Helpers\CachedPieces
     return $coreUid;
   }
 
+  /**
+   * Tells whether the illustration shipped for an asset name is present on disk.
+   * Asset names carry the faction in 4th position, but the OR faction images
+   * live in the OD folder.
+   */
+  public static function illustrationExists($uid)
+  {
+    $expUid = explode('_', $uid);
+    if (count($expUid) < 4) {
+      return false;
+    }
+    $faction = $expUid[3] == 'OR' ? FACTION_OD : $expUid[3];
+    return file_exists(dirname(__FILE__) . '/../../../img/illustrations/' . $faction . '/' . $uid . '.jpg');
+  }
+
   public static function getMainUid($uid)
   {
     if (isset(MANUAL_ALT_ART[$uid])) {
@@ -281,7 +296,16 @@ class Cards extends \ALT\Helpers\CachedPieces
     }
     // Each serialized copy displays its own art (e.g. ALT_DUSTERCB_P_AX_85_C_014).
     if (!is_null($serial)) {
-      $cardO->setAsset($serialBaseUid . $serial);
+      $asset = $serialBaseUid . $serial;
+      // The multi-panel plague art is not shipped anymore, so decklists still
+      // referencing a copy number fall back on the single full-art _XXX print.
+      if (preg_match('/^_\d{3}$/', $serial) && !self::illustrationExists($asset)) {
+        $fullArtAsset = $serialBaseUid . '_XXX';
+        if (self::illustrationExists($fullArtAsset)) {
+          $asset = $fullArtAsset;
+        }
+      }
+      $cardO->setAsset($asset);
       if (strpos($serialBaseUid, 'ALT_DUSTERCB_P_') === 0) {
         $cardO->setMainAsset(self::getMainUid($serialBaseUid));
         $cardO->setFullArt(true);
