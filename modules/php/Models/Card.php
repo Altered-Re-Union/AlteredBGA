@@ -719,7 +719,9 @@ class Card extends \ALT\Helpers\DB_Model
         'token' => $this->isToken(),
         'from' => LANDMARK,
         'to' => DISCARD_PILE,
-        'sacrifice' => $isSacrifice
+        'sacrifice' => $isSacrifice,
+        // Snapshot of the controller while the card is still in its zone, like Discard::stDiscard
+        'cardPId' => $this->getPId()
       ];
       if ($this->isListeningTo($event2)) {
         $afterCleanup[$this->getPId()][] = [
