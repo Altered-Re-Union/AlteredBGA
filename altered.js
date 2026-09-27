@@ -1528,16 +1528,37 @@
       if ($('overlay-deck-selection')) {
         $('overlay-deck-selection').classList.add('fetching');
       }
-      this.takeAction('actLoadAPIDecks', { request: strRequest, lock: false }, false).then((response) => {
-        if (!this._awaitingAPIReturn) return;
 
+      // A rejected takeAction() must still clear the in-flight flag: the guard at the top of
+      // this method blocks every later call while it is set, which would leave the overlay
+      // stuck on "fetching" forever with no way to retry.
+      const onReloadFailed = () => {
+        this._awaitingAPIReturn = false;
         if ($('overlay-deck-selection')) {
           $('overlay-deck-selection').classList.remove('fetching');
         }
-        let args = response.data;
-        args.update = true;
-        this.clientState('chooseFetchedDeck', _('Choose one of your deck'), args);
-      });
+        if ($('api-error')) {
+          $('api-error').innerHTML = _('Something went wrong, please try again.');
+        }
+      };
+
+      const attempt = this.takeAction('actLoadAPIDecks', { request: strRequest, lock: false }, false);
+      if (!attempt || typeof attempt.then !== 'function') {
+        onReloadFailed();
+        return;
+      }
+      attempt
+        .then((response) => {
+          if (!this._awaitingAPIReturn) return;
+
+          if ($('overlay-deck-selection')) {
+            $('overlay-deck-selection').classList.remove('fetching');
+          }
+          let args = response.data;
+          args.update = true;
+          this.clientState('chooseFetchedDeck', _('Choose one of your deck'), args);
+        })
+        .catch(onReloadFailed);
     },
 
     selectCustomDeckFaction(faction) {
@@ -1554,7 +1575,10 @@
  
      onEnteringStateChooseFetchedDeck(args) {
        this._awaitingAPIReturn = false;
-      this._apiRequest = args.request;
+      this._apiRequest = Object.assign({}, args.request);
+      // Server-generated attribution payload; regenerated on every call and rejected by the
+      // server's alphanumeric input guard, so it must not be echoed back to it.
+      delete this._apiRequest.eventFormat;
       // Cached so the "Back" button from the deck preview can rebuild this list
       // without another round trip to the deck-list API.
       this._chooseFetchedDeckArgs = args;
