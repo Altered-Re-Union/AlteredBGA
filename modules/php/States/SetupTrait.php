@@ -397,7 +397,14 @@ trait SetupTrait
     $deckContent[HERO] = ['card' => Cards::getCardClass($deck[HERO]), 'n' => 1];
     $tokenStyles = Globals::getTokenStyles();
     foreach ($deck['cards'] as $cardRef => $card) {
-      if (isset($card['content'])) {
+      // Token-art entries are synthesized by the API from an existing card
+      // entry, so they may carry a Unique's `content` while being keyed by the
+      // token reference. Uniques are keyed by refs no card class can resolve
+      // (e.g. ALT_CORE_B_AX_08_U_29), so route on the key, never on `content`.
+      if (preg_match('/_U_\d+$/', $cardRef)) {
+        if (!isset($card['content'])) {
+          throw new \Bga\GameFramework\VisibleSystemException('MISSING UNIQUE CONTENT###' . $cardRef);
+        }
         //it's a unique!
         if (is_null(Cards::generateUnique($card['content']))) {
           throw new \BgaUserException(
@@ -413,24 +420,25 @@ trait SetupTrait
         }
 
         $deckContent[] = ['card' => ['properties' => Cards::generateUnique($card['content'])], 'n' => 1];
-      } else {
-        $cardObj = Cards::getCardClass($cardRef);
-        if ($cardObj->isToken()) {
-          // Tokens are not part of the deck: they are references to know which
-          // art variant of each token the player chose on the deck builder.
-          // Keep the styling so tokens invoked in game can render with it.
-          $style = ['asset' => $cardObj->getAsset()];
-          if ($cardObj->getMainAsset() != '') {
-            $style['mainAsset'] = $cardObj->getMainAsset();
-          }
-          if ($cardObj->getFullArt() === true) {
-            $style['fullArt'] = true;
-          }
-          $tokenStyles[Players::getCurrentId()][(new \ReflectionClass($cardObj))->getShortName()] = $style;
-          continue;
-        }
-        $deckContent[] = ['card' => ['properties' => $cardObj->getProperties()], 'n' => $card['quantity']];
+        continue;
       }
+
+      $cardObj = Cards::getCardClass($cardRef);
+      if ($cardObj->isToken()) {
+        // Tokens are not part of the deck: they are references to know which
+        // art variant of each token the player chose on the deck builder.
+        // Keep the styling so tokens invoked in game can render with it.
+        $style = ['asset' => $cardObj->getAsset()];
+        if ($cardObj->getMainAsset() != '') {
+          $style['mainAsset'] = $cardObj->getMainAsset();
+        }
+        if ($cardObj->getFullArt() === true) {
+          $style['fullArt'] = true;
+        }
+        $tokenStyles[Players::getCurrentId()][(new \ReflectionClass($cardObj))->getShortName()] = $style;
+        continue;
+      }
+      $deckContent[] = ['card' => ['properties' => $cardObj->getProperties()], 'n' => $card['quantity']];
     }
     Globals::setTokenStyles($tokenStyles);
     $deck['cards'] = $deckContent;
