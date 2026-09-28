@@ -215,10 +215,6 @@ class Cards extends \ALT\Helpers\CachedPieces
       $serialBaseUid = preg_replace('/_(?:XXX|\d{3})$/', '', $uid);
       $uid = $serialBaseUid;
     }
-    // Mapping done for heroes for example
-    if (isset(UID_MAPPING[$uid])) {
-      $uid = UID_MAPPING[$uid];
-    }
     $origUid = $uid;
 
     $ks = self::isKS($uid);
