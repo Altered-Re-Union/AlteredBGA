@@ -205,6 +205,13 @@ abstract class Conditions
     return ($event['playCard'] ?? false) && (int) ($event['cardId'] ?? -1) === (int) $card->getId();
   }
 
+  /** False when an opponent blocking power (eg. The Council) faces this card, preventing its on-play effect. */
+  public static function isNotBlockedByOpponentPower($card, $event)
+  {
+    $location = $event['to'] ?? $card->getLocation();
+    return !Players::hasOpponentBlockingPower($card->getPlayer(), $location, $card->isGigantic());
+  }
+
   public static function isNotMe($card, $event)
   {
     return ($event['pId'] ?? null) != $card->getPId();
