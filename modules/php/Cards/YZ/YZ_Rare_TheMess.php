@@ -28,7 +28,7 @@ class YZ_Rare_TheMess extends \ALT\Models\Card
             'effectPassive' => [
                 'OtherLeaveExpedition' => [
                     'pId' => CONTROLLER,
-                    'conditions' => ['hasSameOwner', 'isDiscardedType:characterOnly'],
+                    'conditions' => ['hasSameEventController', 'isDiscardedType:characterOnly'],
                     'output' => FT::ACTION(SPECIAL_EFFECT, [
                         'effect' => 'incCounter',
                         'args' => ['counter' => 1, 'counterName' => clienttranslate('Food counter')],
