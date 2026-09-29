@@ -5435,7 +5435,7 @@ abstract class FlowConvertor
         'description' => clienttranslate('<SABOTAGE> any number of Characters with total {V} less than or equal to my {V} stat.'),
         'output' => FT::ACTION(TARGET, [
           'targetType' => [CHARACTER, TOKEN],
-          'targetLocation' => STORMS,
+          'targetLocation' => [RESERVE],
           'n' => INFTY,
           'upTo' => true,
           'compareTargetBiome' => ['biome' => FOREST, 'op' => 'lte', 'source' => 'source'],
