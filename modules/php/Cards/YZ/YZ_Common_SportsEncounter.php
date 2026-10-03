@@ -27,7 +27,7 @@ class YZ_Common_SportsEncounter extends \ALT\Models\Card
       'supportIcon' => 'discard',
       'costHand' => 2,
       'costReserve' => 4,
-      'effectPlayed' => FT::SEQ(
+      'effectPlayed' => FT::SEQ_DISTRIBUTE_GAINS(
         FT::ACTION(TARGET, ['effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
         FT::ACTION(TARGET, ['effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
       ),

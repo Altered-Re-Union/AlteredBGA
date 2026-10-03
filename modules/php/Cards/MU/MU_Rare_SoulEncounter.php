@@ -27,7 +27,7 @@ class MU_Rare_SoulEncounter extends \ALT\Models\Card
       'costReserve' => 2,
       'changedStats' => ['costReserve'],
       'cooldown' => true,
-      'effectPlayed' => FT::SEQ(
+      'effectPlayed' => FT::SEQ_DISTRIBUTE_GAINS(
         FT::ACTION(TARGET, ['targetLocation' => [RESERVE, STORM_LEFT, STORM_RIGHT], 'effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
         FT::ACTION(TARGET, ['targetLocation' => [RESERVE, STORM_LEFT, STORM_RIGHT], 'effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
         FT::ACTION(TARGET, ['targetLocation' => [RESERVE, STORM_LEFT, STORM_RIGHT], 'effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
