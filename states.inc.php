@@ -298,6 +298,8 @@ $machinestates = [
     'descriptionmyturn' => clienttranslate('${you} must discard ${n} card(s) from ${source} to ${destination}'),
     'descriptionCanPass' => clienttranslate('${actplayer} may discard ${n} card(s) from ${source} to ${destination}'),
     'descriptionmyturnCanPass' => clienttranslate('${you} may discard ${n} card(s) from ${source} to ${destination}'),
+    'descriptiondownTo' => clienttranslate('${actplayer} must discard down to ${downTo} card(s) in ${source}'),
+    'descriptionmyturndownTo' => clienttranslate('${you} must discard down to ${downTo} card(s) in ${source}'),
     'descriptionnightCleanUp' => clienttranslate(
       '${actplayer} must discard ${n} reserve card(s) and ${nLandmarks} landmark card(s)'
     ),
