@@ -267,6 +267,8 @@ class SpecialEffect extends \ALT\Models\Action
       // Fugue
       case 'blockOpponentsCardNameThisDay':
         return clienttranslate('Opponents can\'t play cards with that name this Day');
+      case 'boostTargetHighestStat':
+        return clienttranslate('Gain boosts equal to target\'s highest statistic');
       case 'sacrificeAllCharacters':
         return clienttranslate('Sacrifice all Characters in target Expedition');
     }
@@ -307,6 +309,7 @@ class SpecialEffect extends \ALT\Models\Action
       case 'boostXLandmarkMax3':
       case 'boostXCompletedFeat':
       case 'drawXCompletedFeat':
+      case 'boostTargetHighestStat':
       default:
         return false;
     }
@@ -2557,6 +2560,13 @@ class SpecialEffect extends \ALT\Models\Action
           Globals::setBlockedCardNamesThisDay($blocked);
         }
         break; 
+      case 'boostTargetHighestStat':
+        $maxBoosts = $args['maxBoosts'] ?? 3;
+        $target = $this->getCard();
+        $n = max($target->getBiomes(true));
+        $n = min($maxBoosts - $card->countToken(BOOST), $n);
+        if ($n > 0) {
+          $this->insertAsChild(FT::GAIN($card, BOOST, $n));
       case 'sacrificeAllCharacters':
         $expedition = $this->getCtxArg('expedition');
         $pId = $this->getCtxArg('player');
