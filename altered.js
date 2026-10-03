@@ -2698,17 +2698,33 @@
      },
  
      onEnteringStateMarkRegion(args) {
-       let targetRegion = (id) => {
-         return () =>
-           this.clientState('markRegionExpedition', _('Select region to add the marker'), {
-             marker: args.markers[id],
-             regions: args.regions,
-           });
+       let goToRegion = (clientArgs) => {
+         this.clientState('markRegionExpedition', _('Select region to add the marker'), Object.assign({ regions: args.regions }, clientArgs));
        };
- 
-       Object.keys(args.markers).forEach((id) => {
+
+       if (args.create && args.regionTypes && args.regionTypes.length > 1) {
+         args.regionTypes.forEach((type) => {
+           this.addPrimaryActionButton('btnMarkType' + type, this.formatSvgIcon(type), () =>
+             goToRegion({ markerType: type, create: true })
+           );
+         });
+         return;
+       }
+
+       if (args.create && args.regionType) {
+         goToRegion({ markerType: args.regionType, create: true });
+         return;
+       }
+
+       let markerIds = Object.keys(args.markers || {});
+       if (markerIds.length === 1) {
+         goToRegion({ marker: args.markers[markerIds[0]] });
+         return;
+       }
+
+       markerIds.forEach((id) => {
          mark = args.markers[id];
-         this.addPrimaryActionButton('btnMark' + mark.id, this.formatSvgIcon(mark.type), targetRegion(id));
+         this.addPrimaryActionButton('btnMark' + mark.id, this.formatSvgIcon(mark.type), () => goToRegion({ marker: mark }));
        });
      },
  
@@ -2720,7 +2736,10 @@
        Object.keys(args.regions).forEach((id) => {
          storm = $(`storm-${id}`);
          storm.classList.add('selectable');
-         this.onClick(storm, () => this.takeAtomicAction('actMarkRegion', [args.marker.id, id]));
+         this.onClick(storm, () => {
+           let markerArg = args.create && args.markerType ? args.markerType : args.marker.id;
+           this.takeAtomicAction('actMarkRegion', [markerArg, id]);
+         });
        });
  
        this.addSecondaryActionButton(

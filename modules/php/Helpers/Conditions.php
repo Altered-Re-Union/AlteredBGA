@@ -2613,7 +2613,7 @@ abstract class Conditions
     return $target->getForest() <= $card->getForest();
   }
 
-  public static function countMonoVisibleRegions($card, $event, $n = 1, $op = 'GTE')
+  public static function getCountMonoVisibleRegions()
   {
     $visibleRegions = Players::getRegionsInfo();
     $count = 0;
@@ -2622,6 +2622,12 @@ abstract class Conditions
         $count++;
       }
     }
+    return $count;
+  }
+
+  public static function countMonoVisibleRegions($card, $event, $n = 1, $op = 'GTE')
+  {
+    $count = self::getCountMonoVisibleRegions();
     if ($op == 'GTE' && $count >= $n) {
       return true;
     } elseif ($op == 'LTE' && $count <= $n) {
@@ -2732,6 +2738,15 @@ abstract class Conditions
   }
 
   /******************ROLLS*******************/
+
+  public static function hasNotRolledDieThisDay($card, $event)
+  {
+    if (!empty($event['firstRollThisDay'])) {
+      return true;
+    }
+    $pId = $event['pId'] ?? $card->getPId();
+    return !Players::get($pId)->hasRolledDieThisDay();
+  }
 
   public static function hasRolled($card, $event, $result = 1, $op = 'GTE')
   {

@@ -852,6 +852,19 @@ class Player extends \ALT\Helpers\DB_Model
     return false;
   }
 
+  public function hasRolledDieThisDay()
+  {
+    $dieRolled = Globals::getDieRolledThisDay();
+    return !empty($dieRolled[$this->id]);
+  }
+
+  public function markDieRolledThisDay()
+  {
+    $dieRolled = Globals::getDieRolledThisDay();
+    $dieRolled[$this->id] = true;
+    Globals::setDieRolledThisDay($dieRolled);
+  }
+
   public function hasGigantic()
   {
     foreach ($this->getPlayedCards()->merge($this->getInfinityCards()) as $cId => $card) {
