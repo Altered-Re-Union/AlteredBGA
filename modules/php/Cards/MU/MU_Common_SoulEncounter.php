@@ -25,7 +25,7 @@ class MU_Common_SoulEncounter extends \ALT\Models\Card
       'effectDesc' => clienttranslate('Distribute 4 boosts among any target Characters in play or in Reserve.'),
       'costHand' => 3,
       'costReserve' => 3,
-      'effectPlayed' => FT::SEQ(
+      'effectPlayed' => FT::SEQ_DISTRIBUTE_GAINS(
         FT::ACTION(TARGET, ['targetLocation' => [RESERVE, STORM_LEFT, STORM_RIGHT], 'effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
         FT::ACTION(TARGET, ['targetLocation' => [RESERVE, STORM_LEFT, STORM_RIGHT], 'effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
         FT::ACTION(TARGET, ['targetLocation' => [RESERVE, STORM_LEFT, STORM_RIGHT], 'effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
