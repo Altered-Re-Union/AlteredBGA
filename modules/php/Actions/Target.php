@@ -69,7 +69,7 @@ class Target extends \ALT\Models\Action
     $upTo = $this->getCtxArg('upTo') ?? false;
     $totalCost = $this->getArg('totalCost');
     $totalMountain = $this->getArg('totalMountain');
-    $baseCost = $this->getArg('maxBaseCost');
+    $baseCost = Utils::resolveMaxBaseCost($this->getArg('maxBaseCost'), $this->getPlayer());
     $minBaseCost = $this->getArg('minBaseCost');
     $typeLabel = null;
     $msg = '';
@@ -303,7 +303,7 @@ class Target extends \ALT\Models\Action
     $monoBiome = $this->getArg('monoBiome');
 
     // Duster
-    $maxBaseCost = $this->getArg('maxBaseCost');
+    $maxBaseCost = Utils::resolveMaxBaseCost($this->getArg('maxBaseCost'), $player); // Updated FUGUE for Aeolus' Wind
     $minBaseCost = $this->getArg('minBaseCost');
 
     // Eole
@@ -312,7 +312,7 @@ class Target extends \ALT\Models\Action
     $compareFilter = $this->resolveCompareTargetBiomeFilter();
 
     // Which criteria ?
-    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic, $augmentOnly, $ascendedOnly, $giganticOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter,$noBoostIfBoosted) {
+    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic,  $augmentOnly, $ascendedOnly, $giganticOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter, $noBoostIfBoosted) {
       if ($excludeSelf && $c->getId() == $sourceId) {
         return false;
       }
@@ -506,17 +506,17 @@ class Target extends \ALT\Models\Action
     $totalMountain = $this->getArg('totalMountain');
 
     if (!empty(array_diff($cardIds, $args['cardIds']))) {
-      throw new \Bga\GameFramework\VisibleSystemException('You cannot target these cards. Should not happen');
+      throw new \BgaVisibleSystemException('You cannot target these cards. Should not happen');
     }
     if (count($cardIds) > $args['n']) {
-      throw new \Bga\GameFramework\VisibleSystemException('You selected too many cards. Should not happen');
+      throw new \BgaVisibleSystemException('You selected too many cards. Should not happen');
     }
     if (
       !$args['upTo'] &&
       ((count($args['cardIds']) >= $args['n'] && count($cardIds) < $args['n']) ||
         (count($args['cardIds']) < $args['n'] && count($cardIds) != count($args['cardIds'])))
     ) {
-      throw new \Bga\GameFramework\VisibleSystemException('You havent selected enough cards. Should not happen');
+      throw new \BgaVisibleSystemException('You havent selected enough cards. Should not happen');
     }
 
     // Tough
