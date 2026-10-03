@@ -28,9 +28,10 @@ class BR_Common_Rust extends \ALT\Models\Card
       'costReserve' => 0,
       'typeline' => clienttranslate('Token Character - Companion'),
       // InvokeToken skips ChooseAssignment, so effectPlayed alone never runs for Rust.
+      // The {j} is emulated as a passive listener, and must honour blocking power (eg. The Council).
       'effectPassive' => [
         'InvokeToken' => [
-          'conditions' => ['isSelfPlayCardEvent', 'isCardAdded:character'],
+          'conditions' => ['isSelfPlayCardEvent', 'isCardAdded:character', 'isNotBlockedByOpponentPower'],
           'output' => FT::ACTION(SPECIAL_EFFECT, ['effect' => 'boostXCompletedFeat']),
         ],
       ],
