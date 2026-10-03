@@ -361,6 +361,9 @@ class Target extends \ALT\Models\Action
 
       $handCost = $c->getCostHand();
       $reserveCost = $c->getCostReserve();
+      $templeCost = $c->getCostTemple();
+      $isPlayedAsTemple = $c->isPlayedAsTemple();
+      $isOnLandmarkWithTempleCost = $c->getLocation() == LANDMARK && $templeCost > 0;
       $statuses = $this->getArg('statuses');
       $excludedStatuses = $this->getArg('excludedStatuses');
       $effects = $this->getArg('hasEffects');
@@ -417,14 +420,15 @@ class Target extends \ALT\Models\Action
         }
       }
 
+      $baseCostForComparison = ($isPlayedAsTemple || $isOnLandmarkWithTempleCost) ? $templeCost : ($c->hasToken(FLEETING) ? $reserveCost : $handCost);
       $costCheck =
         $this->getArg('minHandCost') <= $handCost &&
         $handCost <= $maxHandCost &&
         $this->getArg('minReserveCost') <= $reserveCost &&
         $reserveCost <= $this->getArg('maxReserveCost') &&
-        (($c->hasToken(FLEETING) && $reserveCost <= $maxBaseCost) || (!$c->hasToken(FLEETING) && $handCost <= $maxBaseCost)) &&
-        (($c->hasToken(FLEETING) && $reserveCost >= $minBaseCost) || (!$c->hasToken(FLEETING) && $handCost >= $minBaseCost));
-
+        $baseCostForComparison <= $maxBaseCost &&
+        $baseCostForComparison >= $minBaseCost;
+        
       if ($statuses == 'disabled' || $c->getType() == PERMANENT) {
         return $costCheck;
       } else {
