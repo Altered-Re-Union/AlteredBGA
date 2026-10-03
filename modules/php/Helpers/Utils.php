@@ -405,6 +405,31 @@ abstract class Utils extends \APP_DbObject
       ['type' => CHARACTER, 'additionalTypes' => [FEAT], 'subtypes' => []],
     ];
   }
+
+  public static function getRevealedCard($player)
+  {
+    $revealed = \ALT\Managers\Cards::getInLocation('reveal-' . $player->getId())->first();
+    if ($revealed === null) {
+      $revealed = \ALT\Managers\Cards::getInLocation('reveal-%')->first();
+    }
+    return $revealed;
+  }
+
+  public static function resolveMaxBaseCost($maxBaseCost, $player)
+  {
+    if (is_int($maxBaseCost)) {
+      return $maxBaseCost;
+    }
+    if ($maxBaseCost === 'landmarks') {
+      return $player->getLandmarks()->count();
+    }
+    if ($maxBaseCost === 'revealedCardHandCost') {
+      $revealed = self::getRevealedCard($player);
+      return $revealed !== null ? (int) $revealed->getCostHand() : 0;
+    }
+    // PHP 8.5: `3 <= 'revealedCardHandCost'` is true (string compare). Never leave a string cap.
+    return is_numeric($maxBaseCost) ? (int) $maxBaseCost : 0;
+  }
 }
 
 function array_uunique($array, $comparator)

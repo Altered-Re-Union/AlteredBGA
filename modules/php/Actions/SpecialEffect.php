@@ -332,6 +332,24 @@ class SpecialEffect extends \ALT\Models\Action
     return Cards::get($cardId);
   }
 
+  // Same pattern as RollDie substituting 'die': bake the revealed Hand Cost into later nodes
+  // so Target never compares against the string 'revealedCardHandCost' (PHP 8.5: 3 <= that string is true).
+  private function bindRevealedCardHandCost($cost)
+  {
+    $ctx = $this->getCtx();
+    $parent = $ctx->getParent();
+    if ($parent === null) {
+      return;
+    }
+    foreach ($parent->getChilds() as $i => $child) {
+      if ($child === $ctx || $child->isResolved()) {
+        continue;
+      }
+      $updated = Utils::updateTree($child->toArray(), 'revealedCardHandCost', $cost);
+      $parent->replaceAtPos(Engine::buildTree($updated), $i);
+    }
+  }
+
   protected $args = ['effect' => null, 'args' => []];
 
   public function stSpecialEffect()
@@ -1685,8 +1703,12 @@ class SpecialEffect extends \ALT\Models\Action
         Engine::checkpoint();
         $player = $card->getPlayer();
         $pId = $player->getId();
-        if (Cards::countInLocation("reveal-$pId") == 0 && $player->hasDeckCards()) {
-          $player->draw(1, null, 'reveal-' . $player->getId(), $this->getSource(), clienttranslate('${player_name} reveals ${card_names} from its deck (${card_name2}\'s effect)'), clienttranslate('${you} reveals ${card_names} from its deck (${card_name2}\'s effect)'));
+        $revealed = Cards::getInLocation("reveal-$pId")->first();
+        if ($revealed === null && $player->hasDeckCards()) {
+          $revealed = $player->draw(1, null, 'reveal-' . $player->getId(), $this->getSource(), clienttranslate('${player_name} reveals ${card_names} from its deck (${card_name2}\'s effect)'), clienttranslate('${you} reveals ${card_names} from its deck (${card_name2}\'s effect)'))->first();
+        }
+        if ($revealed !== null) {
+          $this->bindRevealedCardHandCost((int) $revealed->getCostHand());
         }
         break;
       case 'drawReveal':
