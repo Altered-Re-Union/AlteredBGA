@@ -2230,6 +2230,11 @@ abstract class Conditions
     return $card->getPlayer()->getReserveCards()->count() == 0;
   }
 
+  public static function isReserveNotEmpty($card, $event)
+  {
+    return $card->getPlayer()->getReserveCards()->count() > 0;
+  }
+
   public static function hasXExhaustedReserve($card, $event, $n, $op = 'GTE', $player = null)
   {
     $cards = 0;
