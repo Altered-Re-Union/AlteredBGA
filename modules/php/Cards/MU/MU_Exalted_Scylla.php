@@ -14,6 +14,7 @@ class MU_Exalted_Scylla extends \ALT\Models\Card
       'rarity' => RARITY_EXALTED,
       'name' => clienttranslate('Scylla'),
       'typeline' => clienttranslate('Character - Leviathan'),
+      'artist' => "Taras Susak",
       'type' => CHARACTER,
       'extension' => 'NEJ',
       'subtypes' => [LEVIATHAN],

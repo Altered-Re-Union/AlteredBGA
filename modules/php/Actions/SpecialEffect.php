@@ -2558,7 +2558,8 @@ class SpecialEffect extends \ALT\Models\Action
           }
           Globals::setBlockedCardNamesThisDay($blocked);
         }
-        break; case 'boostExpeditions':
+        break; 
+      case 'boostExpeditions':
         $player = $card->getPlayer();
         $n = $args['n'] ?? 1;
         $nodes = [];
