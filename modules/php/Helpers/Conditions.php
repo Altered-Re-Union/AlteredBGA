@@ -1004,12 +1004,16 @@ abstract class Conditions
 
   public static function hasCompanionsInExpeditions($card, $event)
   {
-    $inExpeditions = $card->getPlayer()->getPlayedCards([CHARACTER, TOKEN])->filter(function ($c) {
-      return $c->isGigantic() || in_array($c->getLocation(), STORMS);
+    $pId = (int) $card->getPId();
+    $inExpeditions = Cards::getPlayedCards($pId, [CHARACTER, TOKEN])->filter(function ($c) use ($pId) {
+      if ((int) $c->getPId() !== $pId) {
+        return false;
+      }
+      return $c->isGigantic() || in_array($c->getLocation(), STORMS, true);
     });
 
     foreach ($inExpeditions as $c) {
-      if (in_array(COMPANION, $c->getSubtypes())) {
+      if (in_array(COMPANION, $c->getSubtypes(), true)) {
         return true;
       }
     }
