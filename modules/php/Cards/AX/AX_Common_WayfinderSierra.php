@@ -20,6 +20,7 @@ class AX_Common_WayfinderSierra extends \ALT\Models\Card
       'effectDesc' => clienttranslate('At Noon — If you\'re first player, create my Signature token: Oddball 2/2/2 in your Reserve. (It\'s a Robot Companion with Reserve Cost {2} and "I cost {2} less if you played a Construction this Day.")'),
       'reserveSlots' => 2,
       'landmarkSlots' => 3,
+      'signatureToken' => 'AX_Common_Oddball',
       'effectPassive' => [
         'Noon' => [
           'listeningConditions' => ['isMe'],

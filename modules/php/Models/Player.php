@@ -75,6 +75,16 @@ class Player extends \ALT\Helpers\DB_Model
     return Cards::getInLocation("board-hero-$pId")->first();
   }
 
+  public function getHeroSignatureTokenType()
+  {
+    $hero = $this->getHero();
+    if (is_null($hero)) {
+      return null;
+    }
+    $tokenType = $hero->getSignatureToken();
+    return $tokenType !== '' ? $tokenType : null;
+  }
+
   public function getHeroCollection()
   {
     $pId = $this->id;
@@ -221,6 +231,19 @@ class Player extends \ALT\Helpers\DB_Model
     return $this->getPlayedCards()->filter(function ($c) use ($location, $types) {
       return $c->getLocation() == $location && (in_array($c->getType(), $types) || count(array_intersect($types, $c->getAdditionalType())) > 0);
     })->count();
+  }
+
+  public function hasPlayedConstructionThisDay()
+  {
+    $played = Globals::getConstructionPlayedThisDay();
+    return ($played[$this->id] ?? false) === true;
+  }
+
+  public function markConstructionPlayedThisDay()
+  {
+    $played = Globals::getConstructionPlayedThisDay();
+    $played[$this->id] = true;
+    Globals::setConstructionPlayedThisDay($played);
   }
 
   public function hasPlayedCard($id)
@@ -1241,7 +1264,7 @@ class Player extends \ALT\Helpers\DB_Model
   /**
    * Whether $source counts as a universalCharacter1/2 tough source for $receiver (see {@see countUniversalCharacterTough}).
    */
-  private function playedCardGrantsUniversalCharacterTough(Card $source, int $tier, ?Card $receiver): bool
+   private function playedCardGrantsUniversalCharacterTough(Card $source, int $tier, ?Card $receiver): bool
   {
     $want = $tier === 2 ? 'universalCharacter2' : 'universalCharacter1';
     $dt = $source->getDynamicTough();
@@ -1262,35 +1285,60 @@ class Player extends \ALT\Helpers\DB_Model
     if ($receiver === null) {
       return true;
     }
-    $completed = $source->getEffectCompleted();
-    if (!is_array($completed) || !isset($completed['universalToughScope'])) {
+    $scope = $source->getUniversalToughScope();
+    if ($scope === '') {
+      $completed = $source->getEffectCompleted();
+      $scope = is_array($completed) ? $completed['universalToughScope'] ?? '' : '';
+    }
+    if ($scope === '') {
       return true;
     }
-    $scope = $completed['universalToughScope'];
     if ($scope === 'expedition') {
       return in_array($receiver->getLocation(), STORMS);
     }
     if ($scope === 'expeditionAnchored') {
       return in_array($receiver->getLocation(), STORMS) && $receiver->hasToken(ANCHORED);
     }
+    if ($scope === 'expeditionCompanion') {
+      return in_array(COMPANION, $receiver->getSubtypes())
+        && ($receiver->isGigantic() || in_array($receiver->getLocation(), STORMS));
+    }
     return true;
   }
 
   public function countUniversalToughAnchoredAsleep()
   {
+    return $this->countUniversalStatusTough('anchoredOrAsleep');
+  }
+
+  public function countUniversalToughAnchored()
+  {
+    return $this->countUniversalStatusTough('anchored');
+  }
+
+  public function countUniversalToughFleeting()
+  {
+    return $this->countUniversalStatusTough('fleeting');
+  }
+
+  /**
+   * Counts in-play sources whose {@see Card::getDynamicTough()} is the given status aura
+   * (Embassy anchoredOrAsleep, Silenus anchored/fleeting).
+   */
+  private function countUniversalStatusTough($type)
+  {
     return count(
-      $this->getPlayedCards()->filter(function ($card) {
+      $this->getPlayedCards()->filter(function ($card) use ($type) {
         $dynamicTough = $card->getDynamicTough();
         if (!is_array($dynamicTough)) {
-          return Utils::checkAttributeCondition('tough', $card->getDynamicTough(), $this, $card) == 'anchoredOrAsleep';
-        } else {
-          foreach ($dynamicTough as $singleTough) {
-            if (Utils::checkAttributeCondition('tough', $singleTough, $this, $card) == 'anchoredOrAsleep') {
-              return true;
-            }
-          }
-          return false;
+          $dynamicTough = [$dynamicTough];
         }
+        foreach ($dynamicTough as $singleTough) {
+          if (Utils::checkAttributeCondition('tough', $singleTough, $this, $card) == $type) {
+            return true;
+          }
+        }
+        return false;
       })
     );
   }

@@ -206,6 +206,7 @@ class Card extends \ALT\Helpers\DB_Model
     'costReductionIfConstructionPlayed' => 'int',
     'sacrificeProtectAnchored' => 'bool', // Fane of Calypso
     'sacrificeProtectAsleep' => 'bool', // Fane of Calypso (Ordis)
+    'universalToughScope' => 'str', // Restricts a universalCharacter Tough aura, e.g. Trireme Captain
   ];
 
   /********* DB ACCESS *********/
@@ -1342,6 +1343,13 @@ class Card extends \ALT\Helpers\DB_Model
       if ($anchoredAsleep > 0 && ($this->hasToken(ANCHORED) || $this->hasToken(ASLEEP))) {
         $tough += 1;
       }
+      
+      if ($this->hasToken(ANCHORED)) {
+        $tough += $this->getPlayer()->countUniversalToughAnchored();
+      }
+      if ($this->hasToken(FLEETING)) {
+        $tough += $this->getPlayer()->countUniversalToughFleeting();
+      }
     }
 
     if (in_array($this->getType(), [PERMANENT])) {
@@ -1436,6 +1444,14 @@ class Card extends \ALT\Helpers\DB_Model
     }
 
     if ($this->isToken() && $this->getPlayer()->countUniversalTokenGigantic() > 0) {
+      return true;
+    }
+
+    if (
+      in_array(COMPANION, $this->getSubtypes())
+      && in_array($this->getLocation(), STORMS)
+      && $this->getPlayer()->countUniversalCompanionGigantic() > 0
+    ) {
       return true;
     }
 

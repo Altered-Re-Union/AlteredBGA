@@ -2,7 +2,7 @@
 /**
  *------
  * BGA framework: © Gregory Isabelli <gisabelli@boardgamearena.com> & Emmanuel Colin <ecolin@boardgamearena.com>
- * Altered implementation : © <Your name here> <Your email address here>
+ * altered implementation : © <Your name here> <Your email address here>
  *
  * This code has been produced on the BGA studio platform for use on http://boardgamearena.com.
  * See http://en.boardgamearena.com/#!doc/Studio for more information.
@@ -10,7 +10,7 @@
  *
  * altered.css
  *
- * Altered stylesheet
+ * altered stylesheet
  *
  */
 html {
@@ -11277,19 +11277,19 @@ html {
   top: 250px;
 }
 .altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="1"] ~ .card-typeline {
-  top: 278px;
+  top: 272px;
 }
 .altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="1"] ~ .card-subpermanent {
-  top: 302px;
+  top: 315px;
 }
 .altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="2"] ~ .card-name {
   top: 219px;
 }
 .altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="2"] ~ .card-typeline {
-  top: 248px;
+  top: 242px;
 }
 .altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="2"] ~ .card-subpermanent {
-  top: 272px;
+  top: 275px;
 }
 .altered-card .altered-card-wrapper .card-frame[data-type=gear][data-support="0"][data-size="1"] ~ .card-name {
   top: 250px;
@@ -11668,22 +11668,36 @@ html {
 .altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="1"] ~ .card-text {
   left: 25px;
   right: 25px;
-  top: 328px;
-  height: 97px;
+  top: 346px;
+  height: 89px;
 }
 .altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="1"] ~ .card-text .card-qrcode-container {
   margin-right: -5px;
-  shape-outside: polygon(8px 30px, 8px 100px, 70px 100px, 70px 30px);
+  shape-outside: polygon(0px 15px, 0px 89px, 70px 89px, 70px 15px);
+}
+.altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="1"] ~ .card-text .card-qrcode-container .card-qrcode {
+  position: relative;
+  left: 4px;
+  bottom: 11px;
+  margin-right: 0;
+  margin-bottom: 0;
 }
 .altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="2"] ~ .card-text {
   left: 25px;
   right: 25px;
-  top: 298px;
-  height: 127px;
+  top: 315px;
+  height: 119px;
 }
 .altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="2"] ~ .card-text .card-qrcode-container {
   margin-right: -5px;
-  shape-outside: polygon(8px 55px, 8px 130px, 70px 130px, 70px 55px);
+  shape-outside: polygon(0px 40px, 0px 119px, 70px 119px, 70px 40px);
+}
+.altered-card .altered-card-wrapper .card-frame[data-type=permanent][data-rarity="3"][data-size="2"] ~ .card-text .card-qrcode-container .card-qrcode {
+  position: relative;
+  left: 4px;
+  bottom: 11px;
+  margin-right: 0;
+  margin-bottom: 0;
 }
 .altered-card .altered-card-wrapper .card-frame[data-support="1"][data-size="1"] ~ .card-subpermanent,
 .altered-card .altered-card-wrapper .card-frame[data-support="0"][data-size="2"] ~ .card-subpermanent {
@@ -15520,7 +15534,7 @@ body.focus-board .altered-player-board .player-board-infos {
   position: relative;
   box-sizing: border-box;
   background-image: url("img/deck-thumbnails.jpg");
-  background-size: 600% 600%;
+  background-size: 500% 600%;
   margin: auto;
   border: 2px solid #ffe300;
   color: white;
@@ -15547,18 +15561,15 @@ body.focus-board .altered-player-board .player-board-infos {
   background-position-x: 0%;
 }
 #altered-board-overlay #altered-overlay-content #overlay-deck-details .deck-details[data-thumbnail="1"] {
-  background-position-x: 20%;
+  background-position-x: 25%;
 }
 #altered-board-overlay #altered-overlay-content #overlay-deck-details .deck-details[data-thumbnail="2"] {
-  background-position-x: 40%;
+  background-position-x: 50%;
 }
 #altered-board-overlay #altered-overlay-content #overlay-deck-details .deck-details[data-thumbnail="3"] {
-  background-position-x: 60%;
+  background-position-x: 75%;
 }
 #altered-board-overlay #altered-overlay-content #overlay-deck-details .deck-details[data-thumbnail="4"] {
-  background-position-x: 80%;
-}
-#altered-board-overlay #altered-overlay-content #overlay-deck-details .deck-details[data-thumbnail="5"] {
   background-position-x: 100%;
 }
 #altered-board-overlay #altered-overlay-content #overlay-deck-details .deck-details .faction-banner {
