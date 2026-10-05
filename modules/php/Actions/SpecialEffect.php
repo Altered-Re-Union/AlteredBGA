@@ -267,13 +267,10 @@ class SpecialEffect extends \ALT\Models\Action
       // Fugue
       case 'blockOpponentsCardNameThisDay':
         return clienttranslate('Opponents can\'t play cards with that name this Day');
-<<<<<<< HEAD
       case 'eachPlayerSacrificeWoollyback':
         return clienttranslate('Each player sacrifices a Character, then creates a Woollyback in its Expedition');
-=======
       case 'sacrificeAllCharacters':
         return clienttranslate('Sacrifice all Characters in target Expedition');
->>>>>>> e16f3ba11f9bc450e50d7b3ee9a5467cecbd2cfb
     }
     return '';
   }
@@ -2562,7 +2559,6 @@ class SpecialEffect extends \ALT\Models\Action
           Globals::setBlockedCardNamesThisDay($blocked);
         }
         break; 
-<<<<<<< HEAD
       case 'eachPlayerSacrificeWoollyback':
         $nodes = [];
         foreach (Players::getTurnOrder(Players::getActiveId()) as $pId) {
@@ -2584,7 +2580,6 @@ class SpecialEffect extends \ALT\Models\Action
         }
         $this->insertAsChild(['type' => NODE_SEQ, 'childs' => $nodes]);
         break;  
-=======
       case 'sacrificeAllCharacters':
         $expedition = $this->getCtxArg('expedition');
         $pId = $this->getCtxArg('player');
@@ -2603,7 +2598,6 @@ class SpecialEffect extends \ALT\Models\Action
           $this->insertAsChild(['type' => NODE_SEQ, 'childs' => $nodes]);
         }
         break;
->>>>>>> e16f3ba11f9bc450e50d7b3ee9a5467cecbd2cfb
       default:
         break;
     }
