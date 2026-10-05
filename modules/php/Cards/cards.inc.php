@@ -45,6 +45,7 @@ require_once (dirname(__FILE__)) . '/DemoDecks/eyota.nej.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/kojo.nej.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/zoe.nej.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/osric.nej.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/gray.nej.php';
 
 const DEMO_ROC_DECKS = array(
   array(
@@ -103,6 +104,11 @@ const DEMO_ROC_DECKS = array(
     'faction' => FACTION_MU,
     'deckId' => 'osric.nej',
     'contents' => DEMO_NEJ_OSRIC,
+  ),
+  array(
+    'faction' => FACTION_YZ,
+    'deckId' => 'gray.nej',
+    'contents' => DEMO_NEJ_GRAY,
   ),
 );  
 
