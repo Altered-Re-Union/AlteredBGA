@@ -420,7 +420,7 @@ class Target extends \ALT\Models\Action
         }
       }
 
-      $baseCostForComparison = ($isPlayedAsTemple || $isOnLandmarkWithTempleCost) ? $templeCost : ($c->hasToken(FLEETING) ? $reserveCost : $handCost);
+      $baseCostForComparison = $c->hasToken(FLEETING) ? $reserveCost : $handCost;
       $costCheck =
         $this->getArg('minHandCost') <= $handCost &&
         $handCost <= $maxHandCost &&
