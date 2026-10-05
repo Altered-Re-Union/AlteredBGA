@@ -268,7 +268,6 @@ class SpecialEffect extends \ALT\Models\Action
       case 'blockOpponentsCardNameThisDay':
         return clienttranslate('Opponents can\'t play cards with that name this Day');
       case 'eachPlayerSacrificeWoollyback':
-      case 'eachPlayerSacrificeWoollybackOrdered':
         return clienttranslate('Each player sacrifices a Character, then creates a Woollyback in its Expedition');
     }
     return '';
@@ -2559,21 +2558,8 @@ class SpecialEffect extends \ALT\Models\Action
         }
         break; 
       case 'eachPlayerSacrificeWoollyback':
-        $this->insertAsChild(
-          FT::ACTION(
-            TARGET_PLAYER,
-            [
-              'opponentsOnly' => false,
-              'effect' => FT::ACTION(SPECIAL_EFFECT, ['effect' => 'eachPlayerSacrificeWoollybackOrdered']),
-            ],
-            ['pId' => Globals::getFirstPlayer(), 'sourceId' => $card->getId()]
-          )
-        );
-        break;
-      case 'eachPlayerSacrificeWoollybackOrdered':
-        $startPId = $this->ctx->getPId() ?? Players::getActiveId();
         $nodes = [];
-        foreach (Players::getTurnOrder($startPId) as $pId) {
+        foreach (Players::getTurnOrder(Players::getActiveId()) as $pId) {
           $nodes[] = FT::ACTION(
             TARGET,
             [
