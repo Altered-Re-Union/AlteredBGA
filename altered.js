@@ -143,6 +143,7 @@
        this._beginner = false;
        this._demoDeck = false;
        this._deckFormat = 'STANDARD';
+       this._keepTournamentDeck = false;
  
        this.draggables = [];
        this.draggableCards = [];
@@ -393,6 +394,7 @@
        this._undoPossible = gamedatas.undo;
        this._beginner = gamedatas.beginner;
        this._deckFormat = gamedatas.deckFormat || 'STANDARD';
+       this._keepTournamentDeck = !!gamedatas.keepTournamentDeck;
        this._demoDeck = this._deckFormat === 'DEMO';
  
        this.inherited(arguments);
@@ -1750,10 +1752,11 @@
          this.onClick(`deck-${deck.apiId}`, () => selectFetchedDeck(deck));
        });
 
-       // Sealed format: the first API call never returns more than one deck, so
+       // Sealed format (or tournament deck kept between games, when a previous game exists):
+       // the first API call never returns more than one deck, so
        // select it right away instead of waiting for the player to click on it,
        // chaining straight into the second API call (actGetDeckInfos).
-       if (this.isSealedDeckFormat() && args.decks.length === 1) {
+       if ((this.isSealedDeckFormat() || this._keepTournamentDeck) && args.decks.length === 1) {
          selectFetchedDeck(args.decks[0]);
        }
      },

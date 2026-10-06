@@ -317,6 +317,9 @@ trait SetupTrait
       'mode' => $ratingMode,
       'payload' => [
         'format' => Globals::getDeckFormat(),
+        // bga-api looks up the player's last game of this tournament and returns the same deck list
+        'keepTournamentDeck' => $this->bga->tournament->isTournament()
+          && Globals::isKeepTournamentDeck(),
         'tableId' => $tableId,
         'tournamentName' => $tournamentInfo['name'] ?? null,
         'tournamentParentId' => $tournamentInfo['tournament_parent_id'] ?? null,
