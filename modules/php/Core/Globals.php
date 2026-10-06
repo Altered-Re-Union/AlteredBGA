@@ -296,7 +296,8 @@ class Globals extends \ALT\Helpers\DB_Manager
         break;
     }
     self::setDeckOptions(OPTION_DECKS_STARTER);
-    self::setBeginner($options[OPTION_BEGINNER] ?? 1);
+    // Option removed from the UI (starter decks are now a format); legacy tables may still carry it
+    self::setBeginner($options[OPTION_BEGINNER] ?? 0);
     self::setUndo($options[OPTION_UNDO] ?? 0);
     self::setKeepTournamentDeck($options[OPTION_KEEP_TOURNAMENT_DECK] ?? 1);
   }

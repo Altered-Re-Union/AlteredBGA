@@ -1,19 +1,4 @@
 {
-  "150": {
-    "name": "Game mode",
-    "default": 0,
-    "values": {
-      "1": {
-        "name": "Beginner - Starter Decks",
-        "tmdisplay": "Beginner mode",
-        "description": "Game can be played only with starter decks"
-      },
-      "0": {
-        "name": "Normal - Custom Decks & Starter Decks",
-        "description": "Custom & starter decks can be used"
-      }
-    }
-  },
   "151": {
     "name": "Allow undo",
     "level": "additional",
@@ -38,57 +23,63 @@
       "0": {
         "name": "Frontier",
         "tmdisplay": "Frontier",
-        "description": "40-60 cards, standard rules with a limited pool of 30k uniques that will change next season."
+        "description": "Custom deck recommended: build your deck on https://altered.re and link your account (https://boardgamearena.com/preferences?section=account) before playing. 40-60 cards, standard rules with a limited pool of 30k uniques that will change next season."
       },
       "8": {
         "name": "Random Deck",
         "tmdisplay": "Random Deck",
-        "description": "Play with a randomly assigned deck."
+        "description": "Beginner friendly, no account needed. Play with a randomly assigned deck.",
+        "firstgameonly": true
       },
       "9": {
-        "name": "Less played format",
-        "tmdisplay": "Less played format",
-        "description": "Standard, Sealed, Singleton, Demo decks or Sandbox."
+        "name": "More",
+        "description": "Less chance to find a game, but perfect to create a tournament."
       }
     }
   },
   "156": {
-    "name": "Less played format",
+    "name": "Format",
     "level": "major",
     "default": 0,
     "displaycondition": [
-      { "type": "otheroption", "id": 155, "value": 9 }
+      {
+        "type": "otheroption",
+        "id": 155,
+        "value": 9
+      }
     ],
     "values": {
       "0": {
         "name": "Standard",
         "tmdisplay": "Standard",
-        "description": "40-60 cards, standard rules."
+        "description": "1 faction, min 39 cards, max 15 rares, 3 uniques and 3 exalted. ⚠️ Custom deck mandatory: build your deck on https://altered.re and link your account (https://boardgamearena.com/preferences?section=account) before playing."
       },
       "1": {
         "name": "Sealed",
         "tmdisplay": "Sealed",
-        "description": "⚠️ Deck built from your official sealed pool. Decks for this format must be built on altered-draft.altered.re — it cannot be created or edited here."
+        "description": "Deck built from your official sealed pool. ⚠️ Decks for this format must be built on https://altered-draft.altered.re — it cannot be created or edited here."
       },
       "2": {
         "name": "Singleton",
         "tmdisplay": "Singleton",
-        "description": "60-80 cards, Singleton rules."
+        "description": "1 faction, min 59 cards, max 1 card of each name and each rarity, no rare and exalted limit.⚠️ Custom deck mandatory: build your deck on https://altered.re and link your account (https://boardgamearena.com/preferences?section=account) before playing."
       },
       "3": {
-        "name": "Demo decks",
-        "tmdisplay": "Demo",
-        "description": "Play with demo decks from the set Roots of Corruption."
+        "name": "Starter decks",
+        "tmdisplay": "Starter decks",
+        "description": "Play with starter decks build by the community. An interesting option for beginners, no account needed.",
+        "firstgameonly": true
       },
       "4": {
         "name": "Sandbox",
         "tmdisplay": "Sandbox",
-        "description": "4-100 cards, all cards available, no faction or rarity restrictions."
+        "description": "To test future formats : 4-100 cards, all cards available, no faction or rarity restrictions.⚠️ Custom deck mandatory: build your deck on https://altered.re and link your account (https://boardgamearena.com/preferences?section=account) before playing.",
+        "nobeginner": true
       },
       "5": {
         "name": "Test",
         "tmdisplay": "Test",
-        "description": "40-60 cards, standard rules without unique with set in testing enabled and uniques"
+        "description": "Mode to play with cards currently in development, available by invitation only"
       }
     }
   },
@@ -96,13 +87,22 @@
     "name": "Sealed set",
     "default": 6,
     "displaycondition": [
-      { "type": "otheroption", "id": 155, "value": 9 },
-      { "type": "otheroption", "id": 156, "value": 1 }
+      {
+        "type": "otheroption",
+        "id": 155,
+        "value": 9
+      },
+      {
+        "type": "otheroption",
+        "id": 156,
+        "value": 1
+      }
     ],
     "values": {
-      "6": {
-        "name": "Set 6 : Roots of Corruption",
-        "tmdisplay": "Sealed - Roots of Corruption"
+      "0": {
+        "name": "Custom (Tournament only)",
+        "tmdisplay": "Sealed - Custom",
+        "description": "Custom sealed pool to define in https://altered-draft.altered.re, default to set6 outside a tournament"
       },
       "1": {
         "name": "Set 1 : Beyond the gate",
@@ -124,10 +124,9 @@
         "name": "Set 5 : Seeds of Unity",
         "tmdisplay": "Sealed - Seeds of Unity"
       },
-      "0": {
-        "name": "Custom (Tournament only)",
-        "tmdisplay": "Sealed - Custom",
-        "description": "Custom sealed pool, reserved for tournaments."
+      "6": {
+        "name": "Set 6 : Roots of Corruption",
+        "tmdisplay": "Sealed - Roots of Corruption"
       }
     }
   },
@@ -135,14 +134,26 @@
     "name": "Uniques restriction",
     "default": 1,
     "displaycondition": [
-      { "type": "otheroption", "id": 155, "value": 9 },
-      { "type": "otheroption", "id": 156, "value": [0, 2] }
+      {
+        "type": "otheroption",
+        "id": 155,
+        "value": 9
+      },
+      {
+        "type": "otheroption",
+        "id": 156,
+        "value": [
+          0,
+          2
+        ]
+      }
     ],
     "values": {
       "0": {
         "name": "All uniques",
         "tmdisplay": "All uniques",
-        "description": "All uniques are unlocked."
+        "description": "All uniques are unlocked. Max 3 per deck",
+        "nobeginner": true
       },
       "1": {
         "name": "No uniques",
@@ -163,7 +174,7 @@
       },
       "1": {
         "name": "Enabled",
-        "description": "Players are offered the deck they used in their previous game of the tournament. Only applies to tournaments."
+        "description": "Chose your deck once at your first game of the tournament. Only applies to tournaments."
       }
     }
   }
