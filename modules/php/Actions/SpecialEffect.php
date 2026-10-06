@@ -264,7 +264,9 @@ class SpecialEffect extends \ALT\Models\Action
         return ($this->getArg('args')['n'] ?? 1) > 1
           ? clienttranslate('Target opponent may exhausted-resupply twice')
           : clienttranslate('Target opponent may exhausted-resupply');
-      // Fugue
+      // FUGUE
+      case 'copyInvoke':
+        return clienttranslate('Create another copy of the token in the same place');
       case 'blockOpponentsCardNameThisDay':
         return clienttranslate('Opponents can\'t play cards with that name this Day');
       case 'sacrificeAllCharacters':
@@ -2536,6 +2538,24 @@ class SpecialEffect extends \ALT\Models\Action
         ]);
         break;
       // FUGUE
+      case 'copyInvoke':
+        $event = $this->getEventRecursive();
+
+        if ($event['action'] == 'InvokeToken') {
+          $invokeArgs = [
+            'pId' => 'source',
+            'tokenType' => $event['invoked'],
+            'targetLocation' => [$event['to']],
+            'forcedLocation' => $event['to'],
+          ];
+          $ctxArgs = ['sourceId' => $card->getId()];
+          if (isset($event['locationPId']) && $event['locationPId'] != $card->getPId()) {
+            $invokeArgs['targetPlayer'] = 'owner';
+            $ctxArgs['ownerId'] = $event['locationPId'];
+          }
+          $this->insertAsChild(FT::ACTION(INVOKE_TOKEN, $invokeArgs, $ctxArgs));
+        }
+        break;         
       case 'blockOpponentsCardNameThisDay':
         $targetCardId = $this->getCtxArg('cardId');
         if (is_array($targetCardId)) {
