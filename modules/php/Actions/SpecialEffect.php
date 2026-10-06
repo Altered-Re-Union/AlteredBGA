@@ -267,6 +267,8 @@ class SpecialEffect extends \ALT\Models\Action
       // Fugue
       case 'blockOpponentsCardNameThisDay':
         return clienttranslate('Opponents can\'t play cards with that name this Day');
+      case 'gainOnRevealedHandCost':
+        return clienttranslate('Gain an effect based on the revealed card\'s hand cost');
       case 'sacrificeAllCharacters':
         return clienttranslate('Sacrifice all Characters in target Expedition');
     }
@@ -2557,6 +2559,32 @@ class SpecialEffect extends \ALT\Models\Action
           Globals::setBlockedCardNamesThisDay($blocked);
         }
         break; 
+      case 'gainOnRevealedHandCost':
+        $player = $card->getPlayer();
+        $revealed = Utils::getRevealedCard($player);
+        if ($revealed === null && $player->hasDeckCards()) {
+          $revealed = $player->draw(1, null, 'reveal-' . $player->getId(), $this->getSource(), clienttranslate('${player_name} reveals ${card_names} from its deck (${card_name2}\'s effect)'), clienttranslate('${you} reveals ${card_names} from its deck (${card_name2}\'s effect)'))->first();
+        }
+        if ($revealed === null) {
+          break;
+        }
+        $branches = $args['effect'] ?? $args;
+        if (!is_array($branches)) {
+          break;
+        }
+        $resolved = Utils::resolveBranchingEffect((int) $revealed->getCostHand(), $branches);
+        if ($resolved === null) {
+          break;
+        }
+        if (is_array($resolved) && isset($resolved['action'])) {
+          if (($resolved['args']['cardId'] ?? null) === ME) {
+            $resolved['args']['cardId'] = $card->getId();
+          }
+          $this->insertAsChild(Utils::tagTree($resolved, ['sourceId' => $card->getId()]));
+        } elseif (is_string($resolved)) {
+          $this->insertAsChild(FT::GAIN($card, $resolved));
+        }
+        break;    
       case 'sacrificeAllCharacters':
         $expedition = $this->getCtxArg('expedition');
         $pId = $this->getCtxArg('player');
