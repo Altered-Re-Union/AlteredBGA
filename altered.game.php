@@ -98,6 +98,7 @@ class altered extends Table
       'undo' => Globals::isUndo(),
       'beginner' => Globals::getBeginner() != 0,
       'deckFormat' => Globals::getDeckFormat(),
+      'keepTournamentDeck' => Globals::isKeepTournamentDeck() && $this->bga->tournament->isTournament(),
 
       'firstPlayer' => Globals::getFirstPlayer(),
       'passedPlayers' => Globals::isDayPhase() ? Globals::getSkippedPlayers() : [],

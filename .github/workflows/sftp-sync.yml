@@ -108,6 +108,11 @@ jobs:
           fi
           if [ -f "${TARGET_SLUG}.game.php" ]; then
             echo "Slug already '${TARGET_SLUG}'; skipping rename."
+            # rename-game-slug.py is skipped, so apply the env-specific gameoptions here
+            if [ -f "gameoptions.${TARGET_SLUG}.json" ]; then
+              cp "gameoptions.${TARGET_SLUG}.json" gameoptions.json
+              rm "gameoptions.${TARGET_SLUG}.json"
+            fi
             exit 0
           fi
           python3 misc/python-tools/rename-game-slug.py --target "$TARGET_SLUG"

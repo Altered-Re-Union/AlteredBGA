@@ -16,6 +16,8 @@
   },
   "151": {
     "name": "Allow undo",
+    "level": "additional",
+    "default": 1,
     "values": {
       "0": {
         "name": "Disabled",
@@ -38,40 +40,130 @@
         "tmdisplay": "Frontier",
         "description": "40-60 cards, standard rules with a limited pool of 30k uniques that will change next season."
       },
-      "4": {
-        "name": "Standard No Unique",
-        "tmdisplay": "Standard No Unique",
-        "description": "40-60 cards, standard rules without unique."
+      "8": {
+        "name": "Random Deck",
+        "tmdisplay": "Random Deck",
+        "description": "Play with a randomly assigned deck."
+      },
+      "9": {
+        "name": "Less played format",
+        "tmdisplay": "Less played format",
+        "description": "Standard, Sealed, Singleton, Demo decks or Sandbox."
+      }
+    }
+  },
+  "156": {
+    "name": "Less played format",
+    "level": "major",
+    "default": 0,
+    "displaycondition": [
+      { "type": "otheroption", "id": 155, "value": 9 }
+    ],
+    "values": {
+      "0": {
+        "name": "Standard",
+        "tmdisplay": "Standard",
+        "description": "40-60 cards, standard rules."
       },
       "1": {
-        "name": "Standard All Uniques",
-        "tmdisplay": "Standard All Uniques",
-        "description": "40-60 cards, standard rules, all uniques unlocked. Disclaimer: this is a temporary format. Tournaments using it will switch to another format once it's removed."
+        "name": "Sealed",
+        "tmdisplay": "Sealed",
+        "description": "⚠️ Deck built from your official sealed pool. Decks for this format must be built on altered-draft.altered.re — it cannot be created or edited here."
       },
       "2": {
-        "name": "Singleton No Unique",
-        "tmdisplay": "Singleton No Unique",
-        "description": "60-80 cards, Singleton rules without unique."
+        "name": "Singleton",
+        "tmdisplay": "Singleton",
+        "description": "60-80 cards, Singleton rules."
       },
       "3": {
+        "name": "Demo decks",
+        "tmdisplay": "Demo",
+        "description": "Play with demo decks from the set Roots of Corruption."
+      },
+      "4": {
         "name": "Sandbox",
         "tmdisplay": "Sandbox",
         "description": "4-100 cards, all cards available, no faction or rarity restrictions."
       },
       "5": {
-        "name": "Roots of Corruption Demo Decks",
-        "tmdisplay": "Demo",
-        "description": "Play with demo decks from the set Roots of Corruption."
-      },
-      "6": {
         "name": "Test",
         "tmdisplay": "Test",
         "description": "40-60 cards, standard rules without unique with set in testing enabled and uniques"
+      }
+    }
+  },
+  "157": {
+    "name": "Sealed set",
+    "default": 6,
+    "displaycondition": [
+      { "type": "otheroption", "id": 155, "value": 9 },
+      { "type": "otheroption", "id": 156, "value": 1 }
+    ],
+    "values": {
+      "6": {
+        "name": "Set 6 : Roots of Corruption",
+        "tmdisplay": "Sealed - Roots of Corruption"
       },
-      "7": {
-        "name": "Sealed",
-        "tmdisplay": "Sealed",
-        "description": "⚠️ Deck built from your official sealed pool. Decks for this format must be built on altered-draft.altered.re — it cannot be created or edited here."
+      "1": {
+        "name": "Set 1 : Beyond the gate",
+        "tmdisplay": "Sealed - Beyond the gate"
+      },
+      "2": {
+        "name": "Set 2 : Trial by Frost",
+        "tmdisplay": "Sealed - Trial by Frost"
+      },
+      "3": {
+        "name": "Set 3 : Whispers from the Maze",
+        "tmdisplay": "Sealed - Whispers from the Maze"
+      },
+      "4": {
+        "name": "Set 4 : Skybound Odyssey",
+        "tmdisplay": "Sealed - Skybound Odyssey"
+      },
+      "5": {
+        "name": "Set 5 : Seeds of Unity",
+        "tmdisplay": "Sealed - Seeds of Unity"
+      },
+      "0": {
+        "name": "Custom (Tournament only)",
+        "tmdisplay": "Sealed - Custom",
+        "description": "Custom sealed pool, reserved for tournaments."
+      }
+    }
+  },
+  "158": {
+    "name": "Uniques restriction",
+    "default": 1,
+    "displaycondition": [
+      { "type": "otheroption", "id": 155, "value": 9 },
+      { "type": "otheroption", "id": 156, "value": [0, 2] }
+    ],
+    "values": {
+      "0": {
+        "name": "All uniques",
+        "tmdisplay": "All uniques",
+        "description": "All uniques are unlocked."
+      },
+      "1": {
+        "name": "No uniques",
+        "tmdisplay": "No uniques",
+        "description": "Uniques are not allowed."
+      }
+    }
+  },
+  "159": {
+    "name": "Keep the same deck for the whole tournament",
+    "level": "additional",
+    "default": 1,
+    "values": {
+      "0": {
+        "name": "Disabled",
+        "tmdisplay": "new deck each game",
+        "description": "Players can choose a different deck for each game of the tournament."
+      },
+      "1": {
+        "name": "Enabled",
+        "description": "Players are offered the deck they used in their previous game of the tournament. Only applies to tournaments."
       }
     }
   }

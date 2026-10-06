@@ -27,6 +27,8 @@ class Globals extends \ALT\Helpers\DB_Manager
     'undo' => 'bool',
     'statMapping' => 'obj',
     'deckFormat' => 'str',
+    'sealedSet' => 'int', // 1-6 = set number, 0 = custom
+    'keepTournamentDeck' => 'bool', // reuse the deck of the previous game of the tournament
 
     'firstPlayer' => 'int',
     'skippedPlayers' => 'obj',
@@ -265,10 +267,38 @@ class Globals extends \ALT\Helpers\DB_Manager
         break;
       case OPTION_DF_SEALED:
         self::setDeckFormat('SEALED');
+        break;
+      case OPTION_DF_RANDOM:
+        self::setDeckFormat('RANDOM');
+        break;
+      case OPTION_DF_LESS_PLAYED:
+        $noUnique = ($options[OPTION_UNIQUES] ?? OPTION_UNIQUES_NONE) == OPTION_UNIQUES_NONE;
+        switch ($options[OPTION_LESS_PLAYED_FORMAT] ?? OPTION_LPF_STANDARD) {
+          case OPTION_LPF_SEALED:
+            self::setDeckFormat('SEALED');
+            self::setSealedSet($options[OPTION_SEALED_SET] ?? 6);
+            break;
+          case OPTION_LPF_SINGLETON:
+            self::setDeckFormat($noUnique ? 'SINGLETON_NUC' : 'SINGLETON');
+            break;
+          case OPTION_LPF_DEMO:
+            self::setDeckFormat('DEMO');
+            break;
+          case OPTION_LPF_SANDBOX:
+            self::setDeckFormat('SANDBOX');
+            break;
+          case OPTION_LPF_TEST:
+            self::setDeckFormat('TEST');
+            break;
+          default:
+            self::setDeckFormat($noUnique ? 'NO_UNIQUE' : 'STANDARD');
+        }
+        break;
     }
     self::setDeckOptions(OPTION_DECKS_STARTER);
     self::setBeginner($options[OPTION_BEGINNER] ?? 1);
     self::setUndo($options[OPTION_UNDO] ?? 0);
+    self::setKeepTournamentDeck($options[OPTION_KEEP_TOURNAMENT_DECK] ?? 1);
   }
 
   public static function getStorm($ui = false)

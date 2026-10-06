@@ -35,6 +35,26 @@ const OPTION_DF_NOUNIQUE = 4;
 const OPTION_DF_DEMO = 5;
 const OPTION_DF_TEST = 6;
 const OPTION_DF_SEALED = 7;
+const OPTION_DF_RANDOM = 8;
+const OPTION_DF_LESS_PLAYED = 9;
+// Legacy values 1 to 7 are kept for tournaments created before the "less played format" split
+
+const OPTION_LESS_PLAYED_FORMAT = 156;
+const OPTION_LPF_STANDARD = 0;
+const OPTION_LPF_SEALED = 1;
+const OPTION_LPF_SINGLETON = 2;
+const OPTION_LPF_DEMO = 3;
+const OPTION_LPF_SANDBOX = 4;
+const OPTION_LPF_TEST = 5;
+
+const OPTION_SEALED_SET = 157;
+const OPTION_SEALED_SET_CUSTOM = 0;
+
+const OPTION_UNIQUES = 158;
+const OPTION_UNIQUES_ALL = 0;
+const OPTION_UNIQUES_NONE = 1;
+
+const OPTION_KEEP_TOURNAMENT_DECK = 159;
 // const OPTION_SAME_MAP_RANDOM = 0;
 
 /*
