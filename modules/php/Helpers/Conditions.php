@@ -137,12 +137,25 @@ abstract class Conditions
       return true;
     }
 
-    // Controller is snapshotted at leave time (before borrow/steal ownership is restored in
-    // discardTo). Needed for The Mess when a borrowed Character leaves your Expedition
-    // (e.g. Romantic Encounter). Do not apply on sabotage — that would false-trigger
-    // "your Reserve" effects like The Refinery when you sabotage an opponent's card.
-    return Cards::get($cardId)->getPId() == $card->getPId()
-      || (!($event['sabotage'] ?? false) && $card->getPId() == ($event['controller'] ?? -1));
+    // Card::discardTo() restores player_id to the owner before reactions resolve, so
+    // getPId() is the event card's owner here. Never widen this to "same controller as the
+    // event snapshot": that made both The Mess landmarks fire for a Character stolen with
+    // Romantic Encounter. Zone-based triggers must use hasSameEventController instead.
+    return Cards::get($cardId)->getPId() == $card->getPId();
+  }
+
+  /**
+   * True when the passive card's controller is the player the event card belonged to in its
+   * zone, regardless of ownership.
+   *
+   * Card::checkLeaveListener() snapshots `controller` (and `owner`) before Card::discardTo()
+   * restores player_id, so this is the only reliable way to tell "left MY Expedition" from
+   * "left THEIR Expedition" once the reaction resolves. Used by The Mess ("When a Character
+   * leaves your Expeditions"), whose trigger is about the zone, not the card's owner.
+   */
+  public static function hasSameEventController($card, $event)
+  {
+    return ($event['controller'] ?? $event['pId'] ?? -1) == $card->getPId();
   }
 
   /** True when the passive card's owner voluntarily discards one of their own cards. */
@@ -203,6 +216,13 @@ abstract class Conditions
   public static function isSelfPlayCardEvent($card, $event)
   {
     return ($event['playCard'] ?? false) && (int) ($event['cardId'] ?? -1) === (int) $card->getId();
+  }
+
+  /** False when an opponent blocking power (eg. The Council) faces this card, preventing its on-play effect. */
+  public static function isNotBlockedByOpponentPower($card, $event)
+  {
+    $location = $event['to'] ?? $card->getLocation();
+    return !Players::hasOpponentBlockingPower($card->getPlayer(), $location, $card->isGigantic());
   }
 
   public static function isNotMe($card, $event)

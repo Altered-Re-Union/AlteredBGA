@@ -498,7 +498,11 @@ class Discard extends \ALT\Models\Action
         'sabotage' => $this->isSabotage() || ($this->getDiscardControllerId() != $pId && in_array($originalLocation, [HAND, RESERVE])),
         'controller' => $this->getDiscardControllerId(),
         'sourceId' => $this->getSourceId(),
-        'pId' => $pId
+        'pId' => $pId,
+        // $pId is snapshotted before the move, so it still is the controller that had the card
+        // in its zone. Card::discardTo() restores player_id to the owner right after, so this is
+        // the only reliable value for "who had this card" once the reaction resolves.
+        'cardPId' => $pId
       ]);
     }
 

@@ -413,24 +413,6 @@ const OWNER = 'owner';
 const API_URL = 'https://api.equinox-ccg.io';
 
 const DYNAMIC_PROPERTIES = ['tapped', 'extraDatas', 'setIcon', 'flavorText', 'asset', 'revealed', 'subtypes', 'typeline', 'fullArt', 'mainAsset'];
-const UID_MAPPING = [
-  'ALT_ALIZE_B_AX_01_C' => 'ALT_CORE_B_AX_01_C',
-  'ALT_ALIZE_B_AX_03_C' => 'ALT_CORE_B_AX_03_C',
-  'ALT_ALIZE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
-  'ALT_ALIZE_B_BR_01_C' => 'ALT_CORE_B_BR_01_C',
-  'ALT_ALIZE_B_BR_03_C' => 'ALT_CORE_B_BR_03_C',
-  'ALT_ALIZE_B_BR_31_C' => 'ALT_CORE_B_BR_31_C',
-  'ALT_ALIZE_B_LY_02_C' => 'ALT_CORE_B_LY_02_C',
-  'ALT_ALIZE_B_LY_03_C' => 'ALT_CORE_B_LY_03_C',
-  'ALT_ALIZE_B_MU_02_C' => 'ALT_CORE_B_MU_02_C',
-  'ALT_ALIZE_B_MU_03_C' => 'ALT_CORE_B_MU_03_C',
-  'ALT_ALIZE_B_NE_02_C' => 'ALT_CORE_B_NE_02_C',
-  'ALT_ALIZE_B_OR_01_C' => 'ALT_CORE_B_OR_01_C',
-  'ALT_ALIZE_B_OR_03_C' => 'ALT_CORE_B_OR_03_C',
-  'ALT_ALIZE_B_OR_31_C' => 'ALT_CORE_B_OR_31_C',
-  'ALT_ALIZE_B_YZ_01_C' => 'ALT_CORE_B_YZ_01_C',
-  'ALT_ALIZE_B_YZ_03_C' => 'ALT_CORE_B_YZ_03_C',
-];
 
 const MANUAL_ALT_ART = [
   //Booda

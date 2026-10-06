@@ -382,7 +382,7 @@ abstract class FlowConvertor
       798 => [
         'description' => clienttranslate('When you discard a card from your hand —'),
         'trigger' => 'Discard',
-        'condition' => ['isMe', 'isDiscarded:hand:discard', 'excludeSelf'],
+        'condition' => ['isMe', 'isInStorms', 'isDiscarded:hand:discard', 'excludeSelf'],
       ],
       801 => [
         'description' => clienttranslate('When an Animal other than me joins your Expeditions —'),
@@ -5435,7 +5435,7 @@ abstract class FlowConvertor
         'description' => clienttranslate('<SABOTAGE> any number of Characters with total {V} less than or equal to my {V} stat.'),
         'output' => FT::ACTION(TARGET, [
           'targetType' => [CHARACTER, TOKEN],
-          'targetLocation' => STORMS,
+          'targetLocation' => [RESERVE],
           'n' => INFTY,
           'upTo' => true,
           'compareTargetBiome' => ['biome' => FOREST, 'op' => 'lte', 'source' => 'source'],
