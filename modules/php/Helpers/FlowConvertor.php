@@ -382,7 +382,7 @@ abstract class FlowConvertor
       798 => [
         'description' => clienttranslate('When you discard a card from your hand —'),
         'trigger' => 'Discard',
-        'condition' => ['isMe', 'isDiscarded:hand:discard', 'excludeSelf'],
+        'condition' => ['isMe', 'isInStorms', 'isDiscarded:hand:discard', 'excludeSelf'],
       ],
       801 => [
         'description' => clienttranslate('When an Animal other than me joins your Expeditions —'),
