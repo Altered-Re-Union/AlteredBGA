@@ -18,7 +18,7 @@ class BR_Exalted_Charybdis extends \ALT\Models\Card
       'artist' => 'Jean-Baptiste Andrier',
       'extension' => 'NEJ',
       'subtypes' => [LEVIATHAN],
-      'effectDesc' => clienttranslate('Gigantic.  If I\'m in {O}, I am <TOUGH_CHA_P_1>.  {H} $<SABOTAGE>. Then, you may discard target Permanent.'),
+      'effectDesc' => clienttranslate('Gigantic.  If I\'m in {O}, I am <TOUGH_CHA_P_1>.  {R} $<SABOTAGE>. Then, you may discard target Permanent.'),
       'forest' => 3,
       'mountain' => 4,
       'ocean' => 4,
@@ -28,11 +28,12 @@ class BR_Exalted_Charybdis extends \ALT\Models\Card
       'dynamicTough' => 'tough1:isInBiome:ocean:true',
       'effectHand' => FT::SEQ(
         FT::SABOTAGE(), 
-        FT::SEQ_OPTIONAL(FT::ACTION(TARGET, [
+        FT::ACTION(TARGET, [
           'targetType' => [PERMANENT],
           'effect' => FT::ACTION(DISCARD, []),
+          'optional' => true,
         ]),
-      )),
+      ),
     ];
   }
 }
