@@ -336,6 +336,17 @@ abstract class Utils extends \APP_DbObject
     }
   }
 
+  public static function resolveMaxBaseCost($maxBaseCost, $player)
+  {
+    if (is_int($maxBaseCost)) {
+      return $maxBaseCost;
+    }
+    if ($maxBaseCost === 'landmarks') {
+      return $player->getLandmarks()->count();
+    }
+    return $maxBaseCost;
+  }
+
   public static function checkAttributeCondition($attribute, $data, $player, $card)
   {
     $attributeData = explode(':', $data);
