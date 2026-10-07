@@ -13,7 +13,7 @@ class YZ_Common_MoltedMaw extends \ALT\Models\Card
       'faction' => FACTION_YZ,
       'rarity' => RARITY_COMMON,
       'name' => clienttranslate('Molted Maw'),
-      'typeline' => clienttranslate('Character - Companion'),
+      'typeline' => clienttranslate('Token Character - Companion'),
       'type' => CHARACTER,
       'artist' => 'Justice Wong',
       'extension' => 'NEJ',
