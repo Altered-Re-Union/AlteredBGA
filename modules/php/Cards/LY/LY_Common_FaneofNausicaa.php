@@ -23,11 +23,9 @@ class LY_Common_FaneofNausicaa extends \ALT\Models\Card
       'costReserve' => 2,
       'effectPassive' => [
         'Noon' => [
-          'condition' => 'isMe',
-          'output' => FT::ACTION(CHECK_CONDITION, [
-            'condition' => 'isFirstPlayer', 
-            'effect' => FT::ACTION(RESUPPLY, [])
-          ]),
+          'listeningConditions' => ['isMe'],
+          'condition' => 'isFirstPlayer',
+          'output' => FT::ACTION(RESUPPLY, []),
         ]
       ]
     ];
