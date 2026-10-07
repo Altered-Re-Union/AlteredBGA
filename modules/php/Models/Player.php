@@ -1308,19 +1308,37 @@ class Player extends \ALT\Helpers\DB_Model
 
   public function countUniversalToughAnchoredAsleep()
   {
+    return $this->countUniversalStatusTough('anchoredOrAsleep');
+  }
+
+  public function countUniversalToughAnchored()
+  {
+    return $this->countUniversalStatusTough('anchored');
+  }
+
+  public function countUniversalToughFleeting()
+  {
+    return $this->countUniversalStatusTough('fleeting');
+  }
+
+  /**
+   * Counts in-play sources whose {@see Card::getDynamicTough()} is the given status aura
+   * (Embassy anchoredOrAsleep, Silenus anchored/fleeting).
+   */
+  private function countUniversalStatusTough($type)
+  {
     return count(
-      $this->getPlayedCards()->filter(function ($card) {
+      $this->getPlayedCards()->filter(function ($card) use ($type) {
         $dynamicTough = $card->getDynamicTough();
         if (!is_array($dynamicTough)) {
-          return Utils::checkAttributeCondition('tough', $card->getDynamicTough(), $this, $card) == 'anchoredOrAsleep';
-        } else {
-          foreach ($dynamicTough as $singleTough) {
-            if (Utils::checkAttributeCondition('tough', $singleTough, $this, $card) == 'anchoredOrAsleep') {
-              return true;
-            }
-          }
-          return false;
+          $dynamicTough = [$dynamicTough];
         }
+        foreach ($dynamicTough as $singleTough) {
+          if (Utils::checkAttributeCondition('tough', $singleTough, $this, $card) == $type) {
+            return true;
+          }
+        }
+        return false;
       })
     );
   }

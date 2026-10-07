@@ -270,6 +270,8 @@ class SpecialEffect extends \ALT\Models\Action
       // Fugue
       case 'blockOpponentsCardNameThisDay':
         return clienttranslate('Opponents can\'t play cards with that name this Day');
+      case 'eachPlayerSacrificeWoollyback':
+        return clienttranslate('Each player sacrifices a Character, then creates a Woollyback in its Expedition');
       case 'sacrificeAllCharacters':
         return clienttranslate('Sacrifice all Characters in target Expedition');
     }
@@ -2565,6 +2567,27 @@ class SpecialEffect extends \ALT\Models\Action
           Globals::setBlockedCardNamesThisDay($blocked);
         }
         break; 
+      case 'eachPlayerSacrificeWoollyback':
+        $nodes = [];
+        foreach (Players::getTurnOrder(Players::getActiveId()) as $pId) {
+          $nodes[] = FT::ACTION(
+            TARGET,
+            [
+              'targetPlayer' => ME,
+              'targetType' => [CHARACTER, TOKEN],
+              'effect' => FT::SEQ(
+                FT::ACTION(DISCARD, ['desc' => 'sacrifice']),
+                FT::ACTION(INVOKE_TOKEN, [
+                  'tokenType' => 'MU_Common_Woollyback',
+                  'targetLocation' => ['discardedSource'],
+                ]),
+              ),
+            ],
+            ['pId' => $pId, 'sourceId' => $this->getSourceId()]
+          );
+        }
+        $this->insertAsChild(['type' => NODE_SEQ, 'childs' => $nodes]);
+        break;  
       case 'sacrificeAllCharacters':
         $expedition = $this->getCtxArg('expedition');
         $pId = $this->getCtxArg('player');
