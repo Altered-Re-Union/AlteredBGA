@@ -13,7 +13,7 @@ class LY_Common_Shift extends \ALT\Models\Card
       'faction' => FACTION_LY,
       'rarity' => RARITY_COMMON,
       'name' => clienttranslate('Shift'),
-      'typeline' => clienttranslate('Character - Companion'),
+      'typeline' => clienttranslate('Token Character - Companion'),
       'type' => CHARACTER,
       'artist' => 'Zero Wen',
       'extension' => 'NEJ',
