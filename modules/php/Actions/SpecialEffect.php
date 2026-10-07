@@ -271,6 +271,10 @@ class SpecialEffect extends \ALT\Models\Action
         return clienttranslate('Each Character in your Expeditions gains 1 boost');
       case 'scylla':
         return clienttranslate('Scylla effects');
+      case 'eachPlayerSacrificeWoollyback':
+        return clienttranslate('Each player sacrifices a Character, then creates a Woollyback in its Expedition');
+      case 'sacrificeAllCharacters':
+        return clienttranslate('Sacrifice all Characters in target Expedition');
     }
     return '';
   }
@@ -2592,6 +2596,45 @@ class SpecialEffect extends \ALT\Models\Action
         }
         $this->insertAsChild(['type' => NODE_SEQ, 'childs' => $nodes]);
         break; 
+      case 'eachPlayerSacrificeWoollyback':
+        $nodes = [];
+        foreach (Players::getTurnOrder(Players::getActiveId()) as $pId) {
+          $nodes[] = FT::ACTION(
+            TARGET,
+            [
+              'targetPlayer' => ME,
+              'targetType' => [CHARACTER, TOKEN],
+              'effect' => FT::SEQ(
+                FT::ACTION(DISCARD, ['desc' => 'sacrifice']),
+                FT::ACTION(INVOKE_TOKEN, [
+                  'tokenType' => 'MU_Common_Woollyback',
+                  'targetLocation' => ['discardedSource'],
+                ]),
+              ),
+            ],
+            ['pId' => $pId, 'sourceId' => $this->getSourceId()]
+          );
+        }
+        $this->insertAsChild(['type' => NODE_SEQ, 'childs' => $nodes]);
+        break;  
+      case 'sacrificeAllCharacters':
+        $expedition = $this->getCtxArg('expedition');
+        $pId = $this->getCtxArg('player');
+        $nodes = [];
+        $ownerId = $card->getPId();
+  
+        foreach (Players::get($pId)->getPlayedCards() as $cId => $character) {
+          if ($character->getType() != CHARACTER) {
+            continue;
+          }
+          if ($character->getLocation() == $expedition || (in_array($expedition, STORMS) && $character->isGigantic())) {
+            $nodes[] = FT::ACTION(DISCARD, ['cardId' => $cId, 'desc' => 'sacrifice'], ['sourceId' => $this->getSourceId(), 'pId' => $ownerId]);
+          }
+        }
+        if (!empty($nodes)) {
+          $this->insertAsChild(['type' => NODE_SEQ, 'childs' => $nodes]);
+        }
+        break;
       default:
         break;
     }
