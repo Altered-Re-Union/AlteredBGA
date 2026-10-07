@@ -13,7 +13,7 @@ class AX_Rare_LotusEater extends \ALT\Models\Card
       'faction' => FACTION_AX,
       'rarity' => RARITY_RARE,
       'name' => clienttranslate('Lotus-Eater'),
-      'typeline' => clienttranslate('Character - Citizen Rogue'),
+      'typeline' => clienttranslate('Character - Citizen, Rogue'),
       'type' => CHARACTER,
       'artist' => 'Nestor Papatriantafyllou',
       'extension' => 'NEJ',

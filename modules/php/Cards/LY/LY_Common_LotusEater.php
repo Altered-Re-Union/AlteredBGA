@@ -13,7 +13,7 @@ class LY_Common_LotusEater extends \ALT\Models\Card
       'faction' => FACTION_LY,
       'rarity' => RARITY_COMMON,
       'name' => clienttranslate('Lotus-Eater'),
-      'typeline' => clienttranslate('Character - Citizen Rogue'),
+      'typeline' => clienttranslate('Character - Citizen, Rogue'),
       'type' => CHARACTER,
       'artist' => 'Nestor Papatriantafyllou',
       'extension' => 'NEJ',
