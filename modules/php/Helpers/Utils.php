@@ -420,9 +420,6 @@ abstract class Utils extends \APP_DbObject
     if (is_int($maxBaseCost)) {
       return $maxBaseCost;
     }
-    if ($maxBaseCost === 'landmarks') {
-      return $player->getLandmarks()->count();
-    }
     if ($maxBaseCost === 'revealedCardHandCost') {
       $revealed = self::getRevealedCard($player);
       return $revealed !== null ? (int) $revealed->getCostHand() : 0;
