@@ -1343,6 +1343,13 @@ class Card extends \ALT\Helpers\DB_Model
       if ($anchoredAsleep > 0 && ($this->hasToken(ANCHORED) || $this->hasToken(ASLEEP))) {
         $tough += 1;
       }
+      
+      if ($this->hasToken(ANCHORED)) {
+        $tough += $this->getPlayer()->countUniversalToughAnchored();
+      }
+      if ($this->hasToken(FLEETING)) {
+        $tough += $this->getPlayer()->countUniversalToughFleeting();
+      }
     }
 
     if (in_array($this->getType(), [PERMANENT])) {
