@@ -29,21 +29,21 @@ class YZ_Exalted_HermesGodofSouls extends \ALT\Models\Card
         'Noon' => [
           'childs' => [
             [
-              'conditions' => ['isMe', 'isNotFirstPlayer'],
+              'conditions' => ['isMe', 'isNotFirstPlayer', 'hasHeroSignatureToken'],
               'output' => FT::ACTION(INVOKE_TOKEN, [
                 'tokenType' => HERO_SIGNATURE,
                 'targetLocation' => [RESERVE],
               ]),
             ],
             [
-              'conditions' => ['isMe', 'isTemple'],
+              'conditions' => ['isMe', 'isInLandmarks'],
               'output' => FT::ACTION(DISCARD, ['cardId' => ME, 'destination' => RESERVE], ['optional' => true]),
             ],
           ],
         ],
         'InvokeToken' => [
           'listeningConditions' => ['isMe', 'isNoon', 'isNotFirstPlayer'],
-          'conditions' => ['isCardAdded:token', 'isToReserve'],
+          'conditions' => ['isCardAdded:token', 'isToReserve', 'isHeroSignatureToken'],
           'output' => FT::GAIN(EFFECT, BOOST, 1),
         ],
       ],

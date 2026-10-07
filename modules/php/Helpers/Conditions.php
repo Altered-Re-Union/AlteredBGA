@@ -87,6 +87,12 @@ abstract class Conditions
     return !is_null($card->getPlayer()->getHeroSignatureTokenType());
   }
 
+  public static function isHeroSignatureToken($card, $event)
+  {
+    $tokenType = $card->getPlayer()->getHeroSignatureTokenType();
+    return !is_null($tokenType) && ($event['invoked'] ?? null) == $tokenType;
+  }
+
   public static function isAddedToMyExpedition($card, $event)
   {
     if (!isset($event['cardId'])) {
@@ -125,6 +131,11 @@ abstract class Conditions
   public static function isInStorms($card, $event)
   {
     return in_array($card->getLocation(), STORMS);
+  }
+
+  public static function isInLandmarks($card, $event)
+  {
+    return $card->getLocation() == LANDMARK;
   }
 
   public static function isSource($card, $event)
