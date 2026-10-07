@@ -681,6 +681,19 @@ class Engine
   }
 
   /**
+   * Whether a reaction of $cardId is already queued (not resolved yet) in the current flow for
+   * this gain group
+   */
+  public static function hasPendingGroupedReaction($cardId, $group)
+  {
+    if (is_null(self::$tree) || is_null($cardId) || is_null($group)) {
+      return false;
+    }
+
+    return self::$tree->hasPendingGroupedReaction($cardId, $group);
+  }
+
+  /**
    * Clear all nodes related to the current active zombie player
    */
   public static function clearZombieNodes($pId)

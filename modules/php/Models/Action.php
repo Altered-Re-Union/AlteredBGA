@@ -252,6 +252,8 @@ class Action
       return;
     }
 
+    $reaction = $this->filterGroupedReactions($reaction, $event);
+
     // Split reactions flagged as immediate (resolved inline within the current action's
     // branch) from the default deferred ones (resolved on the after-finishing node once
     // the whole current phase/action has finished).
@@ -270,6 +272,27 @@ class Action
       $this->pushParallelChilds($immediate);
     }
     $this->pushAfterFinishingChilds($deferred);
+  }
+
+  /**
+   * When an effect distributes several gains at once (eg. "Distribute 4 boosts...", see
+   * FT::SEQ_DISTRIBUTE_GAINS), all its gains belong to the same gain event: only the first
+   * reaction of a given listener is kept, so "gains 1 or more boosts" abilities trigger once
+   * for the whole distribution instead of once per gain.
+   */
+  protected function filterGroupedReactions($reaction, $event)
+  {
+    if (empty($reaction) || is_null($event['gainGroup'] ?? null)) {
+      return $reaction;
+    }
+
+    $group = $event['gainGroup'];
+
+    return array_values(
+      array_filter($reaction, function ($child) use ($group) {
+        return !Engine::hasPendingGroupedReaction($child['args']['cardId'] ?? null, $group);
+      })
+    );
   }
 
   protected function logReactions($method, $player, $args = [], $overrideMethod = null)
