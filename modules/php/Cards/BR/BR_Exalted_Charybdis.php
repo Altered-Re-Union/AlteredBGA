@@ -31,8 +31,7 @@ class BR_Exalted_Charybdis extends \ALT\Models\Card
         FT::ACTION(TARGET, [
           'targetType' => [PERMANENT],
           'effect' => FT::ACTION(DISCARD, []),
-          'optional' => true,
-        ]),
+        ], ['optional' => true]),
       ),
     ];
   }
