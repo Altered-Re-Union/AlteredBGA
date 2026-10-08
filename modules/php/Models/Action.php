@@ -498,7 +498,8 @@ class Action
     if (!empty($args['excludePreviousTarget'])) {
       return true;
     }
-    if (($args['maxHandCost'] ?? null) === 'discard2') {
+    $maxHandCost = $args['maxHandCost'] ?? null;
+    if (is_string($maxHandCost) && strpos($maxHandCost, 'discard') === 0) {
       return true;
     }
     $compare = $args['compareTargetBiome'] ?? null;

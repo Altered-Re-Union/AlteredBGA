@@ -5850,10 +5850,11 @@ abstract class FlowConvertor
           'targetLocation' => [HAND],
           'targetType' => [CHARACTER, SPELL, PERMANENT],
           'upTo' => true,
-          'effect' => FT::ACTION(TARGET, [
-            'targetLocation' => STORMS,
+          'effect' => FT::SEQ(FT::ACTION(DISCARD, []), FT::ACTION(TARGET, [
+            'targetType' => [CHARACTER, PERMANENT],
+            'maxHandCost' => 'discard',
             'effect' => FT::ACTION(DISCARD, []),
-          ]),
+          ])),
         ]),
       ],
       869 => [
