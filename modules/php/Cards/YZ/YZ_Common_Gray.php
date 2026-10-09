@@ -15,6 +15,8 @@ class YZ_Common_Gray extends \ALT\Models\Card
       'name' => clienttranslate('Gray'),
       'typeline' => clienttranslate('Yzmir Hero'),
       'type' => HERO,
+      'thumbnail' => 5,
+      'statData' => 36,
       'artist' => 'Justice Wong',
       'extension' => 'NEJ',
       'effectDesc' => clienttranslate('{T}, Sacrifice a Character: Target Character gains 1 boost.  At Noon — If you\'re first player, create my Signature token: Molted Maw 0/0/0 in your Reserve (It\'s a Companion with Reserve Cost {1} and "When you sacrifice a Character — I gain 1 boost.")'),
