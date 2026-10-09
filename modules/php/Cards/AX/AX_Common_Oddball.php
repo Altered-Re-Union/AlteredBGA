@@ -13,7 +13,7 @@ class AX_Common_Oddball extends \ALT\Models\Card
       'faction' => FACTION_AX,
       'rarity' => RARITY_COMMON,
       'name' => clienttranslate('Oddball'),
-      'typeline' => clienttranslate('Character - Robot Companion'),
+      'typeline' => clienttranslate('Token Character - Robot Companion'),
       'type' => CHARACTER,
       'artist' => 'Tristan Bideau',
       'extension' => 'NEJ',

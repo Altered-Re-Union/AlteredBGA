@@ -33,6 +33,7 @@ class MoveExpedition extends \ALT\Models\Action
     'winningBiomes' => [],
     'moveOtherExpedition' => false,
     'ascended' => false,
+    'skipGigantic' => false,
   ];
 
   public function getSides()
@@ -267,7 +268,7 @@ class MoveExpedition extends \ALT\Models\Action
         }
     }
 
-    if ($gigantic) {
+    if ($gigantic && !$this->getArg('skipGigantic')) {
       // we must move the other expedition
       $expedition = $expedition == STORM_LEFT ? STORM_RIGHT : STORM_LEFT;
 
