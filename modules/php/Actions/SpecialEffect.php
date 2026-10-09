@@ -144,6 +144,9 @@ class SpecialEffect extends \ALT\Models\Action
         return clienttranslate('Each player exhausts a card in reserve');
         // Bise
       case 'boostReserve':
+        if ($args['noBoostIfBoosted'] ?? false) { // FUGUE Hestia Goddess of Hearth limitation
+          return clienttranslate('Each Character with no boost in your Reserve gains 1 boost');
+        }
         return clienttranslate('Characters in your Reserve gain 1 boost');
       case 'boostXBoostedChar':
         return clienttranslate('1 Boost for each Boosted character');
@@ -1168,9 +1171,14 @@ class SpecialEffect extends \ALT\Models\Action
       // Bise
       case 'boostReserve':
         $player = Players::getActive();
+       $player = Players::getActive();
+        $noBoostIfBoosted = $args['noBoostIfBoosted'] ?? false; // FUGUE Hestia Goddess of the Hearth limitation
         $nodes = [];
         foreach ($player->getReserveCards() as $cId => $card) {
           if ($card->getType() != CHARACTER) {
+            continue;
+          }
+          if ($noBoostIfBoosted && $card->countToken(BOOST) > 0) {
             continue;
           }
           $nodes[] = FT::ACTION(GAIN, ['cardId' => $cId, 'type' => BOOST], ['sourceId' => $this->getSourceId()]);

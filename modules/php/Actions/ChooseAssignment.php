@@ -717,6 +717,7 @@ class ChooseAssignment extends \ALT\Models\Action
     }
 
 
+    $hasPlayedEffects = false;
     if (
       ($card->getType() == CHARACTER && !Players::hasOpponentBlockingPower($player, $location, $card->isGigantic())) ||
       $card->getType() != CHARACTER
@@ -1010,6 +1011,7 @@ class ChooseAssignment extends \ALT\Models\Action
         $effects = Utils::updateTree($effects, [0 => 'dioclesLocation'], $card->getLocation(), ['expedition']);
         // $effects = Utils::tagTree($effects, ['pId' => $player->getId()]);
         $this->pushAfterFinishingChilds($effects['childs']);
+        $hasPlayedEffects = true;
         if ($card->getRarity() == RARITY_UNIQUE) {
           $this->updateAfterFinishingChilds(['noIndependent' => true]);
         }
@@ -1069,6 +1071,12 @@ class ChooseAssignment extends \ALT\Models\Action
           'stealOwnership' => $stealOwnership,
         ], true, 'EatMeEnergyBars');
       }
+    }
+    
+    // Force resolve-order choice when played effects coincide with after-listeners
+    // (e.g. Rinku {J} TARGET vs Yeti join boost). Unique already sets this earlier.
+    if ($hasPlayedEffects) {
+      $this->updateAfterFinishingChilds(['noIndependent' => true]);
     }
     // throw new \feException(print_r(Globals::getEngine()));
 
