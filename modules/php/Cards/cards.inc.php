@@ -41,7 +41,12 @@ require_once (dirname(__FILE__)) . '/DemoDecks/zhen.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/sam.roc.php';
 
 require_once (dirname(__FILE__)) . '/DemoDecks/sierra.nej.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/kojo.nej.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/eyota.nej.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/kojo.nej.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/zoe.nej.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/osric.nej.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/gray.nej.php';
 
 const DEMO_ROC_DECKS = array(
   array(
@@ -82,9 +87,34 @@ const DEMO_ROC_DECKS = array(
     'contents' => DEMO_NEJ_SIERRA,
   ),
   array(
+    'faction' => FACTION_BR,
+    'deckId' => 'kojo.nej',
+    'contents' => DEMO_NEJ_KOJO,
+  ), 
+  array(
     'faction' => FACTION_OD,
     'deckId' => 'eyota.nej',
     'contents' => DEMO_NEJ_EYOTA,
+  ),
+  array(
+    'faction' => FACTION_BR,
+    'deckId' => 'kojo.nej',
+    'contents' => DEMO_NEJ_KOJO,
+  ),
+  array(
+    'faction' => FACTION_LY,
+    'deckId' => 'zoe.nej',
+    'contents' => DEMO_NEJ_ZOE,
+  ),
+  array(
+    'faction' => FACTION_MU,
+    'deckId' => 'osric.nej',
+    'contents' => DEMO_NEJ_OSRIC,
+  ),
+  array(
+    'faction' => FACTION_YZ,
+    'deckId' => 'gray.nej',
+    'contents' => DEMO_NEJ_GRAY,
   ),
 );  
 

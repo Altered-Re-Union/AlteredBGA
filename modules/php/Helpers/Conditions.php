@@ -87,6 +87,12 @@ abstract class Conditions
     return !is_null($card->getPlayer()->getHeroSignatureTokenType());
   }
 
+  public static function isHeroSignatureToken($card, $event)
+  {
+    $tokenType = $card->getPlayer()->getHeroSignatureTokenType();
+    return !is_null($tokenType) && ($event['invoked'] ?? null) == $tokenType;
+  }
+
   public static function isAddedToMyExpedition($card, $event)
   {
     if (!isset($event['cardId'])) {
@@ -125,6 +131,11 @@ abstract class Conditions
   public static function isInStorms($card, $event)
   {
     return in_array($card->getLocation(), STORMS);
+  }
+
+  public static function isInLandmarks($card, $event)
+  {
+    return $card->getLocation() == LANDMARK;
   }
 
   public static function isSource($card, $event)
@@ -1004,12 +1015,16 @@ abstract class Conditions
 
   public static function hasCompanionsInExpeditions($card, $event)
   {
-    $inExpeditions = $card->getPlayer()->getPlayedCards([CHARACTER, TOKEN])->filter(function ($c) {
-      return $c->isGigantic() || in_array($c->getLocation(), STORMS);
+    $pId = (int) $card->getPId();
+    $inExpeditions = Cards::getPlayedCards($pId, [CHARACTER, TOKEN])->filter(function ($c) use ($pId) {
+      if ((int) $c->getPId() !== $pId) {
+        return false;
+      }
+      return $c->isGigantic() || in_array($c->getLocation(), STORMS, true);
     });
 
     foreach ($inExpeditions as $c) {
-      if (in_array(COMPANION, $c->getSubtypes())) {
+      if (in_array(COMPANION, $c->getSubtypes(), true)) {
         return true;
       }
     }
@@ -1275,16 +1290,20 @@ abstract class Conditions
     return $cards->count() == 0;
   }
 
-  public static function costCheck($card, $event, $cost, $op = 'GTE')
+  public static function costCheck($card, $event, $cost, $op = 'GTE', $type = 'hand')
   {
+    if (!isset($event['cardId'])) {
+      return false;
+    }
+
     $discardedCard = Cards::get($event['cardId']);
-    $costHand = $discardedCard->getCostHand();
+    $compare = $type == 'reserve' ? $discardedCard->getCostReserve() : $discardedCard->getCostHand();
 
     if ($op == 'GTE') {
-      return $cost <= $costHand;
+      return $cost <= $compare;
     }
     if ($op == 'LTE') {
-      return $cost >= $costHand;
+      return $cost >= $compare;
     }
   }
 
