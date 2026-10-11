@@ -449,7 +449,9 @@ const MANUAL_ALT_ART = [
   'ALT_CORE_A_YZ_31_C' => 'ALT_CORE_B_YZ_31_C',
   //Aerolith
   'ALT_WCS26_P_NE_03_C' => 'ALT_CYCLONE_B_NE_03_C',
-
+  //Mana Convergence
+  'ALT_ALIZE_B_NE_01_C' => 'ALT_CORE_B_NE_01_C',
+  'ALT_WCS26_P_NE_01_C' => 'ALT_CORE_B_NE_01_C',
 ];
 
 /******************
