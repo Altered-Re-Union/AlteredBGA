@@ -22,7 +22,7 @@ $machinestates = [
     'description' => '',
     'type' => 'manager',
     'action' => 'stGameSetup',
-    'transitions' => ['' => ST_PRECO_DECK_SELECTION],
+    'transitions' => ['' => ST_DECK_LOCK_TOURNAMENT],
     // 'transitions' => ['' => 50],
   ],
 
@@ -39,6 +39,14 @@ $machinestates = [
     'name' => 'genericNextPlayer',
     'type' => 'game',
     'description' => '',
+  ],
+
+  ST_DECK_LOCK_TOURNAMENT => [
+    'name' => 'deckLockTournament',
+    'type' => 'game',
+    'action' => 'stDeckLockTournament',
+    'description' => 'Checking if decks are already lock by tournament',
+    'transitions' => ['selectDeck' => ST_PRECO_DECK_SELECTION, 'passDeckSelection' => ST_SETUP],
   ],
 
   ST_PRECO_DECK_SELECTION => [

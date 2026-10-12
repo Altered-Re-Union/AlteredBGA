@@ -58,6 +58,20 @@ $game_options = [
         'description' => totranslate('Undo can be disabled as a player preference'),
       ],
     ]
+  ],
+  OPTION_DECK_LOCK_TOURNAMENT => [
+    'name' => clienttranslate('Decks lock for tournament only'),
+    'values' => [
+      OPTION_DISABLED => [
+        'name' => 'Disabled',
+        'tmdisplay' => totranslate("Decks aren't locked, participants can change between tournament games"),
+        'description' => totranslate("Decks aren't locked, participants can change between tournament games"),
+      ],
+      OPTION_ENABLED => [
+        'name' => 'Enabled',
+        'description' => totranslate("Decks are locked, participants can't change between tournament games"),
+      ],
+    ]
   ]
 
 ];

@@ -7,6 +7,7 @@ use ALT\Core\Notifications;
 use ALT\Core\Engine;
 use ALT\Core\Stats;
 use ALT\Core\Preferences;
+use ALT\Helpers\DecksLockTournamentTrait;
 use ALT\Managers\Players;
 use ALT\Managers\Cards;
 use ALT\Managers\Meeples;
@@ -14,6 +15,7 @@ use ALT\Helpers\Log;
 
 trait SetupTrait
 {
+  use DecksLockTournamentTrait;
   /*
    * setupNewGame:
    */
@@ -221,7 +223,7 @@ trait SetupTrait
   public function actSelectPrecoDeck($choice)
   {
     $this->gamestate->checkPossibleAction('actSelectPrecoDeck');
-
+    
     $player = Players::getCurrent();
     $selection = Globals::getDeckSelection();
     $selection[$player->getId()] = $choice;
@@ -479,6 +481,11 @@ trait SetupTrait
   function stDeckSetup()
   {
     $selection = Globals::getDeckSelection();
+
+    if ($this->isDeckLockTournamentEnable() && !$this->isDecksAlreadyLocked()) {
+      $this->deckLockTournament();
+    }
+    
     $factionMap = [FACTION_AX => 1, FACTION_BR => 2, FACTION_LY => 3, FACTION_MU => 4, FACTION_OD => 5, 'OR' => 5, FACTION_YZ => 6];
     $factions = [];
     foreach (Players::getAll() as $pId => $player) {

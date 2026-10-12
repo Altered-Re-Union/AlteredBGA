@@ -8,6 +8,7 @@ const OPTION_DECKS = 102;
 const OPTION_DECKS_DEMO = 0;
 const OPTION_DECKS_STARTER = 1;
 const OPTION_UNDO = 151;
+const OPTION_DECK_LOCK_TOURNAMENT = 153;
 // const OPTION_COMPETITIVE_NORMAL = 2;
 // const OPTION_COMPETITIVE_CUSTOM_SETUP = 3;
 // const OPTION_COMPETITIVE_CUSTOM_SETUP_NON_BEGINNER = 4;
@@ -63,6 +64,7 @@ const OPTION_SDU = 4;
  * State constants
  */
 const ST_GAME_SETUP = 1;
+const ST_DECK_LOCK_TOURNAMENT = 4;
 const ST_PRECO_DECK_SELECTION = 2;
 const ST_DECK_SELECTION = 3;
 const ST_SETUP = 5; // tempest setup + deck shuffle + alterer position
