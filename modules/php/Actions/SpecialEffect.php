@@ -267,7 +267,9 @@ class SpecialEffect extends \ALT\Models\Action
         return ($this->getArg('args')['n'] ?? 1) > 1
           ? clienttranslate('Target opponent may exhausted-resupply twice')
           : clienttranslate('Target opponent may exhausted-resupply');
-      // Fugue
+      // FUGUE
+      case 'eachPlayerKeepOneReserve':
+        return clienttranslate('Choose one card in each player\'s Reserve. Discard all other cards in Reserve.');
       case 'blockOpponentsCardNameThisDay':
         return clienttranslate('Opponents can\'t play cards with that name this Day');
       case 'boostExpeditions':
@@ -2572,6 +2574,26 @@ class SpecialEffect extends \ALT\Models\Action
         ]);
         break;
       // FUGUE
+      case 'eachPlayerKeepOneReserve':
+        $nodes = [];
+        $turnOrder = Players::getTurnOrder(Players::getActiveId());
+        foreach ($turnOrder as $pId) {
+          $reserveIds = Players::get($pId)->getReserveCards()->getIds();
+          if (count($reserveIds) <= 1) {
+            continue;
+          }
+          $nodes[] = FT::ACTION(
+            TARGET,
+            [
+              'targetType' => [CHARACTER, SPELL, TOKEN, PERMANENT],
+              'targetLocation' => [RESERVE],
+              'cards' => $reserveIds,
+              'n' => 1,
+              'discardRemaining' => true,
+            ],
+            ['sourceId' => $this->getSourceId()]
+          );
+        }
       case 'blockOpponentsCardNameThisDay':
         $targetCardId = $this->getCtxArg('cardId');
         if (is_array($targetCardId)) {
