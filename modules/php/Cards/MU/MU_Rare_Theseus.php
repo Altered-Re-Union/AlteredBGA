@@ -30,7 +30,7 @@ class MU_Rare_Theseus extends \ALT\Models\Card
       'costReserve' => 8,
       'scout' => 3,
       'effectPlayed' =>  FT::ACTION(TARGET, ['targetType' => [CHARACTER, TOKEN], 'effect' => FT::RETURN_TO_HAND()]),
-      'effectReserve' => FT::GAIN(ME, BOOST, 2)
+      'effectReserve' => FT::GAIN(ME, BOOST, 2, 99, true)
     ];
   }
 }

@@ -72,14 +72,15 @@ abstract class FT
     return $node;
   }
 
-  public static function GAIN($card, $token, $n = 1, $upTo = 99)
+  public static function GAIN($card, $token, $n = 1, $upTo = 99, $allowDiscarded = false)
   {
     if (!($card instanceof \ALT\Models\Card)) {
       $cardId = $card;
     } else {
       $cardId = $card->getId() ?? ME;
     }
-    return self::ACTION(GAIN, ['cardId' => $cardId, 'type' => $token, 'n' => $n, 'upTo' => $upTo]);
+    $args = ['cardId' => $cardId, 'type' => $token, 'n' => $n, 'upTo' => $upTo, 'allowDiscarded' => $allowDiscarded];
+    return self::ACTION(GAIN, $args);
   }
 
   public static function AUGMENT($card)

@@ -37,7 +37,7 @@ class BR_Rare_Daedalus extends \ALT\Models\Card
             '1-3' => FT::GAIN(EFFECT, BOOST),
             '4+' => FT::SEQ(
               FT::GAIN(EFFECT, BOOST),
-              FT::GAIN(ME, BOOST)
+              FT::GAIN(ME, BOOST, 1, 99, true)
             ),
           ],
         ])

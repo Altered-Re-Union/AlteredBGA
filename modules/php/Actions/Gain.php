@@ -89,27 +89,38 @@ class Gain extends \ALT\Models\Action
 
   public function isDoable($player)
   {
-    if ($this->getCtxArg('cardId') == ME) {
-      $event = $this->getEventRecursive();
-      if (!is_null($event) && isset($event['action']) && $event['action'] == 'Discard' && $event['sourceLocation'] == DISCARD_PILE) {
-        return false;
-      }
-      if (!is_null($event) && isset($event['action']) && $event['action'] == 'ChooseAssignment' && $event['sourceLocation'] == RESERVE) {
-        $card = Cards::get($this->ctx->getSourceId());
-        if (in_array($card->getId(), $event['reserveToListen'] ?? []) && $card->getLocation() != RESERVE) {
-          return false;
-        }
-      }
-      $card = Cards::get($this->ctx->getSourceId());
-      list($gain, $n) = $this->getGain();
-      if ($card->getType() == CHARACTER && $gain == FLEETING && $card->hasToken(FLEETING)) {
-        return false;
-      }
-      // if (in_array(($event['sourceLocation']) ?? 'all'), []
-      return true;
-    } else {
+    if ($this->getCtxArg('cardId') != ME) {
       return true;
     }
+
+    $card = Cards::get($this->ctx->getSourceId());
+    list($gain, $n) = $this->getGain();
+    $event = $this->getEventRecursive();
+
+    // A discarded card becomes a different "object" — it can't give itself
+    // boosts/anchored/fleeting/etc anymore. Suppress self-gains when the
+    // source card has been discarded to RESERVE since the trigger fired.
+    //
+    // Cards that were already in RESERVE at trigger time (sourceLocation
+    // == RESERVE, e.g. infinity effects) are unaffected.
+    //
+    // Card authors can opt-out via FT::GAIN(..., $allowDiscarded = true)
+    // (used for Scout self-boosts like Daedalus / Theseus).
+    $allowDiscarded = (bool) ($this->getCtxArg('allowDiscarded') ?? false);
+    if (
+      !$allowDiscarded &&
+      $card->getLocation() == RESERVE &&
+      ($event['sourceLocation'] ?? null) !== RESERVE
+    ) {
+      return false;
+    }
+
+    // A character can't have more than one fleeting token.
+    if ($card->getType() == CHARACTER && $gain == FLEETING && $card->hasToken(FLEETING)) {
+      return false;
+    }
+
+    return true;
   }
 
   // public function isOptional($player = null)
@@ -184,7 +195,8 @@ class Gain extends \ALT\Models\Action
     'n' => 1,
     'augment' => false,
     'type' => '',
-    'upTo' => 99
+    'upTo' => 99,
+    'allowDiscarded' => false,
   ];
 
   public function getGain()
@@ -336,6 +348,23 @@ class Gain extends \ALT\Models\Action
     $upTo = $this->getUpTo();
 
     list($resource, $amount) = $this->getGain();
+
+    // Enforcement for automatic engine actions: isDoable() is not always called
+    // before stGain(). Apply the same "discarded card is a different object"
+    // rule here to reliably suppress self-gains after discarding to RESERVE.
+    if ($this->getCtxArg('cardId') == ME) {
+      $allowDiscarded = (bool) ($this->getCtxArg('allowDiscarded') ?? false);
+      $event = $this->getEventRecursive();
+      $sourceCard = Cards::get($this->ctx->getSourceId());
+      if (
+        !$allowDiscarded &&
+        $sourceCard->getLocation() == RESERVE &&
+        ($event['sourceLocation'] ?? null) !== RESERVE
+      ) {
+        $this->resolveAction([]);
+        return;
+      }
+    }
 
     if ($card->getLocation() == RESERVE && Players::hasBlockOpponentReserveGain($player)) {
       Notifications::message(clienttranslate('No counter can be gained in Reserve'), []);
