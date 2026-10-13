@@ -54,6 +54,7 @@ class Card extends \ALT\Helpers\DB_Model
     'supportIcon' => 'str',
     'artist' => 'str',
     'setIcon' => 'str',
+    'serial' => 'str',
     'thumbnail' => 'int', // Only used for Heros for UI
     'statData' => 'int',
     'extension' => 'str',
@@ -408,6 +409,22 @@ class Card extends \ALT\Helpers\DB_Model
       && !$player->canPlayTappedCards($this->getType(), null, $this->getAdditionalType());
   }
 
+  /**
+   * True when this card's cost is reduced by playing it into an Expedition
+   * that's In Contact (dynamicCostReduction ...:hasOneContact). In that case
+   * the reduction depends on the selected location.
+   */
+  public function hasContactCostReduction()
+  {
+    $reductions = (array) $this->getDynamicCostReduction();
+    foreach ($reductions as $reduction) {
+      if (strpos($reduction, 'hasOneContact') !== false) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public function getPlayableLocation($player, $forcedLocation = null, $free = false)
   {
     if (in_array(LANDMARK, $this->getSubtypes())) {
@@ -496,7 +513,17 @@ class Card extends \ALT\Helpers\DB_Model
             return [$forcedLocation];
           }
 
-          return STORMS;
+          if ($free || !$this->hasContactCostReduction()) {
+            return STORMS;
+          }
+
+          $locations = [];
+          foreach (STORMS as $storm) {
+            if ($this->getCost(false, false, $storm) <= $player->getMana()) {
+              $locations[] = $storm;
+            }
+          }
+          return empty($locations) ? STORMS : $locations;
         }
       }
     }
@@ -693,7 +720,9 @@ class Card extends \ALT\Helpers\DB_Model
         'token' => $this->isToken(),
         'from' => LANDMARK,
         'to' => DISCARD_PILE,
-        'sacrifice' => $isSacrifice
+        'sacrifice' => $isSacrifice,
+        // Snapshot of the controller while the card is still in its zone, like Discard::stDiscard
+        'cardPId' => $this->getPId()
       ];
       if ($this->isListeningTo($event2)) {
         $afterCleanup[$this->getPId()][] = [
@@ -948,7 +977,7 @@ class Card extends \ALT\Helpers\DB_Model
     return [$power['payment'] ?? [], $power['output']];
   }
 
-  public function getCost($scout = false, $reserveFlipCost = false)
+  public function getCost($scout = false, $reserveFlipCost = false, $location = null)
   {
     if (($this->getType() == SPELL || in_array(SPELL, $this->getAdditionalType())) && Globals::isNextSpellIsFree()) {
       return 0;
@@ -1059,18 +1088,7 @@ class Card extends \ALT\Helpers\DB_Model
       foreach ($biomes as $type => &$value) {
         $value += $boost;
       }
-
-      $dynamicIncrease = $this->getDynamicIncreaseBiomeHighestSelf();
-      $dynSplit = explode(':', $dynamicIncrease);
-
-      if (count($dynSplit) > 1) {
-        // we need to test if ok, add change dynamic tough to the value of 0
-        if (!is_null(Utils::checkAttributeCondition('cost', $dynamicIncrease, $this->getPlayer(), $this))) {
-          $dynamicIncreaseSelf = (int) $dynSplit[0];
-        } else {
-          $dynamicIncreaseSelf = 0;
-        }
-      }
+      $dynamicIncreaseSelf = $this->hasBiomesEqualToHighestSelf() ? 1 : 0;
     }
     if ($increaseBiomesToHighest == true || $dynamicIncreaseSelf == 1) {
       $max = 0;
@@ -1080,6 +1098,37 @@ class Card extends \ALT\Helpers\DB_Model
       $biomes = [OCEAN => $max, MOUNTAIN => $max, FOREST => $max];
     }
     return $biomes;
+  }
+
+  /**
+   * 240692 - Interaction between Big Bad Wolf and Lyra Aerialist
+   * <code>dynamicIncreaseBiomeHighestSelf</code> (Lyra Aerialist, Urbex Specialist, unique power 573) is a printed
+   * passive, so it only shapes the statistics while the Character is in an Expedition: a copy waiting in a Reserve
+   * keeps its printed statistics, e.g. when Sabotage compares them. Reserve-scoped grants coming from
+   * {@see effectInfinity} are the exception and stay active there.
+   */
+  public function hasBiomesEqualToHighestSelf(): bool
+  {
+    $dynamicIncrease = $this->getDynamicIncreaseBiomeHighestSelf();
+    if (!is_array($dynamicIncrease)) {
+      $dynamicIncrease = $dynamicIncrease === '' ? [] : [$dynamicIncrease];
+    }
+    if (count($dynamicIncrease) == 0) {
+      return false;
+    }
+
+    $printed = isset($this->properties['dynamicIncreaseBiomeHighestSelf']);
+    if ($printed && !in_array($this->getLocation(), STORMS)) {
+      return false;
+    }
+
+    foreach ($dynamicIncrease as $singleIncrease) {
+      if ((int) Utils::checkAttributeCondition('cost', $singleIncrease, $this->getPlayer(), $this) == 1) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**

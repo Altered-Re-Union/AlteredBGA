@@ -298,6 +298,11 @@ class Player extends \ALT\Helpers\DB_Model
   {
     return Cards::getPlayedCards($this->id, PERMANENT)->where('subtypes', LANDMARK);
   }
+
+  public function getFeats()
+  {
+    return Cards::getPlayedCards($this->id, PERMANENT)->where('subtypes', FEAT);
+  }
   
   /**
    * Number of completed Feats among this player's Landmark permanents (see FEAT_COMPLETED meeple).

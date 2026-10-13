@@ -413,23 +413,43 @@ const OWNER = 'owner';
 const API_URL = 'https://api.equinox-ccg.io';
 
 const DYNAMIC_PROPERTIES = ['tapped', 'extraDatas', 'setIcon', 'flavorText', 'asset', 'revealed', 'subtypes', 'typeline', 'fullArt', 'mainAsset'];
-const UID_MAPPING = [
-  'ALT_ALIZE_B_AX_01_C' => 'ALT_CORE_B_AX_01_C',
-  'ALT_ALIZE_B_AX_03_C' => 'ALT_CORE_B_AX_03_C',
-  'ALT_ALIZE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
-  'ALT_ALIZE_B_BR_01_C' => 'ALT_CORE_B_BR_01_C',
-  'ALT_ALIZE_B_BR_03_C' => 'ALT_CORE_B_BR_03_C',
+
+const MANUAL_ALT_ART = [
+  //Booda
+  'ALT_CORE_A_BR_31_C' => 'ALT_CORE_B_BR_31_C',
   'ALT_ALIZE_B_BR_31_C' => 'ALT_CORE_B_BR_31_C',
-  'ALT_ALIZE_B_LY_02_C' => 'ALT_CORE_B_LY_02_C',
-  'ALT_ALIZE_B_LY_03_C' => 'ALT_CORE_B_LY_03_C',
-  'ALT_ALIZE_B_MU_02_C' => 'ALT_CORE_B_MU_02_C',
-  'ALT_ALIZE_B_MU_03_C' => 'ALT_CORE_B_MU_03_C',
-  'ALT_ALIZE_B_NE_02_C' => 'ALT_CORE_B_NE_02_C',
-  'ALT_ALIZE_B_OR_01_C' => 'ALT_CORE_B_OR_01_C',
-  'ALT_ALIZE_B_OR_03_C' => 'ALT_CORE_B_OR_03_C',
+  'ALT_DUSTEROP_B_BR_31_C' => 'ALT_CORE_B_BR_31_C',
+  //Halua
+  'ALT_DUSTER_B_BR_83_C' => 'ALT_CYCLONE_B_BR_83_C',
+  //Woollyback
+  'ALT_EOLE_B_MU_83_C' => 'ALT_CYCLONE_B_MU_83_C',
+  'ALT_DUSTEROP_A_MU_83_C' => 'ALT_CYCLONE_B_MU_83_C',
+  //Ordis Recruit
+  'ALT_CORE_A_OR_31_C' => 'ALT_CORE_B_OR_31_C',
+  'ALT_CORE_B_OR_32_C' => 'ALT_CORE_B_OR_31_C',
   'ALT_ALIZE_B_OR_31_C' => 'ALT_CORE_B_OR_31_C',
-  'ALT_ALIZE_B_YZ_01_C' => 'ALT_CORE_B_YZ_01_C',
-  'ALT_ALIZE_B_YZ_03_C' => 'ALT_CORE_B_YZ_03_C',
+  'ALT_BISE_B_OR_31_C' => 'ALT_CORE_B_OR_31_C',
+  'ALT_DUSTER_B_OR_31_C' => 'ALT_CORE_B_OR_31_C',
+  'ALT_EOLE_B_OR_31_C' => 'ALT_CORE_B_OR_31_C',
+    //Brassbug
+  'ALT_CORE_A_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_ALIZE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_BISE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_CYCLONE_B_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_CYCLONE_B_AX_31_R' => 'ALT_CORE_B_AX_31_R',
+  'ALT_WCS26_P_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  'ALT_WCS26_A_AX_31_C' => 'ALT_CORE_B_AX_31_C',
+  //Mana Moth
+  'ALT_BISE_B_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  'ALT_CYCLONE_B_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  'ALT_DUSTER_B_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  'ALT_EOLE_B_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  'ALT_WCS26_P_YZ_47_C' => 'ALT_ALIZE_B_YZ_47_C',
+  //Maw
+  'ALT_CORE_A_YZ_31_C' => 'ALT_CORE_B_YZ_31_C',
+  //Aerolith
+  'ALT_WCS26_P_NE_03_C' => 'ALT_CYCLONE_B_NE_03_C',
+
 ];
 
 /******************

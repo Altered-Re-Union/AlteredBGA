@@ -24,7 +24,7 @@ class MU_Rare_Cleanse extends \ALT\Models\Card
       'extension' => 'ROC',
       'subtypes' => [DISRUPTION],
       'effectDesc' => clienttranslate(
-        'Roll a die. #On a 1-3, I gain <FLEETING>.# Then, you may send to Reserve target Character with Base Cost equal to the result. (Base Cost is the Reserve Cost if it\'s Fleeting, or the Hand Cost if not.)'
+        'Roll a die. #On a 1-3, I gain <FLEETING>.# Then, you may send to Reserve target Character with Base Cost {X} or less, where X is the result. (Base Cost is the Reserve Cost if it\'s Fleeting, or the Hand Cost if not.)'
       ),
       'costHand' => 2,
       'costReserve' => 2,

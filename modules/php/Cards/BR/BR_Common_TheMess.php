@@ -28,7 +28,7 @@ class BR_Common_TheMess extends \ALT\Models\Card
             'effectPassive' => [
                 'OtherLeaveExpedition' => [
                     'pId' => CONTROLLER,
-                    'conditions' => ['hasSameOwner', 'isDiscardedType:character'],
+                    'conditions' => ['hasSameEventController', 'isDiscardedType:character'],
                     'output' => FT::ACTION(SPECIAL_EFFECT, [
                         'effect' => 'incCounter',
                         'args' => ['counter' => 1, 'counterName' => clienttranslate('Food counter')],

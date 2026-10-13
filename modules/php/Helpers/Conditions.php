@@ -137,12 +137,25 @@ abstract class Conditions
       return true;
     }
 
-    // Controller is snapshotted at leave time (before borrow/steal ownership is restored in
-    // discardTo). Needed for The Mess when a borrowed Character leaves your Expedition
-    // (e.g. Romantic Encounter). Do not apply on sabotage — that would false-trigger
-    // "your Reserve" effects like The Refinery when you sabotage an opponent's card.
-    return Cards::get($cardId)->getPId() == $card->getPId()
-      || (!($event['sabotage'] ?? false) && $card->getPId() == ($event['controller'] ?? -1));
+    // Card::discardTo() restores player_id to the owner before reactions resolve, so
+    // getPId() is the event card's owner here. Never widen this to "same controller as the
+    // event snapshot": that made both The Mess landmarks fire for a Character stolen with
+    // Romantic Encounter. Zone-based triggers must use hasSameEventController instead.
+    return Cards::get($cardId)->getPId() == $card->getPId();
+  }
+
+  /**
+   * True when the passive card's controller is the player the event card belonged to in its
+   * zone, regardless of ownership.
+   *
+   * Card::checkLeaveListener() snapshots `controller` (and `owner`) before Card::discardTo()
+   * restores player_id, so this is the only reliable way to tell "left MY Expedition" from
+   * "left THEIR Expedition" once the reaction resolves. Used by The Mess ("When a Character
+   * leaves your Expeditions"), whose trigger is about the zone, not the card's owner.
+   */
+  public static function hasSameEventController($card, $event)
+  {
+    return ($event['controller'] ?? $event['pId'] ?? -1) == $card->getPId();
   }
 
   /** True when the passive card's owner voluntarily discards one of their own cards. */
@@ -203,6 +216,13 @@ abstract class Conditions
   public static function isSelfPlayCardEvent($card, $event)
   {
     return ($event['playCard'] ?? false) && (int) ($event['cardId'] ?? -1) === (int) $card->getId();
+  }
+
+  /** False when an opponent blocking power (eg. The Council) faces this card, preventing its on-play effect. */
+  public static function isNotBlockedByOpponentPower($card, $event)
+  {
+    $location = $event['to'] ?? $card->getLocation();
+    return !Players::hasOpponentBlockingPower($card->getPlayer(), $location, $card->isGigantic());
   }
 
   public static function isNotMe($card, $event)
@@ -334,7 +354,7 @@ abstract class Conditions
         $card->getPId() != $event['pId'] ||
         !isset($stormMoves[$card->getPId()][$storm])
       ) {
-        return false;
+        continue;
       }
 
       // $side = $storm == STORM_LEFT ? HERO : COMPANION;
@@ -964,6 +984,11 @@ abstract class Conditions
     }
     return !empty($playerAbilities[$type]);
   }
+
+  public static function checkAbilityNotActivatedThisTurn($card, $event, $type = 'any')
+  {
+    return !self::checkAbilityActivatedThisTurn($card, $event, $type);
+  }
   
   public static function checkAbilityActivatedThisTurnTypeCount($card, $event, $type, $n = 1, $op = 'GTE')
   {
@@ -1268,6 +1293,10 @@ abstract class Conditions
 
   public static function hasOneContact($card, $event)
   {
+    $location = $event['location'] ?? null;
+    if ($location == STORM_LEFT || $location == STORM_RIGHT) {
+      return $card->getPlayer()->isInContact($location);
+    }
     return $card->getPlayer()->isInContact(STORM_LEFT) || $card->getPlayer()->isInContact(STORM_RIGHT);
   }
 
@@ -1325,17 +1354,21 @@ abstract class Conditions
     return ($card->getExtraDatas()['userPower'] ?? false) == true;
   }
   
+  /**
+   * Charges are stored per copy (pId => [cardId => charges]): with two completed copies,
+   * arming one must not make the other one think it is armed.
+   * Legacy saves stored a single player-wide charge count instead.
+   */
   public static function getSmokeThemOutCharges($pId, $cardId = null)
   {
     $val = Globals::getSmokeThemOutArmed()[$pId] ?? 0;
-    if (is_int($val) || (is_string($val) && ctype_digit($val))) {
-      return (int) $val;
+    if (is_array($val)) {
+      if ($cardId === null) {
+        return (int) array_sum($val);
+      }
+      return (int) ($val[$cardId] ?? 0);
     }
-    if ($val) {
-      // Legacy saves stored cardId instead of a charge count.
-      return ($cardId === null || $val == $cardId) ? 1 : 0;
-    }
-    return 0;
+    return (int) $val;
   }
 
   public static function isSmokeThemOutArmed($card, $event)
@@ -1343,25 +1376,46 @@ abstract class Conditions
     return self::getSmokeThemOutCharges($card->getPId(), $card->getId()) > 0;
   }
 
-  public static function armSmokeThemOut($pId)
+  public static function armSmokeThemOut($pId, $cardId)
   {
     $armed = Globals::getSmokeThemOutArmed();
-    $armed[$pId] = self::getSmokeThemOutCharges($pId) + 1;
+    $charges = is_array($armed[$pId] ?? null) ? $armed[$pId] : [];
+    $charges[$cardId] = ($charges[$cardId] ?? 0) + 1;
+    $armed[$pId] = $charges;
     Globals::setSmokeThemOutArmed($armed);
   }
 
   public static function consumeSmokeThemOutCharge($pId, $cardId = null)
   {
-    $charges = self::getSmokeThemOutCharges($pId, $cardId);
-    if ($charges <= 0) {
+    $armed = Globals::getSmokeThemOutArmed();
+    $charges = $armed[$pId] ?? null;
+
+    if (!is_array($charges)) {
+      $remaining = self::getSmokeThemOutCharges($pId, $cardId) - 1;
+      if ($remaining < 0) {
+        return;
+      }
+      if ($remaining == 0) {
+        unset($armed[$pId]);
+      } else {
+        $armed[$pId] = $remaining;
+      }
+      Globals::setSmokeThemOutArmed($armed);
       return;
     }
-    $armed = Globals::getSmokeThemOutArmed();
-    $remaining = $charges - 1;
-    if ($remaining <= 0) {
+
+    if ($cardId === null || ($charges[$cardId] ?? 0) <= 0) {
+      return;
+    }
+
+    $charges[$cardId]--;
+    if ($charges[$cardId] <= 0) {
+      unset($charges[$cardId]);
+    }
+    if (empty($charges)) {
       unset($armed[$pId]);
     } else {
-      $armed[$pId] = $remaining;
+      $armed[$pId] = $charges;
     }
     Globals::setSmokeThemOutArmed($armed);
   }
@@ -2466,7 +2520,9 @@ abstract class Conditions
       return false;
     }
     $target = Cards::get($event['cardId']);
-    return $target->getForest() <= $card->getForest();
+    $targetForest = (int) ($target->getBiomes(true)[FOREST] ?? 0);
+    $sourceForest = (int) ($card->getBiomes(true)[FOREST] ?? 0);
+    return $targetForest <= $sourceForest;
   }
 
   public static function countMonoVisibleRegions($card, $event, $n = 1, $op = 'GTE')

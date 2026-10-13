@@ -82,6 +82,8 @@ class SpecialEffect extends \ALT\Models\Action
         return clienttranslate('Boost number of cards in reserve');
       case 'boostXLandmark':
         return clienttranslate('Boost number of landmarks');
+      case 'boostXFeat':
+        return clienttranslate('Boost number of feats');  
       case 'boostXReserveAll':
         return clienttranslate('Boost number of all cards in reserve');
       case 'boost3Stat0':
@@ -241,6 +243,8 @@ class SpecialEffect extends \ALT\Models\Action
         return clienttranslate('Sacrifice highest opponent character');
       case 'sacrificeHighestCharacterPermanent':
         return clienttranslate('Sacrifice highest opponent character or permanent');
+       case 'boostXAnimalsMax2':
+        return clienttranslate('1 Boost per other Animal (max 2)');
         // EOLE
       case 'nextCharacterAsleep':
         return clienttranslate('Next character gains <ASLEEP>');
@@ -352,7 +356,7 @@ class SpecialEffect extends \ALT\Models\Action
         $card->setExtraDatas($data);
         break;
       case 'armSmokeThemOut':
-        Conditions::armSmokeThemOut($card->getPId());
+        Conditions::armSmokeThemOut($card->getPId(), $card->getId());
         break;
       case 'disarmSmokeThemOut':
         Conditions::consumeSmokeThemOutCharge($card->getPId(), $card->getId());
@@ -601,6 +605,15 @@ class SpecialEffect extends \ALT\Models\Action
           $this->insertAsChild(FT::GAIN($card, BOOST, $n));
         }
         break;
+      case 'boostXFeat':
+        $n = $card
+          ->getPlayer()
+          ->getFeats()
+          ->count();
+        if ($n > 0) {
+          $this->insertAsChild(FT::GAIN($card, BOOST, $n));
+        }
+        break;  
       case 'boostXFleetingChar';
         $n = $card
           ->getPlayer()
@@ -2494,7 +2507,17 @@ class SpecialEffect extends \ALT\Models\Action
         if (!empty($nodes)) {
           $this->insertAsChild(['type' => NODE_SEQ, 'childs' => $nodes['childs']]);
         }
-        break;     
+        break;   
+      // #238924: Uniques with effect Sap Duende on target
+      case 'swapBoostsWithSource':
+        $pickedId = $this->getCtxArg('cardId');
+        if ($pickedId === ME || $pickedId === EFFECT) {
+          $pickedId = null;
+        }
+        if (!is_null($pickedId)) {
+          $this->insertAsChild(FT::ACTION(BOOST_EXCHANGE, ['cardId' => $pickedId], ['sourceId' => $this->getSourceId()]));
+        }
+        break;  
       // #206754: insert at runtime with opponent pId so LeaveExpedition tagTree cannot
       // stamp the controller onto nested RESUPPLY (TARGET_PLAYER > SEQ_OPTIONAL breaks there).
       case 'targetOpponentOptionalExhaustedResupply':

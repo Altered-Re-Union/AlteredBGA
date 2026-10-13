@@ -98,7 +98,7 @@ class TargetExpedition extends \ALT\Models\Action
     if ($expedition == 'all') {
       $expedition = $args['expeditions'];
     }
-    foreach ($expedition as $exp) {
+    foreach ($expedition as $index => $exp) {
       $expeditions = explode('-', $exp);
       if (!in_array($exp, $args['expeditions'])) {
         throw new \BgaVisibleSystemException('Invalid target expedition. Should not happen');
@@ -111,6 +111,9 @@ class TargetExpedition extends \ALT\Models\Action
       $node['args']['player'] = $pId;
       $node['args']['expedition'] = $expeditions[1];
       $node['args']['forceExpedition'] = [$pId, $expeditions[1]];
+      if (count($expedition) > 1 && $index > 0) {
+        $node['args']['moreThan1'] = true;
+      }
 
       if (isset($node['childs'])) {
         foreach ($node['childs'] as &$child) {

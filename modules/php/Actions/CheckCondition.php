@@ -21,7 +21,7 @@ class CheckCondition extends \ALT\Models\Action
     return ST_CHECK_CONDITION;
   }
 
-  protected $args = ['condition' => null, 'effect' => null, 'oppositeEffect' => null, 'previousEvent' => false];
+  protected $args = ['condition' => null, 'effect' => null, 'oppositeEffect' => null, 'previousEvent' => false, 'ignoreDeck' => false];
 
   private function isFlowEffect($effect): bool
   {
@@ -157,7 +157,7 @@ class CheckCondition extends \ALT\Models\Action
     }
 
     $effect = $this->getArg('effect');
-    if ($this->effectRequiresDeck($effect) && !$this->getDeckPlayer($player)->hasDeckCards()) {
+    if (!$this->getArg('ignoreDeck') && $this->effectRequiresDeck($effect) && !$this->getDeckPlayer($player)->hasDeckCards()) {
       return false;
     }
 

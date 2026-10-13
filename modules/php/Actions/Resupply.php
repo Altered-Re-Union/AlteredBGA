@@ -65,7 +65,7 @@ class Resupply extends \ALT\Models\Action
 
   public function isDoable($player)
   {
-    return $this->getPlayer()->hasDeckCards();
+    return true;
   }
 
   protected $args = [
@@ -207,6 +207,8 @@ class Resupply extends \ALT\Models\Action
         );
         $cards = $drawn;
         $checkpoint = false;
+      } else {
+        $cards = $drawn;
       }
     } else {
       $cards = $player->draw(

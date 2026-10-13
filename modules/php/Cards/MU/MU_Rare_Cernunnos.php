@@ -8,7 +8,7 @@ class MU_Rare_Cernunnos extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_MU_14_R',
+      'uid' => 'ALT_CORE_B_MU_14_R1',
       'asset' => 'ALT_CORE_B_MU_14_R',
 
       'faction' => FACTION_MU,

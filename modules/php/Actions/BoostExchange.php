@@ -44,9 +44,9 @@ class BoostExchange extends \ALT\Models\Action
   public function stBoostExchange()
   {
     $player = $this->getPlayer();
-    $allIds = $this->getArg('cardId');
+    $allIds = $this->resolveSwapIds($this->getArg('cardId'));
     if (is_null($allIds) || count($allIds) != 2) {
-      throw new \Bga\GameFramework\VisibleSystemException('No Ids to switch in boostExchange, should not happen');
+      throw new \BgaVisibleSystemException('No Ids to switch in boostExchange, should not happen');
     }
 
     $source = $this->ctx->getSource() ?? null;
@@ -92,5 +92,58 @@ class BoostExchange extends \ALT\Models\Action
 
 
     $this->resolveAction();
+  }
+  
+  /**
+   * Sap Duende passes two ids at once. Unique 839 is a nested TARGET: the second pick is
+   * `cardId`, the first pick (or the unique itself) is recovered from ancestor ctx / source.
+   */
+  private function resolveSwapIds($allIds)
+  {
+    if (is_array($allIds)) {
+      $ids = array_values($allIds);
+      if (count($ids) == 2) {
+        return $ids;
+      }
+      if (count($ids) != 1) {
+        return null;
+      }
+      $allIds = $ids[0];
+    }
+
+    if (!$this->isResolvedCardId($allIds)) {
+      return null;
+    }
+
+    $pickedId = $allIds;
+    $otherId = $this->findPreviousTargetCardId($pickedId);
+    if ($otherId === null) {
+      $otherId = $this->getSourceId();
+    }
+    if (!$this->isResolvedCardId($otherId) || $otherId == $pickedId) {
+      return null;
+    }
+
+    return [$pickedId, $otherId];
+  }
+
+  private function findPreviousTargetCardId($excludeId)
+  {
+    $ctx = $this->getCtx();
+    $parent = ($ctx !== null && method_exists($ctx, 'getParent')) ? $ctx->getParent() : null;
+    while ($parent !== null) {
+      $args = method_exists($parent, 'getArgs') ? ($parent->getArgs() ?? []) : [];
+      $cid = $args['cardId'] ?? null;
+      if ($this->isResolvedCardId($cid) && $cid != $excludeId) {
+        return $cid;
+      }
+      $parent = method_exists($parent, 'getParent') ? $parent->getParent() : null;
+    }
+    return null;
+  }
+
+  private function isResolvedCardId($cid)
+  {
+    return $cid !== null && $cid !== EFFECT && $cid !== ME && !is_array($cid) && is_numeric($cid);
   }
 }

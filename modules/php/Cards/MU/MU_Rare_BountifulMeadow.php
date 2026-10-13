@@ -10,7 +10,7 @@ class MU_Rare_BountifulMeadow extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_MU_24_R',
+      'uid' => 'ALT_CORE_B_MU_24_R1',
       'asset' => 'ALT_CORE_B_MU_24_R',
 
       'faction' => FACTION_MU,

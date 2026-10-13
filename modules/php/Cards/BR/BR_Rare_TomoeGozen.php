@@ -8,7 +8,7 @@ class BR_Rare_TomoeGozen extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_BR_23_R',
+      'uid' => 'ALT_CORE_B_BR_23_R1',
       'asset' => 'ALT_CORE_B_BR_23_R',
 
       'faction' => FACTION_BR,

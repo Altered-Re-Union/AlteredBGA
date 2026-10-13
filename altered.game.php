@@ -277,7 +277,8 @@ class altered extends Table
       // No reaction => just go to next player
       $this->nextPlayerCustomOrder($event['type']);
     } else {
-      $reaction = ['type' => NODE_PARALLEL, 'childs' => $reaction];
+      // When multiple effects trigger at the same phase, let player choose order
+      $reaction = ['type' => NODE_PARALLEL, 'childs' => $reaction, 'noIndependent' => count($reaction) > 1];
       // Reaction => boot up the Engine
       Engine::setup($reaction, ['order' => $event['type']]);
       Engine::proceed();

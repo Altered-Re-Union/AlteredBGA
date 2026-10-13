@@ -32,7 +32,7 @@ class MU_Rare_MiladydeWinter extends \ALT\Models\Card
         'targetLocation' => IN_PLAY,
         'targetType' => [PERMANENT],
         'onlyToken' => true,
-        'effect' => FT::ACTION(SPECIAL_EFFECT, ['effect' => 'defect', 'args' => ['takeControl' => true]])
+        'effect' => FT::ACTION(SPECIAL_EFFECT, ['effect' => 'defect', 'args' => ['moveToMe' => true, 'takeControl' => true]])
       ])
     ];
   }

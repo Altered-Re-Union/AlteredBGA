@@ -8,7 +8,7 @@ class YZ_Rare_StudiousDisciple extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_YZ_04_R',
+      'uid' => 'ALT_CORE_B_YZ_04_R1',
       'asset' => 'ALT_CORE_B_YZ_04_R',
 
       'faction' => FACTION_YZ,

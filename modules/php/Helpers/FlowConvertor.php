@@ -382,7 +382,7 @@ abstract class FlowConvertor
       798 => [
         'description' => clienttranslate('When you discard a card from your hand —'),
         'trigger' => 'Discard',
-        'condition' => ['isMe', 'isDiscarded:hand:discard', 'excludeSelf'],
+        'condition' => ['isMe', 'isInStorms', 'isDiscarded:hand:discard', 'excludeSelf'],
       ],
       801 => [
         'description' => clienttranslate('When an Animal other than me joins your Expeditions —'),
@@ -392,12 +392,12 @@ abstract class FlowConvertor
       804 => [
         'description' => clienttranslate('When you put a card from your hand in Reserve —'),
         'trigger' => 'Discard',
-        'condition' => ['isMe', 'isDiscarded:hand:reserve'],
+        'condition' => ['isMe', 'isInStorms', 'isDiscarded:hand:reserve'],
       ],
       805 => [
         'description' => clienttranslate('When I leave an <ASCENDED_S> Expedition —'),
         'trigger' => 'LeaveExpedition',
-        'condition' => ['isCardExpeditionAscended'],
+        'condition' => ['wasCardExpeditionAscended'],
         'pId' => CONTROLLER,
       ],
       808 => [
@@ -1297,11 +1297,11 @@ abstract class FlowConvertor
       ],
       903 => [
         'description' => clienttranslate('Unless you discarded a card from your hand or your Reserve this turn:'),
-        'condition' => 'checkAbilityActivatedThisTurnTypeCount:discard:0:LTE',
+        'condition' => 'checkAbilityNotActivatedThisTurn:discardFromHandOrReserve',
       ],
       904 => [
         'description' => clienttranslate('Unless you discarded a card from your hand this turn:'),
-        'condition' => 'checkAbilityActivatedThisTurnTypeCount:discard:0:LTE',
+        'condition' => 'checkAbilityNotActivatedThisTurn:discardFromHand',
       ],
       905 => [
         'description' => clienttranslate('If there are at most five cards in your discard pile:'),
@@ -1362,6 +1362,7 @@ abstract class FlowConvertor
           'targetLocation' => STORMS,
           'excludeSelf' => true,
           'upTo' => true,
+          'compareTargetBiome' => ['biome' => FOREST, 'op' => 'lte', 'source' => 'source'],
           'effect' => FT::ACTION(CHECK_CONDITION, [
             'condition' => 'isTargetForestLessOrEqualToSource',
             'effect' => 'OUTPUT',
@@ -1377,6 +1378,7 @@ abstract class FlowConvertor
           'targetLocation' => STORMS,
           'excludeSelf' => true,
           'upTo' => true,
+          'compareTargetBiome' => ['biome' => FOREST, 'op' => 'lte', 'source' => 'source'],
           'effect' => FT::ACTION(CHECK_CONDITION, [
             'condition' => 'isTargetForestLessOrEqualToSource',
             'effect' => 'OUTPUT',
@@ -1392,6 +1394,7 @@ abstract class FlowConvertor
           'targetLocation' => STORMS,
           'excludeSelf' => true,
           'upTo' => true,
+          'compareTargetBiome' => ['biome' => FOREST, 'op' => 'lte', 'source' => 'source'],
           'effect' => FT::ACTION(CHECK_CONDITION, [
             'condition' => 'isTargetForestLessOrEqualToSource',
             'effect' => 'OUTPUT',
@@ -5432,7 +5435,7 @@ abstract class FlowConvertor
         'description' => clienttranslate('<SABOTAGE> any number of Characters with total {V} less than or equal to my {V} stat.'),
         'output' => FT::ACTION(TARGET, [
           'targetType' => [CHARACTER, TOKEN],
-          'targetLocation' => STORMS,
+          'targetLocation' => [RESERVE],
           'n' => INFTY,
           'upTo' => true,
           'compareTargetBiome' => ['biome' => FOREST, 'op' => 'lte', 'source' => 'source'],
@@ -5566,8 +5569,7 @@ abstract class FlowConvertor
         'output' => FT::SEQ(
           FT::ACTION(SPECIAL_EFFECT, ['effect' => 'nextTokenAnchored']),
           FT::ACTION(INVOKE_TOKEN, [
-            'targetPlayer' => OPPONENT,
-            'targetLocation' => ['source'],
+            'pId' => 'source',
             'tokenType' => 'MU_Common_Woollyback',
           ]),
         ),
@@ -5696,7 +5698,8 @@ abstract class FlowConvertor
           'targetType' => [CHARACTER, TOKEN],
           'targetLocation' => [STORM_LEFT, STORM_RIGHT, RESERVE],
           'excludeSelf' => true,
-          'effect' => FT::ACTION(SPECIAL_EFFECT, ['effect' => 'swapBoostsWithSource']),
+          'excludePreviousTarget' => true,
+          'effect' => FT::ACTION(BOOST_EXCHANGE, []),
         ]),
       ],
       840 => [
@@ -5728,7 +5731,7 @@ abstract class FlowConvertor
       ],
       845 => [
         'description' => clienttranslate('I gain 1 boost per Feat in your Landmarks.'),
-        'output' => FT::ACTION(SPECIAL_EFFECT, ['effect' => 'boostXLandmark']),
+        'output' => FT::ACTION(SPECIAL_EFFECT, ['effect' => 'boostXFeat']),
       ],
       846 => [
         'description' => clienttranslate('I gain 1 boost, otherwise discard the top card of your deck.'),

@@ -23,6 +23,7 @@ class Globals extends \ALT\Helpers\DB_Manager
     'playerDecks' => 'obj',
     'deckOptions' => 'str',
     'deckContent' => 'obj',
+    'tokenStyles' => 'obj', // pId => tokenType => ['asset', 'mainAsset', 'fullArt']
     'undo' => 'bool',
     'statMapping' => 'obj',
     'deckFormat' => 'str',
@@ -87,7 +88,7 @@ class Globals extends \ALT\Helpers\DB_Manager
     'nextAnimalBoostOccurence' => 'int',
     'abilityActivatedThisTurnCount' => 'obj',
     'abilityActivatedThisTurnTypeCount' => 'obj',
-    'smokeThemOutArmed' => 'obj', // pId => int (completed support tap charges this assignment turn)
+    'smokeThemOutArmed' => 'obj', // pId => [cardId => int] (completed support tap charges this assignment turn)
     'samSpookEverDiscarded' => 'obj',
 
     'newDayManaSelection' => 'obj', // to avoid warning for legacy games

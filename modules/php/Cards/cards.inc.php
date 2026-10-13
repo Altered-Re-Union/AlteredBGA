@@ -10,11 +10,13 @@ require_once (dirname(__FILE__)) . '/StarterDecks/br_1_kojo.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/br_2_atsadi.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/br_3_basira.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/br_65_sol.inc.php';
+require_once (dirname(__FILE__)) . '/StarterDecks/br_105_gretel.inc.php';
 
 require_once (dirname(__FILE__)) . '/StarterDecks/ly_1_nevenka.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/ly_2_auraq.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/ly_3_fen.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/ly_65_nadir.inc.php';
+require_once (dirname(__FILE__)) . '/StarterDecks/ly_105_yeonggi.inc.php';
 
 require_once (dirname(__FILE__)) . '/StarterDecks/mu_1_teija.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/mu_2_arjun.inc.php';
@@ -32,6 +34,7 @@ require_once (dirname(__FILE__)) . '/StarterDecks/yz_1_akesha.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/yz_2_lindiwe.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/yz_3_afanas.inc.php';
 require_once (dirname(__FILE__)) . '/StarterDecks/yz_65_moyo.inc.php';
+require_once (dirname(__FILE__)) . '/StarterDecks/yz_105_sam.inc.php';
 
 require_once (dirname(__FILE__)) . '/DemoDecks/isaree.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/gretel.roc.php';
@@ -138,8 +141,8 @@ const STARTER_DECKS = array(
   ),
   array(
     'faction' => FACTION_BR,
-    'deckId' => 'gretel.roc',
-    'contents' => DEMO_ROC_GRETEL,
+    'deckId' => 'br_105_gretel',
+    'contents' => STARTER_GRETEL,
   ),
 
   // LYRA
@@ -165,8 +168,8 @@ const STARTER_DECKS = array(
   ),
   array(
     'faction' => FACTION_LY,
-    'deckId' => 'yeonggi.roc',
-    'contents' => DEMO_ROC_YEONGGI,
+    'deckId' => 'ly_105_yeonggi',
+    'contents' => STARTER_YEONGGI,
   ),
 
   // MUNA
@@ -246,8 +249,8 @@ const STARTER_DECKS = array(
   ),
   array(
     'faction' => FACTION_YZ,
-    'deckId' => 'sam.roc',
-    'contents' => DEMO_ROC_SAM,
+    'deckId' => 'yz_105_sam',
+    'contents' => STARTER_SAM,
   ),
 );
 
@@ -955,6 +958,7 @@ const MAP_REFS_CLASSES = [
   'ALT_ALIZE_B_MU_45_C' => 'MU/MU_Common_IceboundTaiga',
   'ALT_ALIZE_B_MU_45_R1' => 'MU/MU_Rare_IceboundTaiga',
   'ALT_ALIZE_B_MU_45_R2' => 'LY/LY_Rare_IceboundTaiga',
+  'ALT_ALIZE_B_NE_02_C' => 'NE/NE_Common_DragonShade',
   'ALT_ALIZE_B_OR_01_C' => 'OD/OD_Common_SigismarWingspan',
   'ALT_ALIZE_B_OR_03_C' => 'OD/OD_Common_GulrangTocsin',
   'ALT_ALIZE_B_OR_33_C' => 'OD/OD_Common_Hound',
@@ -1869,6 +1873,7 @@ const MAP_REFS_CLASSES = [
   'ALT_DUSTER_B_MU_102_C' => 'MU/MU_Common_TheNaos',
   'ALT_DUSTER_B_MU_102_R1' => 'MU/MU_Rare_TheNaos',
   'ALT_DUSTER_B_MU_102_R2' => 'OD/OD_Rare_TheNaos',
+  'ALT_DUSTER_B_NE_04_C' => 'NE/NE_Common_Manaseed',
   'ALT_DUSTER_B_OR_85_C' => 'OD/OD_Common_MatzHive',
   'ALT_DUSTER_B_OR_95_C' => 'OD/OD_Common_Kikimora',
   'ALT_DUSTER_B_OR_95_R1' => 'OD/OD_Rare_Kikimora',
@@ -2162,6 +2167,7 @@ const MAP_REFS_CLASSES = [
   'ALT_EOLE_B_MU_122_C' => 'MU/MU_Common_GatherthePack',
   'ALT_EOLE_B_MU_122_R1' => 'MU/MU_Rare_GatherthePack',
   'ALT_EOLE_B_MU_122_R2' => 'BR/BR_Rare_GatherthePack',
+  'ALT_EOLE_B_NE_03_C' => 'NE/NE_Common_Aerolith',
   'ALT_EOLE_B_OR_65_C' => 'OD/OD_Common_ZhenZephyr',
   'ALT_EOLE_B_OR_108_C' => 'OD/OD_Common_PaperEnvoy',
   'ALT_EOLE_B_OR_108_R1' => 'OD/OD_Rare_PaperEnvoy',

@@ -10,7 +10,7 @@ class AX_Rare_BrassbugHive extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_AX_30_R',
+      'uid' => 'ALT_CORE_B_AX_30_R1',
       'asset' => 'ALT_CORE_B_AX_30_R',
 
       'faction' => FACTION_AX,
@@ -44,12 +44,10 @@ class AX_Rare_BrassbugHive extends \ALT\Models\Card
         ],
         'ChooseAssignment' => [
           'conditions' => ['isCardAdded:robot', 'isStillSameLocation', 'hasSameOwner'],
-          'immediate' => true,
           'output' => FT::GAIN(EFFECT, BOOST),
         ],
         'InvokeToken' => [
           'conditions' => ['isCardAdded:robot', 'isStillSameLocation', 'hasSameOwner'],
-          'immediate' => true,
           'output' => FT::GAIN(EFFECT, BOOST),
         ],
       ],

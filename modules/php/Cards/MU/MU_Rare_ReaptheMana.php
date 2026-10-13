@@ -53,6 +53,7 @@ class MU_Rare_ReaptheMana extends \ALT\Models\Card
               'effect' => FT::ACTION(MOVE_EXPEDITION, [
                 'pId' => ME,
                 'n' => 1,
+                'force' => true,
               ]),
             ]),
           ),

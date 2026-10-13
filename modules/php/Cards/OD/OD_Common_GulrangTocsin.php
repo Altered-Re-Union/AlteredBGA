@@ -34,7 +34,6 @@ class OD_Common_GulrangTocsin extends \ALT\Models\Card
           'conditions' => ['isMe', 'isCardPlayed:character'],
           // Apply inline so nested creates (LeaveExpedition / opponent Draw → Quetzalcoatl)
           // still boost before after-finishing resolution moves on. Same pattern as Brassbug Hive.
-          'immediate' => true,
           'output' => FT::GAIN(EFFECT, BOOST),
         ],
       ],

@@ -310,8 +310,9 @@ class Target extends \ALT\Models\Action
     $compareFilter = $this->resolveCompareTargetBiomeFilter();
 
     // Which criteria ?
-    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic, $augmentOnly, $ascendedOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter,$noBoostIfBoosted) {
-      if ($excludeSelf && $c->getId() == $sourceId) {
+    $allowSelfAsSecondBoostSwap = $this->canTargetSourceAsBoostSwapPair($sourceId, $previousTargetId);
+    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $allowSelfAsSecondBoostSwap, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic, $augmentOnly, $ascendedOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter,$noBoostIfBoosted) {
+      if ($excludeSelf && $c->getId() == $sourceId && !$allowSelfAsSecondBoostSwap) {
         return false;
       }
       if ($excludePreviousTarget && $previousTargetId && $c->getId() == $previousTargetId) {
@@ -724,6 +725,46 @@ class Target extends \ALT\Models\Action
       return count($subType) === 1 ? $subType[0] : null;
     }
     return $subType;
+  }
+  
+  /**
+   * Output 839: "Exchange its boosts with target Character in play or in Reserve" does not
+   * exclude the unique. After 911 picks another Character, the unique is a legal second target.
+   * Standalone 839 still uses excludeSelf (swapping with yourself is a no-op).
+   */
+  private function canTargetSourceAsBoostSwapPair($sourceId, $previousTargetId)
+  {
+    $effect = $this->getArg('effect');
+    if (!is_array($effect)) {
+      return false;
+    }
+    $action = $effect['action'] ?? null;
+    $isBoostSwap = $action === BOOST_EXCHANGE
+      || ($action === SPECIAL_EFFECT && (($effect['args']['effect'] ?? null) === 'swapBoostsWithSource'));
+    if (!$isBoostSwap) {
+      return false;
+    }
+
+    if ($this->isResolvedTargetCardId($previousTargetId) && $previousTargetId != $sourceId) {
+      return true;
+    }
+
+    $ctx = $this->getCtx();
+    $parent = ($ctx !== null && method_exists($ctx, 'getParent')) ? $ctx->getParent() : null;
+    while ($parent !== null) {
+      $args = method_exists($parent, 'getArgs') ? ($parent->getArgs() ?? []) : [];
+      $cid = $args['cardId'] ?? null;
+      if ($this->isResolvedTargetCardId($cid) && $cid != $sourceId) {
+        return true;
+      }
+      $parent = method_exists($parent, 'getParent') ? $parent->getParent() : null;
+    }
+    return false;
+  }
+
+  private function isResolvedTargetCardId($cid)
+  {
+    return $cid !== null && $cid !== EFFECT && $cid !== ME && !is_array($cid) && is_numeric($cid);
   }
 
   /**

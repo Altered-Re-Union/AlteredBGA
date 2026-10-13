@@ -10,7 +10,7 @@ class AX_Rare_KelonElemental extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_AX_04_R',
+      'uid' => 'ALT_CORE_B_AX_04_R1',
       'asset' => 'ALT_CORE_B_AX_04_R',
 
       'faction' => FACTION_AX,

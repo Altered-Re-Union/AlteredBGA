@@ -10,7 +10,7 @@ class AX_Rare_Boom extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_AX_21_R',
+      'uid' => 'ALT_CORE_B_AX_21_R1',
       'asset' => 'ALT_CORE_B_AX_21_R',
 
       'faction' => FACTION_AX,

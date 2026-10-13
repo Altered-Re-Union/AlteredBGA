@@ -29,15 +29,15 @@ class MU_Common_NikauKaurisFather extends \ALT\Models\Card
       'costReserve' => 2,
       'effectPassive' => [
         'ChooseAssignment' => [
-          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardPlayed:animal:::true', 'hasSameOwner'],
+          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardAddedAnyPlayer:animal:::true'],
           'output' => FT::GAIN(ME, BOOST, 1, 2),
         ],
         'InvokeToken' => [
-          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardPlayed:animal:::true', 'hasSameOwner'],
+          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardAddedAnyPlayer:animal:::true'],
           'output' => FT::GAIN(ME, BOOST, 1, 2),
         ],
         'MoveCard' => [
-          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardPlayed:animal:::true', 'hasSameOwner'],
+          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardAddedAnyPlayer:animal:::true'],
           'output' => FT::GAIN(ME, BOOST, 1, 2),
         ],
       ],

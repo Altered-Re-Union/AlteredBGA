@@ -33,7 +33,6 @@ class AX_Exalted_PlagueofAvarice extends \ALT\Models\Card
               FT::ACTION(TARGET, [
               'targetPlayer' => ME,
               'targetType' => [PERMANENT],
-              'upTo' => true,
               'effect' => FT::ACTION(DISCARD, ['desc' => 'sacrifice'])
             ])
         ]

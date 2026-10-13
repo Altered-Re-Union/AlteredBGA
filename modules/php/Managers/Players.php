@@ -5,7 +5,6 @@ namespace ALT\Managers;
 use ALT\Core\Game;
 use ALT\Core\Globals;
 use ALT\Core\Stats;
-use ALT\Helpers\Utils;
 use ALT\Helpers\Collection;
 use ALT\Managers\Meeples;
 use ALT\Core\Notifications;
@@ -658,12 +657,12 @@ class Players extends \ALT\Helpers\CachedDB_Manager
           $win = $pIdWinner == $pId || ($isEqual && $isAscended);
           $movements[$pId][$side][$biome] = $win ? 2 : 1;
 
-          if ($isEqual && $isAscended){
+          if ($win) {
             $move = true;
+            $winningBiomes[] = $biome;
+          }
+          if ($isEqual && $isAscended) {
             $expeditionAscensionMoves[$pId][$expedition] = true;
-          } elseif ($pIdWinner == $pId)  {
-              $move = true;
-              $winningBiomes[] = $biome;
           }
         }
 
@@ -694,7 +693,16 @@ class Players extends \ALT\Helpers\CachedDB_Manager
             'forceExpedition' => [$pId, $expedition],
             'winningBiomes' => $winningBiomes,
             'ascended' => $isAscended,
+            'hasMovedFromAscension' => $hasMovedFromAscension,
           ];
+
+          // Pegasus is cumulative: all copies apply to a single move instead of being alternatives
+          $pegasusCards = [];
+          foreach ($actionInsteadAdvance[$pId][$expedition] as $cId => $action) {
+            if ($action == 'PegasusCommon') {
+              $pegasusCards[] = $cId;
+            }
+          }
 
           if (!in_array('ErisCommon', $actionInsteadAdvance[$pId][$expedition]) && !in_array('ErisRare', $actionInsteadAdvance[$pId][$expedition]) && !in_array('blockMove', $actionInsteadAdvance[$pId][$expedition]) && !in_array('PegasusCommon', $actionInsteadAdvance[$pId][$expedition])) {
             $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $n]), ['pId' => $pId]);
@@ -734,15 +742,16 @@ class Players extends \ALT\Helpers\CachedDB_Manager
               } else {
                 $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $n]), ['pId' => $pId]);
               }
-             } elseif ($action == 'PegasusCommon') {
-              $nValue = ($hasMovedFromAscension && $isAscended) ? $n + 1 : $n;
-              $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $nValue]), ['pId' => $pId]);
             } elseif ($action == 'blockMove') {
               // Eris, we need to check if it was triggered, else we do need to move the expedition
               if (!isset($playerMoves[$triggeredCard->getLocation()])) {
                 $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $n]), ['pId' => $pId]);
               }
             }
+          }
+          if (!empty($pegasusCards)) {
+            $nValue = ($hasMovedFromAscension && $isAscended) ? $n + count($pegasusCards) : $n;
+            $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $nValue]), ['pId' => $pId]);
           }
           if (!empty($nodes)) {
             $duskEngineSteps[] = count($nodes) == 1

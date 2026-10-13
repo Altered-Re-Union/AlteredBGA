@@ -57,7 +57,7 @@
 
   function renderDeckDifficultyStars(stars) {
     const filledCount = Math.max(0, Math.min(5, Number(stars) || 0));
-    return `<div class="deck-details-stars"><p>${_('Difficulty:')}</p> ${Array.from({ length: 5 }, (_unused, index) =>
+    return `<div class="deck-details-stars"><p>${_('Complexity:')}</p> ${Array.from({ length: 5 }, (_unused, index) =>
       `<span class="deck-star${index < filledCount ? ' filled' : ''}"></span>`
     ).join('')}</div>`;
   }
@@ -1528,16 +1528,37 @@
       if ($('overlay-deck-selection')) {
         $('overlay-deck-selection').classList.add('fetching');
       }
-      this.takeAction('actLoadAPIDecks', { request: strRequest, lock: false }, false).then((response) => {
-        if (!this._awaitingAPIReturn) return;
 
+      // A rejected takeAction() must still clear the in-flight flag: the guard at the top of
+      // this method blocks every later call while it is set, which would leave the overlay
+      // stuck on "fetching" forever with no way to retry.
+      const onReloadFailed = () => {
+        this._awaitingAPIReturn = false;
         if ($('overlay-deck-selection')) {
           $('overlay-deck-selection').classList.remove('fetching');
         }
-        let args = response.data;
-        args.update = true;
-        this.clientState('chooseFetchedDeck', _('Choose one of your deck'), args);
-      });
+        if ($('api-error')) {
+          $('api-error').innerHTML = _('Something went wrong, please try again.');
+        }
+      };
+
+      const attempt = this.takeAction('actLoadAPIDecks', { request: strRequest, lock: false }, false);
+      if (!attempt || typeof attempt.then !== 'function') {
+        onReloadFailed();
+        return;
+      }
+      attempt
+        .then((response) => {
+          if (!this._awaitingAPIReturn) return;
+
+          if ($('overlay-deck-selection')) {
+            $('overlay-deck-selection').classList.remove('fetching');
+          }
+          let args = response.data;
+          args.update = true;
+          this.clientState('chooseFetchedDeck', _('Choose one of your deck'), args);
+        })
+        .catch(onReloadFailed);
     },
 
     selectCustomDeckFaction(faction) {
@@ -1554,7 +1575,10 @@
  
      onEnteringStateChooseFetchedDeck(args) {
        this._awaitingAPIReturn = false;
-      this._apiRequest = args.request;
+      this._apiRequest = Object.assign({}, args.request);
+      // Server-generated attribution payload; regenerated on every call and rejected by the
+      // server's alphanumeric input guard, so it must not be echoed back to it.
+      delete this._apiRequest.eventFormat;
       // Cached so the "Back" button from the deck preview can rebuild this list
       // without another round trip to the deck-list API.
       this._chooseFetchedDeckArgs = args;
@@ -1783,13 +1807,31 @@
 
        this.addCard({ id: '-hero', properties: deck.cards.hero.card.properties }, 'deck-hero');
        $(`card--hero`).insertAdjacentHTML('beforeend', `<div class='faction-banner' data-faction='${deck.faction}'></div>`);
+       let heroCardEl = $(`card--hero`);
+       if (!heroCardEl.querySelector('.card-frame')) {
+         heroCardEl.querySelector('.altered-card-wrapper').insertAdjacentHTML(
+           'afterbegin',
+           `<div class='card-frame' data-fullart='1' data-faction='${deck.cards.hero.card.properties.faction}' data-type='hero'></div>`
+         );
+       }
 
        Object.entries(deck.cards).forEach(([i, card]) => {
          if (i == 'hero') return;
+         if (card.card.properties.token) return;
 
-         let id = 'preview-' + i;
-         this.addCard({ id, properties: card.card.properties }, 'deck-cards');
-         $(`card-${id}`).querySelector('.card-frame').dataset.copies = card.n;
+          let id = 'preview-' + i;
+          let props = card.card.properties;
+          this.addCard({ id, properties: props }, 'deck-cards');
+          let cardEl = $(`card-${id}`);
+          let frame = cardEl.querySelector('.card-frame');
+          if (!frame && props.fullArt) {
+            cardEl.querySelector('.altered-card-wrapper').insertAdjacentHTML(
+              'afterbegin',
+              `<div class='card-frame' data-fullart='1' data-faction='${props.faction}' data-rarity='${props.rarity}'></div>`
+            );
+            frame = cardEl.querySelector('.card-frame');
+          }
+          if (frame) frame.dataset.copies = card.n;
        });
      },
 

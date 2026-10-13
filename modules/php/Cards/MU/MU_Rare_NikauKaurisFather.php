@@ -30,15 +30,15 @@ class MU_Rare_NikauKaurisFather extends \ALT\Models\Card
       'costReserve' => 2,
       'effectPassive' => [
         'ChooseAssignment' => [
-          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardPlayed:animal:::true', 'isPlayedInOwnOtherExpedition'],
+          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardAddedAnyPlayer:animal:::true', 'isPlayedInOwnOtherExpedition'],
           'output' => FT::GAIN(EFFECT, BOOST),
         ],
         'InvokeToken' => [
-          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardPlayed:animal:::true', 'isPlayedInOwnOtherExpedition'],
+          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardAddedAnyPlayer:animal:::true', 'isPlayedInOwnOtherExpedition'],
           'output' => FT::GAIN(EFFECT, BOOST),
         ],
         'MoveCard' => [
-          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardPlayed:animal:::true', 'isPlayedInOwnOtherExpedition'],
+          'conditions' => ['isCardAddedAnyPlayer:character:::true', 'isCardAddedAnyPlayer:animal:::true', 'isPlayedInOwnOtherExpedition'],
           'output' => FT::GAIN(EFFECT, BOOST),
         ],
       ],

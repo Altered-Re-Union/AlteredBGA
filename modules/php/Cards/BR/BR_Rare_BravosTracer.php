@@ -10,7 +10,7 @@ class BR_Rare_BravosTracer extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_BR_07_R',
+      'uid' => 'ALT_CORE_B_BR_07_R1',
       'asset' => 'ALT_CORE_B_BR_07_R',
 
       'faction' => FACTION_BR,

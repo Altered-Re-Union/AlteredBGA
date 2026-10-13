@@ -28,7 +28,7 @@ class OD_Common_StigmaofBanality extends \ALT\Models\Card
       'effectHand' => FT::ACTION(TARGET, [
         'targetType' => [CHARACTER],
         'maxBaseCost' => 2,
-        'effect' => FT::SEQ(
+        'effect' => FT::SEQ_OPTIONAL_MANUAL(
             FT::ACTION(DISCARD, []),
             FT::ACTION(INVOKE_TOKEN, [
                 'pId' => 'source',

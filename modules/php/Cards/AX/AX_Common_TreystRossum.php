@@ -47,6 +47,7 @@ class AX_Common_TreystRossum extends \ALT\Models\Card
       ],
       'effectTap' => FT::ACTION(CHECK_CONDITION, [
         'condition' => 'hasCounterOnCard:5',
+        'ignoreDeck' => true,
         'effect' => FT::SEQ(
           FT::ACTION(DRAW, ['players' => ME]),
           FT::ACTION(TARGET, [
