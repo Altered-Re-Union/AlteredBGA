@@ -643,6 +643,13 @@ class Cards extends \ALT\Helpers\CachedPieces
     return $deckList;
   }
 
+  /** Demo decks offered by the DEMO format: the tournament deck once revealed, the RoC demo decks before. */
+  public static function getDemoDecks()
+  {
+    require_once dirname(__FILE__) . '/../Cards/cards.inc.php';
+    return time() >= strtotime(DEMO_ROC_FLOCK_REVEAL) ? DEMO_ROC_FLOCK_DECKS : DEMO_ROC_DECKS;
+  }
+
   public static function setupDemoDeck($player, $deckNumber, $deckList)
   {
     // Load list of cards
@@ -651,7 +658,7 @@ class Cards extends \ALT\Helpers\CachedPieces
     $toCreate = [];
     $pId = $player->getId();
 
-    foreach (DEMO_ROC_DECKS as $deck) {
+    foreach (self::getDemoDecks() as $deck) {
       $faction = $deck['faction'];
       $deckId = $deck['deckId'];
 
@@ -678,6 +685,16 @@ class Cards extends \ALT\Helpers\CachedPieces
             'name' => $card->getName(),
             'faction' => $card->getFaction(),
           ],
+        ];
+      }
+
+      // uniques are generated from their definition, one copy each
+      foreach ($deck['uniques'] ?? [] as $unique) {
+        $toCreate[] = [
+          'player_id' => $pId,
+          'location' => "deck-" . $deckNumber,
+          'nbr' => 1,
+          'properties' => self::generateUnique($unique),
         ];
       }
       $deckNumber++;

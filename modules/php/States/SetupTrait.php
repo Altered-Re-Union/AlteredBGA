@@ -59,7 +59,8 @@ trait SetupTrait
     }
 
     $demoDef = null;
-    foreach (DEMO_ROC_DECKS as $deck) {
+    // both lists: the reveal may happen between deck setup and this preview
+    foreach (array_merge(DEMO_ROC_DECKS, DEMO_ROC_FLOCK_DECKS) as $deck) {
       if ($deck['deckId'] === ($deckInfo['deckId'] ?? null)) {
         $demoDef = $deck;
         break;
@@ -84,6 +85,9 @@ trait SetupTrait
         continue;
       }
       $deckContent[] = ['card' => ['properties' => $card->getProperties()], 'n' => $n];
+    }
+    foreach ($demoDef['uniques'] ?? [] as $unique) {
+      $deckContent[] = ['card' => ['properties' => Cards::generateUnique($unique)], 'n' => 1];
     }
 
     return [
@@ -312,6 +316,9 @@ trait SetupTrait
       'mode' => $ratingMode,
       'payload' => [
         'format' => Globals::getDeckFormat(),
+        // bga-api looks up the player's last game of this tournament and returns the same deck list
+        'keepTournamentDeck' => $this->bga->tournament->isTournament()
+          && Globals::isKeepTournamentDeck(),
         'tableId' => $tableId,
         'tournamentName' => $tournamentInfo['name'] ?? null,
       ],

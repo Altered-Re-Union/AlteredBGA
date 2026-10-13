@@ -39,6 +39,7 @@ require_once (dirname(__FILE__)) . '/DemoDecks/yeonggi.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/kauri.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/zhen.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/sam.roc.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/tournament.roc.php';
 
 const DEMO_ROC_DECKS = array(
   array(
@@ -72,6 +73,19 @@ const DEMO_ROC_DECKS = array(
     'contents' => DEMO_ROC_SAM,
   ),
 );  
+
+// Deck of the 'Woollyback Flock' tournament, kept secret: the DEMO format only switches to it from this moment.
+// TEMPORARY TEST VALUE (13 Oct 2026, 18:10 Reunion time). Production value: 2026-11-08T11:00:00+01:00 (tournament 14:00 Paris time, reveal 3h before).
+const DEMO_ROC_FLOCK_REVEAL = '2026-10-13T18:10:00+04:00';
+
+const DEMO_ROC_FLOCK_DECKS = array(
+  array(
+    'faction' => FACTION_MU,
+    'deckId' => 'tournament.roc',
+    'contents' => DEMO_ROC_TOURNAMENT,
+    'uniques' => DEMO_ROC_TOURNAMENT_UNIQUES,
+  ),
+);
 
 const STARTER_DECKS = array(
   // AXIOM
