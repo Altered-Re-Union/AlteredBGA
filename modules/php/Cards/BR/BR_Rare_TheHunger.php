@@ -43,11 +43,11 @@ class BR_Rare_TheHunger extends \ALT\Models\Card
       ),
       'effectPassive' => [
         'Discard' => [
-          'conditions' => ['isDiscarded::discard', 'isNotToken'],
+          'conditions' => ['isInStorms', 'isDiscarded::discard', 'isNotToken'],
           'output' => FT::GAIN(ME, BOOST)
         ],
         'ChooseAssignment' => [
-          'conditions' => ['isAfternoon', 'isFromReserve', 'isSupportEffect'],
+          'conditions' => ['isInStorms', 'isAfternoon', 'isFromReserve', 'isSupportEffect'],
           'output' => FT::GAIN(ME, BOOST)
         ],
       ],
