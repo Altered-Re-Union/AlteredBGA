@@ -159,10 +159,12 @@ class Cards extends \ALT\Helpers\CachedPieces
       }
     } elseif (in_array($expUid[1], ['TCS3'])) {
       $expUid[1] = 'BISE';
-    } elseif (in_array($expUid[1], ['WCQ25', 'WCS25', 'WCF25', 'MUSUBI'])) {
+    } elseif (in_array($expUid[1], ['WCQ25', 'WCS25', 'WCF25', 'MUSUBI', 'JUDGE'])) {
       $expUid[1] = 'CORE';
     } elseif (in_array($expUid[1], ['WCS26'])) {
       $expUid[1] = 'DUSTER';
+    } elseif (in_array($expUid[1], ['EOLETOP', 'EOLECB', 'EOLEOP'])) {
+      $expUid[1] = 'EOLE';
     }
     $expUid[2] = 'B';
     $coreUid = implode('_', $expUid);
@@ -1193,6 +1195,12 @@ class Cards extends \ALT\Helpers\CachedPieces
       'ALT_WCS26_P_YZ_94' => ['flavorText' => ''],
       'ALT_EOLEOP_P_LY_111' => ['flavorText' => ''],
       'ALT_EOLETOP_P_OR_54' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_EOLETOP_A_AX_65' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_EOLETOP_A_BR_105' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_EOLETOP_A_LY_105' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_EOLETOP_A_MU_65' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_EOLETOP_A_OR_65' => ['flavorText' => '', 'fullArt' => true],
+      'ALT_EOLETOP_A_YZ_105' => ['flavorText' => '', 'fullArt' => true],
       'ALT_WCF25_P_BR_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_WCF25_P_LY_01' => ['flavorText' => '', 'fullArt' => true],
       'ALT_WCF25_P_MU_01' => ['flavorText' => '', 'fullArt' => true],
