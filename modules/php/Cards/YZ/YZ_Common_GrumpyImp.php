@@ -27,7 +27,7 @@ class YZ_Common_GrumpyImp extends \ALT\Models\Card
       'costReserve' => 2, 
       'effectPassive' => [
         'Discard' => [
-          'conditions' => ['hasSameOwner', 'isDiscarded:hand:discard', 'hasNoBoost'],
+          'conditions' => ['isInStorms', 'hasSameOwner', 'isDiscarded:hand:discard', 'hasNoBoost'],
           'output' => FT::GAIN(ME, BOOST)
         ],
       ],

@@ -39,11 +39,11 @@ class YZ_Common_TheHunger extends \ALT\Models\Card
             'effectHand' => FT::ACTION(SPECIAL_EFFECT, ['effect' => 'hunger']),
             'effectPassive' => [
                 'Discard' => [
-                    'conditions' => ['isDiscarded::discard', 'isNotToken'],
+                    'conditions' => ['isInStorms', 'isDiscarded::discard', 'isNotToken'],
                     'output' => FT::GAIN(ME, BOOST)
                 ],
                 'ChooseAssignment' => [
-                    'conditions' => ['isAfternoon', 'isFromReserve', 'isSupportEffect'],
+                    'conditions' => ['isInStorms', 'isAfternoon', 'isFromReserve', 'isSupportEffect'],
                     'output' => FT::GAIN(ME, BOOST)
                 ],
             ],
