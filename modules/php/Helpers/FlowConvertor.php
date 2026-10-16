@@ -2483,13 +2483,13 @@ abstract class FlowConvertor
           'targetLocation' => [RESERVE],
           'upTo' => true,
           'effect' => FT::ACTION(DISCARD, []),
-        ]),
+        ], ['optional' => true]),
         'oppositeOutput' => FT::ACTION(TARGET, [
           'targetType' => [CHARACTER, SPELL, PERMANENT],
           'upTo' => true,
           'targetLocation' => [RESERVE],
           'effect' => FT::ACTION(EXHAUST, []),
-        ]),
+        ], ['optional' => true]),
       ],
       266 => [
         'description' => clienttranslate('Any number of target Characters in {V} gain 2 boosts.'),
@@ -6335,6 +6335,13 @@ abstract class FlowConvertor
       $calculated['output'] = Utils::tagTree($calculated['output'], ['pId' => 'owner']);
     }
 
+    // Commit the "if you do" cost only. Do this before substituting OUTPUT so sabotage
+    // (and the otherwise) keep their own optional / upTo.
+    if ($calculated['ifYouDo'] && isset($calculated['oppositeOutput'])) {
+      $node = Utils::updateTree($node, true, false, ['optional']);
+      $node = Utils::updateTree($node, true, false, ['upTo']);
+    }
+
     if (isset($calculated['output'])) {
       self::addOutputToNode($calculated['output'], $node);
     }
@@ -6367,12 +6374,6 @@ abstract class FlowConvertor
           $eff['pId'] = $calculated['pId'];
         }
       }
-    }
-
-    if ($calculated['ifYouDo'] && isset($calculated['oppositeOutput'])) {
-      // we remove the optional values
-      $node = Utils::updateTree($node, true, false, ['optional']);
-      $node = Utils::updateTree($node, true, false, ['upTo']);
     }
 
     // needed for passive effects in reaction to a classical output (171 for example)
