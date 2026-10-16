@@ -4685,6 +4685,8 @@ abstract class FlowConvertor
       ],
       701 => [
         'description' => clienttranslate('Draw a card, then put a card from your hand in Reserve.'),
+        // Draw is a no-op on an empty deck; still allow putting a card from hand in Reserve.
+        'ignoreDeck' => true,
         'output' => FT::SEQ(
           FT::ACTION(DRAW, ['players' => ME]),
           FT::ACTION(TARGET, [
@@ -6259,7 +6261,7 @@ abstract class FlowConvertor
         self::insertCheckCondition($calculated['triggerConditions'], $node, [
           $calculated['conditionDescription'] ?? null,
           $calculated['outputDescription'] ?? null,
-        ]);
+        ], !empty($calculated['ignoreDeck']) ? ['ignoreDeck' => true] : []);
       }
       if (isset($calculated['conditionEffect'])) {
         self::addEffectToCondition($calculated['conditionEffect'], $node);
@@ -6775,19 +6777,22 @@ abstract class FlowConvertor
     if (isset($output['oppositeOutput'])) {
       $calculated['oppositeOutput'] = $output['oppositeOutput'];
     }
+    if (!empty($output['ignoreDeck'])) {
+      $calculated['ignoreDeck'] = true;
+    }
 
     // manage unique power attributes (tough/gigantic/) awaiting info from GDs
   }
 
-  public static function insertCheckCondition($conditions, &$node, $description)
+  public static function insertCheckCondition($conditions, &$node, $description, $extraArgs = [])
   {
     if (empty($node)) {
-      $node = FT::ACTION(CHECK_CONDITION, [
+      $node = FT::ACTION(CHECK_CONDITION, array_merge([
         'conditions' => $conditions,
         'effect' => 'OUTPUT',
         'oppositeEffect' => 'OPPOSITE',
         'description' => $description,
-      ]);
+      ], $extraArgs));
     } else {
       $nKey = Utils::search($node, function ($child) {
         return ($child['action'] ?? '') == CHECK_CONDITION;
