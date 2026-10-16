@@ -681,16 +681,16 @@ class Engine
   }
 
   /**
-   * Whether a reaction of $cardId is already queued (not resolved yet) in the current flow for
-   * this gain group
+   * Whether a reaction of $cardId about $gainCardId is already queued (not resolved yet) in the
+   * current flow for this gain group
    */
-  public static function hasPendingGroupedReaction($cardId, $group)
+  public static function hasPendingGroupedReaction($cardId, $gainCardId, $group)
   {
     if (is_null(self::$tree) || is_null($cardId) || is_null($group)) {
       return false;
     }
 
-    return self::$tree->hasPendingGroupedReaction($cardId, $group);
+    return self::$tree->hasPendingGroupedReaction($cardId, $gainCardId, $group);
   }
 
   /**

@@ -362,11 +362,12 @@ class AbstractNode
   }
 
   /**
-   * Whether a not-yet-resolved reaction of $cardId is already queued in the tree for the given
-   * gain group (see FT::SEQ_DISTRIBUTE_GAINS), to avoid queueing the same trigger several times
-   * when an effect gains counters on several cards at once.
+   * Whether a not-yet-resolved reaction of $cardId about $gainCardId is already queued in the tree
+   * for the given gain group (see FT::SEQ_DISTRIBUTE_GAINS), to avoid queueing the same trigger
+   * several times when an effect gains counters on several cards at once. Triggers once per
+   * (listener, gaining card) pair, so a listener can still react once for each card that gains.
    */
-  public function hasPendingGroupedReaction($cardId, $group)
+  public function hasPendingGroupedReaction($cardId, $gainCardId, $group)
   {
     foreach ($this->childs as $child) {
       $args = $child->getArgs() ?? [];
@@ -374,12 +375,13 @@ class AbstractNode
         !$child->isResolved() &&
         $child->getAction() == ACTIVATE_CARD &&
         ($args['cardId'] ?? null) == $cardId &&
+        ($args['event']['cardId'] ?? $args['event']['gain']['cardId'] ?? null) == $gainCardId &&
         ($args['event']['gainGroup'] ?? null) == $group
       ) {
         return true;
       }
 
-      if ($child->hasPendingGroupedReaction($cardId, $group)) {
+      if ($child->hasPendingGroupedReaction($cardId, $gainCardId, $group)) {
         return true;
       }
     }

@@ -277,8 +277,8 @@ class Action
   /**
    * When an effect distributes several gains at once (eg. "Distribute 4 boosts...", see
    * FT::SEQ_DISTRIBUTE_GAINS), all its gains belong to the same gain event: only the first
-   * reaction of a given listener is kept, so "gains 1 or more boosts" abilities trigger once
-   * for the whole distribution instead of once per gain.
+   * reaction of a given (listener, gaining card) pair is kept, so "gains 1 or more boosts"
+   * abilities trigger once per gaining card for the whole distribution instead of once per gain.
    */
   protected function filterGroupedReactions($reaction, $event)
   {
@@ -287,10 +287,11 @@ class Action
     }
 
     $group = $event['gainGroup'];
+    $gainCardId = $event['cardId'] ?? $event['gain']['cardId'] ?? null;
 
     return array_values(
-      array_filter($reaction, function ($child) use ($group) {
-        return !Engine::hasPendingGroupedReaction($child['args']['cardId'] ?? null, $group);
+      array_filter($reaction, function ($child) use ($group, $gainCardId) {
+        return !Engine::hasPendingGroupedReaction($child['args']['cardId'] ?? null, $gainCardId, $group);
       })
     );
   }
