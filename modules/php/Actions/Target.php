@@ -233,12 +233,19 @@ class Target extends \ALT\Models\Action
       }
     } elseif (!is_int($maxHandCost) && $maxHandCost == 'sourceCounter2') {
       $maxHandCost = ($this->getSource()->getExtraDatas()['counter'] ?? 0) + 2;
-    } elseif (!is_int($maxHandCost) && $maxHandCost == 'discard2') {
+    } elseif (!is_int($maxHandCost) && strpos($maxHandCost, 'discard') === 0) {
       $previousCardId = $this->getCtxArg('cardId');
       if (is_null($previousCardId)) {
-        $maxHandCost = 2;
+        preg_match('/discard([+-]?\d+)/', $maxHandCost, $matches);
+        $offset = isset($matches[1]) ? (int) $matches[1] : 0;
+        $maxHandCost = $offset;
       } else {
-        $maxHandCost = 2 + Cards::get($previousCardId)->getCostHand();
+        preg_match('/discard([+-]?\d+)/', $maxHandCost, $matches);
+        $offset = isset($matches[1]) ? (int) $matches[1] : 0;
+        if ($offset === 0 && $maxHandCost === 'discard') {
+          $offset = 0;
+        }
+        $maxHandCost = $offset + Cards::get($previousCardId)->getCostHand();
       }
     }
 
