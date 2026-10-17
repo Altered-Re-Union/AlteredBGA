@@ -59,9 +59,9 @@
         "description": "4-100 cards, all cards available, no faction or rarity restrictions."
       },
       "5": {
-        "name": "Roots of Corruption Demo Decks",
-        "tmdisplay": "Demo",
-        "description": "Play with demo decks from the set Roots of Corruption."
+        "name": "Woollyback Flock",
+        "tmdisplay": "Woollyback Flock",
+        "description": "Everyone plays the same predefined deck. Its list will only be revealed when the November 8th tournament starts; until then, only the Roots of Corruption demo decks are available."
       },
       "6": {
         "name": "Test",

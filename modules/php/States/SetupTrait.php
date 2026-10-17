@@ -59,7 +59,8 @@ trait SetupTrait
     }
 
     $demoDef = null;
-    foreach (DEMO_ROC_DECKS as $deck) {
+    // both lists: the reveal may happen between deck setup and this preview
+    foreach (array_merge(DEMO_ROC_DECKS, DEMO_ROC_FLOCK_DECKS) as $deck) {
       if ($deck['deckId'] === ($deckInfo['deckId'] ?? null)) {
         $demoDef = $deck;
         break;
@@ -84,6 +85,9 @@ trait SetupTrait
         continue;
       }
       $deckContent[] = ['card' => ['properties' => $card->getProperties()], 'n' => $n];
+    }
+    foreach ($demoDef['uniques'] ?? [] as $unique) {
+      $deckContent[] = ['card' => ['properties' => Cards::generateUnique($unique)], 'n' => 1];
     }
 
     return [
@@ -317,6 +321,9 @@ trait SetupTrait
       'mode' => $ratingMode,
       'payload' => [
         'format' => Globals::getDeckFormat(),
+        // bga-api looks up the player's last game of this tournament and returns the same deck list
+        'keepTournamentDeck' => $this->bga->tournament->isTournament()
+          && Globals::isKeepTournamentDeck(),
         'tableId' => $tableId,
         'tournamentName' => $tournamentInfo['name'] ?? null,
         'tournamentParentId' => $tournamentInfo['tournament_parent_id'] ?? null,
@@ -500,6 +507,18 @@ trait SetupTrait
         $deckNumber = $selection[$pId];
         // faction setup
         $faction = Globals::getPlayerDecks()[$pId][$deckNumber]['faction'];
+
+        // Demo / starter decks are not stored in Globals::deckContent (only API and random
+        // decks are), so keep their list here (before the hero leaves the deck location)
+        // for the end-of-game report.
+        $preview = Globals::getDeckFormat() == 'DEMO'
+          ? $this->getDemoDeckPreview($pId, $deckNumber)
+          : $this->getStarterDeckPreview($pId, $deckNumber);
+        if ($preview !== null) {
+          $gContent = Globals::getDeckContent();
+          $gContent[$pId] = $preview;
+          Globals::setDeckContent($gContent);
+        }
       }
       $faction = substr($faction, 0, 2);
       $player->setFaction($faction);
