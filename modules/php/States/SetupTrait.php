@@ -507,6 +507,18 @@ trait SetupTrait
         $deckNumber = $selection[$pId];
         // faction setup
         $faction = Globals::getPlayerDecks()[$pId][$deckNumber]['faction'];
+
+        // Demo / starter decks are not stored in Globals::deckContent (only API and random
+        // decks are), so keep their list here (before the hero leaves the deck location)
+        // for the end-of-game report.
+        $preview = Globals::getDeckFormat() == 'DEMO'
+          ? $this->getDemoDeckPreview($pId, $deckNumber)
+          : $this->getStarterDeckPreview($pId, $deckNumber);
+        if ($preview !== null) {
+          $gContent = Globals::getDeckContent();
+          $gContent[$pId] = $preview;
+          Globals::setDeckContent($gContent);
+        }
       }
       $faction = substr($faction, 0, 2);
       $player->setFaction($faction);
