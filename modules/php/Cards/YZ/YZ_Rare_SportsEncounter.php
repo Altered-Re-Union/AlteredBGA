@@ -29,7 +29,7 @@ class YZ_Rare_SportsEncounter extends \ALT\Models\Card
       'costReserve' => 1,
       'changedStats' => ['costReserve'],
       'cooldown' => true,
-      'effectPlayed' => FT::SEQ(
+      'effectPlayed' => FT::SEQ_DISTRIBUTE_GAINS(
         FT::ACTION(TARGET, ['targetLocation' => [STORM_LEFT, STORM_RIGHT, RESERVE], 'effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
         FT::ACTION(TARGET, ['targetLocation' => [STORM_LEFT, STORM_RIGHT, RESERVE], 'effect' => FT::ACTION(GAIN, ['type' => BOOST])]),
       ),
