@@ -1585,6 +1585,9 @@ class Card extends \ALT\Helpers\DB_Model
     }
     $subType = '';
     $dynamicDefender = $this->getDynamicDefender();
+    // Dynamic attributes can be suffixed by a trigger condition ("marker:cond1|cond2"); the aura
+    // marker below must be detected on its base segment, not on the whole string.
+    $dynamicDefenderBase = is_string($dynamicDefender) ? explode(':', $dynamicDefender)[0] : '';
     switch ($dynamicDefender) {
       case '2OtherPlants':
         $subType = PLANT;
@@ -1613,7 +1616,10 @@ class Card extends \ALT\Helpers\DB_Model
       }
     }
 
-    if ($dynamicDefender != '' && $subType == '') {
+    // "otherExpeditionCharacter" is an aura marker (see the aura block below), possibly followed by a
+    // trigger condition: it grants Defender to Characters in the other Expedition, it does not make
+    // this card a Defender itself.
+    if ($dynamicDefender != '' && $subType == '' && $dynamicDefenderBase != 'otherExpeditionCharacter') {
       return !is_null(Utils::checkAttributeCondition('defender', $dynamicDefender, $this->getPlayer(), $this));
     }
 
@@ -1623,7 +1629,12 @@ class Card extends \ALT\Helpers\DB_Model
         if ($auraCard->getId() == $this->getId()) {
           continue;
         }
-        if ($auraCard->getDynamicDefender() != 'otherExpeditionCharacter') {
+        $auraDefender = $auraCard->getDynamicDefender();
+        if (!is_string($auraDefender) || explode(':', $auraDefender)[0] != 'otherExpeditionCharacter') {
+          continue;
+        }
+        // The marker can carry a trigger condition; the aura is only active when it holds.
+        if (is_null(Utils::checkAttributeCondition('defender', $auraDefender, $auraCard->getPlayer(), $auraCard))) {
           continue;
         }
         // Gigantic cards have no "other expedition" to grant.
