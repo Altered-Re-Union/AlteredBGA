@@ -1965,6 +1965,7 @@ abstract class FlowConvertor
         ]),
       ],
       122 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate(
           'You may put me in my owner\'s Mana zone (as an exhausted Mana Orb). If you don\'t, draw a card.'
         ),
@@ -2395,6 +2396,7 @@ abstract class FlowConvertor
         ]),
       ],
       229 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate(
           'You may put me in my owner\'s Mana zone (as an exhausted Mana Orb). If you don\'t, draw a card.'
         ),
@@ -3299,6 +3301,7 @@ abstract class FlowConvertor
         ]),
       ],
       351 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate(
           'You may send target Character to Reserve. Unless it was in {V}, its controller draws a card.'
         ),
@@ -3394,6 +3397,7 @@ abstract class FlowConvertor
         'oppositeOutput' => FT::ACTION(RESUPPLY, []),
       ],
       452 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('<SABOTAGE>. If you discarded a card this way, its owner <EXHAUSTED_RESUPPLIES>.'),
         'output' => FT::ACTION(TARGET, [
           'targetType' => [CHARACTER, SPELL, TOKEN, PERMANENT],
@@ -3803,6 +3807,7 @@ abstract class FlowConvertor
         ]),
       ],
       500 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate(
           'You may discard target Permanent with Hand Cost {2} or less. If you do, its controller <RESUPPLIES>.'
         ),
@@ -4095,6 +4100,7 @@ abstract class FlowConvertor
         ),
       ],
       559 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate(
           'Create a <WOOLLYBACK> Animal token in target opponent\'s Companion Expedition, then draw a card.'
         ),
@@ -4602,6 +4608,7 @@ abstract class FlowConvertor
       ],
       // Duster
       690 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('<RESUPPLY>, then you may <RUSH>.'),
         'output' => FT::SEQ(
           FT::ACTION(RESUPPLY, []),
@@ -4661,6 +4668,7 @@ abstract class FlowConvertor
         ]),
       ],
       698 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('Draw a card, then create two <MANASEED> tokens in your Landmarks.'),
         'output' => FT::SEQ(
           FT::ACTION(DRAW, ['players' => ME]),
@@ -4673,6 +4681,7 @@ abstract class FlowConvertor
         )
       ],
       700 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('Draw a card, then create a <MANASEED> token in your Landmarks.'),
         'output' => FT::SEQ(
           FT::ACTION(DRAW, ['players' => ME]),
@@ -4684,7 +4693,10 @@ abstract class FlowConvertor
         )
       ],
       701 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('Draw a card, then put a card from your hand in Reserve.'),
+        // Draw is a no-op on an empty deck; still allow putting a card from hand in Reserve.
+        'ignoreDeck' => true,
         'output' => FT::SEQ(
           FT::ACTION(DRAW, ['players' => ME]),
           FT::ACTION(TARGET, [
@@ -4837,6 +4849,7 @@ abstract class FlowConvertor
         'output' => FT::ACTION(RESUPPLY, ['player' => 'nextPlayer', 'exhausted' => true])
       ],
       725 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('Target opponent draws a card. Then, create a <MANASEED> token in their Landmarks.'),
         'output' => FT::SEQ(
           FT::ACTION(DRAW, ['players' => OPPONENT]),
@@ -4907,6 +4920,7 @@ abstract class FlowConvertor
         )
       ],
       736 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('You may discard target Character or Permanent. If its Base Cost was {3} or more, its controller draws a card.'),
         'output' => FT::XOR(
           FT::ACTION(TARGET, [
@@ -4925,6 +4939,7 @@ abstract class FlowConvertor
         )
       ],
       737 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('You may discard target Character. If its Base Cost was {3} or more, its controller draws a card.'),
         'output' => FT::XOR(
           FT::ACTION(TARGET, [
@@ -4987,6 +5002,7 @@ abstract class FlowConvertor
         ])
       ],
       741 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('You may exhaust target card in Reserve. If it\'s in your Reserve, <RESUPPLY_LOW>.'),
         'output' => FT::ACTION(
           TARGET,
@@ -5410,6 +5426,7 @@ abstract class FlowConvertor
         ])
       ],
       795 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('You may have target opponent draw a card. If you do, target Character gains <ANCHORED>.'),
         'output' => FT::SEQ_OPTIONAL_MANUAL(
           FT::ACTION(TARGET_PLAYER, ['opponentsOnly' => true, 'effect' => FT::ACTION(DRAW, ['players' => ME])]),
@@ -5639,6 +5656,7 @@ abstract class FlowConvertor
         ],
       ],
       832 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('Draw a card, then discard a card from your hand.'),
         'output' => FT::SEQ(
           FT::ACTION(DRAW, ['players' => ME]),
@@ -5651,6 +5669,7 @@ abstract class FlowConvertor
         ),
       ],
       833 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('Draw three cards, then discard a card from your hand.'),
         'output' => FT::SEQ(
           FT::ACTION(DRAW, ['players' => ME, 'n' => 3]),
@@ -5663,6 +5682,7 @@ abstract class FlowConvertor
         ),
       ],
       835 => [
+        'ignoreDeck' => true,
         'description' => clienttranslate('Draw two cards, then discard a card from your hand.'),
         'output' => FT::SEQ(
           FT::ACTION(DRAW, ['players' => ME, 'n' => 2]),
@@ -6259,7 +6279,7 @@ abstract class FlowConvertor
         self::insertCheckCondition($calculated['triggerConditions'], $node, [
           $calculated['conditionDescription'] ?? null,
           $calculated['outputDescription'] ?? null,
-        ]);
+        ], !empty($calculated['ignoreDeck']) ? ['ignoreDeck' => true] : []);
       }
       if (isset($calculated['conditionEffect'])) {
         self::addEffectToCondition($calculated['conditionEffect'], $node);
@@ -6355,6 +6375,12 @@ abstract class FlowConvertor
         // throw new \feException(print_r($node));
         $node = FT::XOR($node, $calculated['oppositeOutput']);
       }
+    }
+
+    // Flagged outputs (see getOutput 'ignoreDeck') are sequenced effects whose deck-dependent
+    // part must not block the rest of the effect: make every generated check ignore the deck.
+    if (!empty($calculated['ignoreDeck']) && is_array($node)) {
+      self::tagIgnoreDeck($node);
     }
 
     // Specific interaction
@@ -6775,19 +6801,52 @@ abstract class FlowConvertor
     if (isset($output['oppositeOutput'])) {
       $calculated['oppositeOutput'] = $output['oppositeOutput'];
     }
+<<<<<<< Updated upstream
+    if (!empty($output['ignoreDeck'])) {
+=======
+    // Outputs whose deck-dependent part is only a step of a sequenced effect:
+    // the rest of the effect must still be playable on an empty deck.
+    if (isset($output['ignoreDeck'])) {
+>>>>>>> Stashed changes
+      $calculated['ignoreDeck'] = true;
+    }
 
     // manage unique power attributes (tough/gigantic/) awaiting info from GDs
   }
 
+<<<<<<< Updated upstream
+  public static function insertCheckCondition($conditions, &$node, $description, $extraArgs = [])
+=======
+  /**
+   * Recursively set ignoreDeck on every CheckCondition node, so a flagged sequenced output
+   * is not skipped when the deck is empty (the deck part becomes a no-op instead).
+   */
+  private static function tagIgnoreDeck(&$node)
+  {
+    if (!is_array($node)) {
+      return;
+    }
+    if (($node['action'] ?? null) === CHECK_CONDITION) {
+      $node['args']['ignoreDeck'] = true;
+    }
+    foreach ($node as &$value) {
+      if (is_array($value)) {
+        self::tagIgnoreDeck($value);
+      }
+    }
+    unset($value);
+  }
+
   public static function insertCheckCondition($conditions, &$node, $description)
+>>>>>>> Stashed changes
   {
     if (empty($node)) {
-      $node = FT::ACTION(CHECK_CONDITION, [
+      $node = FT::ACTION(CHECK_CONDITION, array_merge([
         'conditions' => $conditions,
         'effect' => 'OUTPUT',
         'oppositeEffect' => 'OPPOSITE',
         'description' => $description,
-      ]);
+      ], $extraArgs));
     } else {
       $nKey = Utils::search($node, function ($child) {
         return ($child['action'] ?? '') == CHECK_CONDITION;
