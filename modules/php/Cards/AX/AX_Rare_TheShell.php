@@ -29,17 +29,15 @@ class AX_Rare_TheShell extends \ALT\Models\Card
       'costHand' => 2,
       'costReserve' => 3,
       'changedStats' => ['costHand'],
-      'effectReserve' => FT::SEQ_OPTIONAL(
-        FT::ACTION(
-          TARGET,
-          [
-            'targetType' => [CHARACTER, SPELL, PERMANENT],
-            'targetPlayer' => ME,
-            'targetLocation' => [HAND],
-            'effect' => FT::DISCARD_TO_RESERVE(),
-          ]
-        ),
-        FT::ACTION(DRAW, ['players' => ME])
+      'effectReserve' => FT::ACTION(
+        TARGET,
+        [
+          'targetType' => [CHARACTER, SPELL, PERMANENT],
+          'targetPlayer' => ME,
+          'targetLocation' => [HAND],
+          'effect' => FT::SEQ(FT::DISCARD_TO_RESERVE(), FT::ACTION(DRAW, ['players' => ME])),
+        ],
+        ['optional' => true]
       ),
     ];
   }
