@@ -82,6 +82,11 @@ class Discard extends \ALT\Models\Action
 
   private function getDiscardControllerId()
   {
+    // "Each player discards their hand/reserve" (Loki...): each player discards their own cards
+    if (in_array($this->getArg('special'), ['allHand', 'allHandReserve', 'allReserve']) && !is_null($this->getArg('pId'))) {
+      return $this->getArg('pId');
+    }
+
     $source = $this->getSource();
     if (!is_null($source)) {
       return $source->getPId();
