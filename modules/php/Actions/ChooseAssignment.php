@@ -190,6 +190,21 @@ class ChooseAssignment extends \ALT\Models\Action
     return $this->getCtx()->getOptional() == true || (count($this->getArg('actions')) != 3 && empty($this->argsChooseAssignment()['_private']['active']['play']->toArray() ?? []) && !$this->getArg('mandatory'));
   }
 
+  /**
+   * Rush ("play another card immediately") inside a SEQ: if nothing is played (nothing playable
+   * or the player passes), the rest of the sequence (e.g. the "to give me 1 boost" part) must not happen.
+   */
+  public function actPassChooseAssignment()
+  {
+    $ctx = $this->getCtx();
+    $parent = $ctx->getParent();
+    $ctx->resolve([PASS]);
+    if ($this->getArg('mandatory') && !is_null($parent) && $parent instanceof \ALT\Core\Engine\SeqNode) {
+      $parent->resolve([PASS]);
+    }
+    Engine::save();
+  }
+
   public function isDoable($player)
   {
     if ($this->isOptional($player) || !$this->getArg('mandatory')) {
