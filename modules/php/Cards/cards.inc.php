@@ -77,7 +77,7 @@ const DEMO_ROC_DECKS = array(
   ),
 );  
 
-// Deck of the 'Woollyback Flock' format (deck format 'DEMO').
+// Deck of the 'Woolly Flock' format (deck format 'DEMO').
 const DEMO_ROC_FLOCK_DECKS = array(
   array(
     'faction' => FACTION_MU,
