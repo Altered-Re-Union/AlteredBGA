@@ -1625,6 +1625,12 @@ abstract class Conditions
 
   public static function isNotMeInvoke($card, $event)
   {
+    // A token is a gift only if I (the card owner) made the opponent receive it.
+    // A token created by the opponent's own effect (e.g. unique discarded by my Requiem) is not a gift.
+    if (isset($event['pId']) && $event['pId'] != $card->getPId()) {
+      return false;
+    }
+    
     return $card->getPId() != ($event['locationPId']  ?? $card->getPId());
   }
 
