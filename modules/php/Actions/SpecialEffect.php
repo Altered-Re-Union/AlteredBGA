@@ -555,12 +555,12 @@ class SpecialEffect extends \ALT\Models\Action
         }
         $this->pushParallelChilds($nodes);
         break;
-      case 'boostAllCharactersInExpedition':
+     case 'boostAllCharactersInExpedition':
         $player = Players::get($this->getArg('player'));
         $expedition = $this->getArg('expedition');
         $nodes = [];
         foreach ($player->getPlayedCards() as $cId => $pCard) {
-          if ($pCard->getLocation() == $expedition && in_array($pCard->getType(), [TOKEN, CHARACTER])) {
+          if (($pCard->getLocation() == $expedition || $pCard->isGigantic()) && in_array($pCard->getType(), [TOKEN, CHARACTER])) {
             $nodes[] = FT::GAIN($pCard, BOOST, 1);
           }
         }
@@ -571,7 +571,7 @@ class SpecialEffect extends \ALT\Models\Action
         $expedition = $this->getArg('expedition');
         $nodes = [];
         foreach ($player->getPlayedCards() as $cId => $pCard) {
-          if ($pCard->getLocation() == $expedition && in_array($pCard->getType(), [TOKEN, CHARACTER])) {
+          if (($pCard->getLocation() == $expedition || $pCard->isGigantic()) && in_array($pCard->getType(), [TOKEN, CHARACTER])) {
             $nodes[] = FT::GAIN($pCard, FLEETING, 1);
           }
         }
