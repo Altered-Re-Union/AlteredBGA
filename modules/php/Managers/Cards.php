@@ -704,13 +704,6 @@ class Cards extends \ALT\Helpers\CachedPieces
     return $deckList;
   }
 
-  /** Demo decks offered by the DEMO format: the tournament deck once revealed, the RoC demo decks before. */
-  public static function getDemoDecks()
-  {
-    require_once dirname(__FILE__) . '/../Cards/cards.inc.php';
-    return time() >= strtotime(DEMO_ROC_FLOCK_REVEAL) ? DEMO_ROC_FLOCK_DECKS : DEMO_ROC_DECKS;
-  }
-
   public static function setupDemoDeck($player, $deckNumber, $deckList)
   {
     // Load list of cards
@@ -719,7 +712,7 @@ class Cards extends \ALT\Helpers\CachedPieces
     $toCreate = [];
     $pId = $player->getId();
 
-    foreach (self::getDemoDecks() as $deck) {
+    foreach (DEMO_ROC_FLOCK_DECKS as $deck) {
       $faction = $deck['faction'];
       $deckId = $deck['deckId'];
 

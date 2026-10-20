@@ -26,22 +26,21 @@ const DEMO_ROC_TOURNAMENT = [
 // Effects ({trigger, condition, output} ids) come from CardsData UniquePrintEffectFragments.csv.
 const DEMO_ROC_TOURNAMENT_UNIQUES = [
   [
-    'reference' => 'ALT_EOLE_B_MU_108_U_4942',
+    'reference' => 'ALT_EOLE_B_MU_108_U_5014',
     'mainFaction' => ['reference' => 'MU'],
     'name' => 'Corrupted Woollyback',
     'cardType' => ['reference' => 'CHARACTER'],
     'subTypes' => ['CORRUPTION', 'ANIMAL'],
     'typeline' => 'Character - Corruption Animal',
     'illustrator' => 'Zaeliven',
-    'elements' => ['MAIN_COST' => 1, 'RECALL_COST' => 1, 'FOREST_POWER' => 1, 'MOUNTAIN_POWER' => 0, 'OCEAN_POWER' => 1],
+    'elements' => ['MAIN_COST' => 1, 'RECALL_COST' => 1, 'FOREST_POWER' => 1, 'MOUNTAIN_POWER' => 1, 'OCEAN_POWER' => 0],
     'uniqueReduced' => [
-      ['effects' => [24, 634, 822]],
+      ['effects' => [24, 894, 918]],
       ['effects' => [24, 191, 558]],
-      ['effects' => [192, 191, 70]],
     ],
   ],
   [
-    'reference' => 'ALT_EOLE_B_MU_108_U_4151',
+    'reference' => 'ALT_EOLE_B_MU_108_U_399',
     'mainFaction' => ['reference' => 'MU'],
     'name' => 'Corrupted Woollyback',
     'cardType' => ['reference' => 'CHARACTER'],
@@ -52,22 +51,22 @@ const DEMO_ROC_TOURNAMENT_UNIQUES = [
     'uniqueReduced' => [
       ['effects' => [24, 634, 822]],
       ['effects' => [24, 191, 558]],
-      ['effects' => [192, 191, 730]],
+      ['effects' => [192, 191, 742]],
     ],
   ],
   [
-    'reference' => 'ALT_EOLE_B_MU_108_U_1626',
+    'reference' => 'ALT_EOLE_B_MU_108_U_3368',
     'mainFaction' => ['reference' => 'MU'],
     'name' => 'Corrupted Woollyback',
     'cardType' => ['reference' => 'CHARACTER'],
     'subTypes' => ['CORRUPTION', 'ANIMAL'],
     'typeline' => 'Character - Corruption Animal',
     'illustrator' => 'Zaeliven',
-    'elements' => ['MAIN_COST' => 1, 'RECALL_COST' => 1, 'FOREST_POWER' => 1, 'MOUNTAIN_POWER' => 0, 'OCEAN_POWER' => 1],
+    'elements' => ['MAIN_COST' => 1, 'RECALL_COST' => 1, 'FOREST_POWER' => 2, 'MOUNTAIN_POWER' => 0, 'OCEAN_POWER' => 0],
     'uniqueReduced' => [
-      ['effects' => [24, 634, 822]],
+      ['effects' => [24, 634, 929]],
       ['effects' => [24, 191, 558]],
-      ['effects' => [192, 191, 730]],
+      ['effects' => [192, 191, 872]],
     ],
   ],
 ];

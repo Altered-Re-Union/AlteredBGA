@@ -77,10 +77,7 @@ const DEMO_ROC_DECKS = array(
   ),
 );  
 
-// Deck of the 'Woollyback Flock' tournament, kept secret: the DEMO format only switches to it from this moment.
-// TEMPORARY TEST VALUE (13 Oct 2026, 18:10 Paris time). Production value: 2026-11-08T11:00:00+01:00 (tournament 14:00 Paris time, reveal 3h before).
-const DEMO_ROC_FLOCK_REVEAL = '2026-10-13T18:10:00+02:00';
-
+// Deck of the 'Woollyback Flock' format (deck format 'DEMO').
 const DEMO_ROC_FLOCK_DECKS = array(
   array(
     'faction' => FACTION_MU,
