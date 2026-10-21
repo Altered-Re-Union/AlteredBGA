@@ -1479,10 +1479,10 @@
          // takeAction() can still return undefined (instead of a promise) for a while
          // after a clearClientState()/notification-driven transition. Retry with a short
          // backoff instead of crashing on ".then is not a function".
-         const attempt = this.takeAction(
+         const attempt = this._takeActionRetryingTransient(
            'actLoadAPIDecks',
            { request: JSON.stringify(requestPayload), lock: false },
-           false
+           () => this._awaitingAPIReturn
          );
          if (!attempt || typeof attempt.then !== 'function') {
            this._fetchDecksTakeActionRetries += 1;
@@ -1542,7 +1542,11 @@
         }
       };
 
-      const attempt = this.takeAction('actLoadAPIDecks', { request: strRequest, lock: false }, false);
+      const attempt = this._takeActionRetryingTransient(
+        'actLoadAPIDecks',
+        { request: strRequest, lock: false },
+        () => this._awaitingAPIReturn
+      );
       if (!attempt || typeof attempt.then !== 'function') {
         onReloadFailed();
         return;
@@ -1720,12 +1724,38 @@
 
          this._awaitingAPIReturn = true;
          $('api-error').innerHTML = '';
-         this.takeAction('actGetDeckInfos', { deckNumber: JSON.stringify(deck.apiId), lock: false }, false).then((response) => {
+
+         // Failure that handleAPIError() (see showMessage) didn't already deal with -- a
+         // deadlock/timeout still failing after the retries -- must free the picker too, or the
+         // `_awaitingAPIReturn` guard above would ignore every later click on a deck.
+         const onSelectFailed = () => {
+           if (!this._awaitingAPIReturn) return;
            this._awaitingAPIReturn = false;
-           let deckContent = response.data;
-           deckContent.apiId = deck.apiId;
-           this.showFetchedDeckPreview(deckContent, args);
-         });
+           const tile = $(`deck-${deck.apiId}`);
+           if (tile) tile.classList.remove('fetching');
+           if ($('api-error')) {
+             $('api-error').innerHTML = _('Something went wrong, please try again.');
+           }
+         };
+
+         const attempt = this._takeActionRetryingTransient(
+           'actGetDeckInfos',
+           { deckNumber: JSON.stringify(deck.apiId), lock: false },
+           () => this._awaitingAPIReturn
+         );
+         if (!attempt || typeof attempt.then !== 'function') {
+           onSelectFailed();
+           return;
+         }
+         attempt
+           .then((response) => {
+             if (!this._awaitingAPIReturn) return;
+             this._awaitingAPIReturn = false;
+             let deckContent = response.data;
+             deckContent.apiId = deck.apiId;
+             this.showFetchedDeckPreview(deckContent, args);
+           })
+           .catch(onSelectFailed);
        };
 
        $(`deck-list`).innerHTML = '';
@@ -1867,7 +1897,16 @@
            // (non re-entrant) click-handler call stack — matches the safe pattern used
            // in onEnteringStateChooseAssignmentLocation's Cancel button.
            this._clearClientStateWithoutFetchRetry();
-           this.takeAction('actConfirmAPIDeck', { method: 'post', deckContent: JSON.stringify(deckContent) }, false);
+           // A single retry: a deadlock rolled the transaction back, so replaying is safe, but
+           // this one writes the player's deck, so it is replayed less eagerly than the reads.
+           const confirmation = this._takeActionRetryingTransient(
+             'actConfirmAPIDeck',
+             { method: 'post', deckContent: JSON.stringify(deckContent) },
+             () => true,
+             1
+           );
+           // Nothing else to do on a final failure: the error was already shown to the player.
+           if (confirmation && typeof confirmation.catch === 'function') confirmation.catch(() => {});
          },
          'deck-preview-actions'
        );
@@ -1899,6 +1938,18 @@
      //////////////////////////////
      // HANDLING API ERRORS
      showMessage() {
+       // A deck API failure that is about to be retried (see _takeActionRetryingTransient)
+       // must not flash an error nor tear the deck picker down: the retry usually succeeds.
+       if (
+         this._apiRetriesLeft > 0 &&
+         arguments[1] == 'error' &&
+         typeof arguments[0] == 'string' &&
+         this._isTransientApiError(arguments[0])
+       ) {
+         debug('Transient API error hidden, retry pending', arguments[0]);
+         return true;
+       }
+
        if (!this._awaitingAPIReturn || arguments[0].indexOf('API ERROR###') < 0) {
          return this.inherited(arguments);
        } else {
@@ -1924,7 +1975,82 @@
          $('api-error').innerHTML = _(l);
        }
      },
- 
+
+     /**
+      * Errors that will fail the same way however often they are replayed: the account is not
+      * paired, the deck is not legal, a card/unique is not implemented or suspended, the action
+      * is not possible. Matched on message text -- the only thing the client receives (the
+      * HTTP-level code is dropped by takeAction()).
+      */
+     _isTransientApiError(error) {
+       const text = typeof error == 'string' ? error : (error && error.message) || '';
+       const deterministic = [
+         'pair your account',
+         'Pairing with Equinox',
+         'not implemented',
+         'unimplemented power',
+         'MISSING UNIQUE',
+         'temporarily suspended',
+         'not possible',
+         _('This deck is not legal'),
+       ];
+       // Everything else is treated as transient: a MySQL deadlock / statement timeout from
+       // BGA's own table lock (rolled back, so replaying is safe), or the upstream deck API
+       // having a moment ("Unexpected error while getting the deck content").
+       return !deterministic.some((known) => text.indexOf(known) >= 0);
+     },
+
+     /**
+      * takeAction() for the deck API calls, replaying them when they fail for a transient
+      * reason (see _isTransientApiError) instead of making the player restart the deck
+      * selection. Retries `maxRetries` times, after a jittered pause so two players whose
+      * actions collided on the table lock don't collide again in step. Gives up (re-throwing
+      * the error) as soon as `stillWanted()` turns false -- e.g. the player cancelled -- or
+      * the error is not transient. Passes through whatever takeAction() returns when it
+      * didn't send anything (a non-promise), as the callers already handle that case.
+      */
+     _takeActionRetryingTransient(action, data, stillWanted = () => true, maxRetries = 2) {
+       const send = () => this.takeAction(action, Object.assign({}, data), false);
+       const first = send();
+       if (!first || typeof first.then !== 'function') return first;
+
+       // Retries not started yet; showMessage() hides a transient error while this is > 0.
+       this._apiRetriesLeft = maxRetries;
+       const finish = () => {
+         this._apiRetriesLeft = 0;
+       };
+
+       const watch = (attempt, retryNumber) =>
+         attempt.catch((error) => {
+           if (this._apiRetriesLeft <= 0 || !stillWanted() || !this._isTransientApiError(error)) {
+             finish();
+             throw error;
+           }
+           debug('Transient API error, retrying', action, retryNumber, error);
+           const pause = 300 * retryNumber + Math.random() * 500;
+           return new Promise((resolve) => setTimeout(resolve, pause)).then(() => {
+             const next = stillWanted() ? send() : null;
+             if (!next || typeof next.then !== 'function') {
+               finish();
+               throw error;
+             }
+             this._apiRetriesLeft--;
+             return watch(next, retryNumber + 1);
+           });
+         });
+
+       return watch(first, 1).then(
+         (result) => {
+           finish();
+           return result;
+         },
+         (error) => {
+           finish();
+           throw error;
+         }
+       );
+     },
+
      notif_vsScreen(n) {
        debug('Notif: VS screen', n);
        this.closeOverlayIfOpened();

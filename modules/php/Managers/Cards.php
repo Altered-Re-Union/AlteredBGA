@@ -714,7 +714,7 @@ class Cards extends \ALT\Helpers\CachedPieces
     $toCreate = [];
     $pId = $player->getId();
 
-    foreach (DEMO_ROC_DECKS as $deck) {
+    foreach (DEMO_ROC_FLOCK_DECKS as $deck) {
       $faction = $deck['faction'];
       $deckId = $deck['deckId'];
 
@@ -741,6 +741,16 @@ class Cards extends \ALT\Helpers\CachedPieces
             'name' => $card->getName(),
             'faction' => $card->getFaction(),
           ],
+        ];
+      }
+
+      // uniques are generated from their definition, one copy each
+      foreach ($deck['uniques'] ?? [] as $unique) {
+        $toCreate[] = [
+          'player_id' => $pId,
+          'location' => "deck-" . $deckNumber,
+          'nbr' => 1,
+          'properties' => self::generateUnique($unique),
         ];
       }
       $deckNumber++;

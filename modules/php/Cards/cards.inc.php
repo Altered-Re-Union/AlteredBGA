@@ -42,6 +42,7 @@ require_once (dirname(__FILE__)) . '/DemoDecks/yeonggi.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/kauri.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/zhen.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/sam.roc.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/tournament.roc.php';
 
 const DEMO_ROC_DECKS = array(
   array(
@@ -75,6 +76,16 @@ const DEMO_ROC_DECKS = array(
     'contents' => DEMO_ROC_SAM,
   ),
 );  
+
+// Deck of the 'Woolly Flock' format (deck format 'DEMO').
+const DEMO_ROC_FLOCK_DECKS = array(
+  array(
+    'faction' => FACTION_MU,
+    'deckId' => 'tournament.roc',
+    'contents' => DEMO_ROC_TOURNAMENT,
+    'uniques' => DEMO_ROC_TOURNAMENT_UNIQUES,
+  ),
+);
 
 const STARTER_DECKS = array(
   // AXIOM
