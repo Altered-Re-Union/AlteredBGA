@@ -6801,22 +6801,15 @@ abstract class FlowConvertor
     if (isset($output['oppositeOutput'])) {
       $calculated['oppositeOutput'] = $output['oppositeOutput'];
     }
-<<<<<<< Updated upstream
-    if (!empty($output['ignoreDeck'])) {
-=======
     // Outputs whose deck-dependent part is only a step of a sequenced effect:
     // the rest of the effect must still be playable on an empty deck.
     if (isset($output['ignoreDeck'])) {
->>>>>>> Stashed changes
       $calculated['ignoreDeck'] = true;
     }
 
     // manage unique power attributes (tough/gigantic/) awaiting info from GDs
   }
 
-<<<<<<< Updated upstream
-  public static function insertCheckCondition($conditions, &$node, $description, $extraArgs = [])
-=======
   /**
    * Recursively set ignoreDeck on every CheckCondition node, so a flagged sequenced output
    * is not skipped when the deck is empty (the deck part becomes a no-op instead).
@@ -6838,7 +6831,6 @@ abstract class FlowConvertor
   }
 
   public static function insertCheckCondition($conditions, &$node, $description)
->>>>>>> Stashed changes
   {
     if (empty($node)) {
       $node = FT::ACTION(CHECK_CONDITION, array_merge([
