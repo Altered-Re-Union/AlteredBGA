@@ -2020,10 +2020,18 @@ class SpecialEffect extends \ALT\Models\Action
       case 'doppelganger':
         // throw new \feException(print_r($this->getCtxArgs()));
         $extra = $card->getExtraDatas();
-        $extra['subtypes'] = $card->getSubtypes();
-        $extra['typeline'] = $card->getTypeline();
-        $card->setSubtypes(Cards::get($this->getCtxArgs()['cardId'])->getSubtypes());
-        $card->setTypeline(Cards::get($this->getCtxArgs()['cardId'])->getTypeline());
+       $targetCard = Cards::get($this->getCtxArgs()['cardId']);
+        if (!array_key_exists('subtypes', $extra)) {
+          $extra['subtypes'] = $card->getSubtypes();
+          $extra['typeline'] = $card->getTypeline();
+        }
+        // Add the target's subtypes to the existing ones
+        $card->setSubtypes(array_values(array_unique(array_merge($card->getSubtypes(), $targetCard->getSubtypes()))));
+        $targetTypeline = $targetCard->getTypeline();
+        $parts = explode(' - ', $targetTypeline, 2);
+        if (count($parts) == 2 && !in_array($parts[1], explode(', ', $card->getTypeline()))) {
+          $card->setTypeline($card->getTypeline() . ', ' . $parts[1]);
+        }
 
         $card->setExtraDatas($extra);
         Notifications::refreshCard($card);
@@ -2044,10 +2052,19 @@ class SpecialEffect extends \ALT\Models\Action
         }
         break;
       case 'resetCard':
+         $event = $this->getEventRecursive();
+        // Seasoned: keeps its gained subtypes when going to reserve
+        if (($event['to'] ?? null) == RESERVE) {
+          break;
+        }
         $extra = $card->getExtraDatas();
-        $card->setSubtypes($extra['subtypes']);
-        $card->setTypeline($extra['typeline']);
-        Notifications::refreshCard($card);
+        if (array_key_exists('subtypes', $extra)) {
+          $card->setSubtypes($extra['subtypes']);
+          $card->setTypeline($extra['typeline']);
+          unset($extra['subtypes'], $extra['typeline']);
+          $card->setExtraDatas($extra);
+          Notifications::refreshCard($card);
+        }
 
         break;
       case 'defect':
