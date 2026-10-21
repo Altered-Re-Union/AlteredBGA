@@ -6830,7 +6830,7 @@ abstract class FlowConvertor
     unset($value);
   }
 
-  public static function insertCheckCondition($conditions, &$node, $description)
+public static function insertCheckCondition($conditions, &$node, $description, $extraArgs = [])
   {
     if (empty($node)) {
       $node = FT::ACTION(CHECK_CONDITION, array_merge([
