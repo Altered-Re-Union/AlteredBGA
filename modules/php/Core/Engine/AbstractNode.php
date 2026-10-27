@@ -2,6 +2,8 @@
 
 namespace ALT\Core\Engine;
 
+use ALT\Helpers\Evaluation;
+
 use ALT\Core\Globals;
 use ALT\Managers\Players;
 use ALT\Managers\Cards;
@@ -408,31 +410,14 @@ class AbstractNode
   }
 
   /**
-   * Results of the read-only evaluations (choices, doability...) during one top-level evaluation.
    * getChoices asks each child whether it is doable, optional, automatic and independent, and each
    * of these walks the child's subtree again: without sharing, the work grows exponentially with
-   * the depth of the tree (e.g. a XOR of SEQs of TARGETs). Nothing changes the game while choices
-   * are evaluated, so a result stays valid until the outermost evaluation returns.
+   * the depth of the tree (e.g. a XOR of SEQs of TARGETs). Results are shared within the
+   * read-only evaluation scope (see Evaluation).
    */
-  protected static ?array $evaluations = null;
-
   protected function memoized(string $what, $player, callable $compute)
   {
-    $outermost = self::$evaluations === null;
-    if ($outermost) {
-      self::$evaluations = [];
-    }
-    $key = spl_object_id($this) . '|' . $what . '|' . (is_null($player) ? '' : $player->getId());
-    try {
-      if (!array_key_exists($key, self::$evaluations)) {
-        self::$evaluations[$key] = $compute();
-      }
-      return self::$evaluations[$key];
-    } finally {
-      if ($outermost) {
-        self::$evaluations = null;
-      }
-    }
+    return Evaluation::run('node|' . spl_object_id($this) . '|' . $what . '|' . (is_null($player) ? '' : $player->getId()), $compute);
   }
 
   public function isAutomatic($player = null)
