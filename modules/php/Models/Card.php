@@ -205,16 +205,37 @@ class Card extends \ALT\Helpers\DB_Model
 
   /********* DB ACCESS *********/
 
+  // Explicit getters for the DB fields read on every card when collections are filtered: same
+  // result as the magic getter below, without going through it
+  public function getId()
+  {
+    return $this->id;
+  }
+
+  public function getLocation()
+  {
+    return $this->location;
+  }
+
+  public function getState()
+  {
+    return $this->state;
+  }
+
+  public function getPId()
+  {
+    return $this->pId;
+  }
+
   // Magic getter to test DB Field & properties field
   public function __call($method, $args)
   {
-    if (preg_match('/^([gs]et|inc|is)([A-Z])(.*)$/', $method, $match)) {
-      // Sanity check : does the name correspond to a declared variable ?
-      $name = mb_strtolower($match[2]) . $match[3];
+    if ($parsed = self::parseMethod($method)) {
+      [$prefix, $name] = $parsed;
 
       // TODO put management of properties
       if (\array_key_exists($name, $this->propertiesAttributes)) {
-        if ($match[1] == 'get') {
+        if ($prefix == 'get') {
           $type = $this->propertiesAttributes[$name];
           if (isset($this->properties[$name])) {
             if (count($args) > 0 && $type == 'obj' && is_array($this->properties[$name])) {
@@ -245,13 +266,13 @@ class Card extends \ALT\Helpers\DB_Model
               return [];
             }
           }
-        } elseif ($match[1] == 'is') {
+        } elseif ($prefix == 'is') {
           if (!isset($this->properties[$name])) {
             return false;
           }
           // Boolean getter
           return (bool) $this->properties[$name];
-        } elseif ($match[1] == 'set') {
+        } elseif ($prefix == 'set') {
           return $this->setProperty($name, $args[0]);
         }
       }
