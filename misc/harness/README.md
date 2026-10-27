@@ -102,6 +102,20 @@ Ignored notifications: `gameStateChange` (compared separately as a state sequenc
 played. Replaying it after a change that alters behaviour (or even an asset name) diverges, and
 that is the point: a refactoring or an optimisation must keep every replay green.
 
+## Profiling
+
+An image with Xdebug's profiler profiles one card of the sweep (setup included):
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.profile.yml run --rm -T \
+  -e XDEBUG_TRIGGER=1 -e SWEEP='^LY_Rare_SoulEncounter$' php phpunit -c phpunit-profile.xml
+python3 tools/profile_summary.py results/profile/cachegrind.out.<...>   # inclusive and self time per function
+```
+
+Profiles are large (about 1 GB). To check that an optimisation keeps behaviour, compare a sweep
+against a saved one: copy `results/` to `baseline/` before the change, rerun `./sweep.sh` after, then
+`python3 tools/compare_sweep.py baseline results` (outcome of each card, and query and time totals).
+
 ## Helpers (`tests/AlteredTestCase.php`)
 
 | Helper | Purpose |
