@@ -407,6 +407,34 @@ class AbstractNode
     return $this->infos['manualChoice'] ?? false;
   }
 
+  /**
+   * Results of the read-only evaluations (choices, doability...) during one top-level evaluation.
+   * getChoices asks each child whether it is doable, optional, automatic and independent, and each
+   * of these walks the child's subtree again: without sharing, the work grows exponentially with
+   * the depth of the tree (e.g. a XOR of SEQs of TARGETs). Nothing changes the game while choices
+   * are evaluated, so a result stays valid until the outermost evaluation returns.
+   */
+  protected static ?array $evaluations = null;
+
+  protected function memoized(string $what, $player, callable $compute)
+  {
+    $outermost = self::$evaluations === null;
+    if ($outermost) {
+      self::$evaluations = [];
+    }
+    $key = spl_object_id($this) . '|' . $what . '|' . (is_null($player) ? '' : $player->getId());
+    try {
+      if (!array_key_exists($key, self::$evaluations)) {
+        self::$evaluations[$key] = $compute();
+      }
+      return self::$evaluations[$key];
+    } finally {
+      if ($outermost) {
+        self::$evaluations = null;
+      }
+    }
+  }
+
   public function isAutomatic($player = null)
   {
     $choices = $this->getChoices($player);
@@ -416,14 +444,23 @@ class AbstractNode
   // Allow for automatic resolution in parallel node
   public function isIndependent($player = null)
   {
-    // add of no independant in specific cases of Moyo
-    return !($this->infos['noIndependent'] ?? false) && $this->isAutomatic($player) &&
-      $this->childsReduceAnd(function ($child) use ($player) {
-        return $child->isIndependent($player);
-      }) && Globals::getEngineChoices() <= 20;
+    return $this->memoized('isIndependent', $player, function () use ($player) {
+      // add of no independant in specific cases of Moyo
+      return !($this->infos['noIndependent'] ?? false) && $this->isAutomatic($player) &&
+        $this->childsReduceAnd(function ($child) use ($player) {
+          return $child->isIndependent($player);
+        }) && Globals::getEngineChoices() <= 20;
+    });
   }
 
   public function getChoices($player = null, $displayAllChoices = false)
+  {
+    return $this->memoized('getChoices' . (int) $displayAllChoices, $player, function () use ($player, $displayAllChoices) {
+      return $this->computeChoices($player, $displayAllChoices);
+    });
+  }
+
+  protected function computeChoices($player = null, $displayAllChoices = false)
   {
     $choice = null;
     $choices = [];
