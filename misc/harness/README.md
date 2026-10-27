@@ -28,8 +28,12 @@ docker compose run --rm -e SWEEP=all php phpunit --filter CardSweepTest   # ever
 - **Scenario tests** (`AngryCrowdTest`): a real game is created, both players pick a starter deck
   and their mana, then cards are put on the board with `createCard()` and the test plays through
   the same entry points as the client (`actPlay`, `actChooseAction`, `actTarget`...).
-- **Card sweep** (`CardSweepTest`): every card is played from hand on a standard board and its
-  effect is resolved by a naive player (first choice, first targets, pass optional steps).
+- **Card sweep** (`CardSweepTest`, about 45 s for every card): every card is played from hand on a
+  standard board and its effect is resolved by a naive player (first choice, first targets, pass
+  optional steps; `SWEEP_PICK=last` takes the last ones). The board is set up once per process and
+  restored from a database snapshot before each card; each shard runs in one process
+  (`phpunit-sweep.xml`). Each card gets a fingerprint of every notification sent and of the final
+  database (`results/fingerprints.csv`).
   A PHP exception fails the test. States the naive player cannot answer are reported as
   incomplete. The SQL query count per card goes to `results/costs.csv` (or `sweep.csv`),
   which points at slow cards.
@@ -112,9 +116,26 @@ docker compose -f docker-compose.yml -f docker-compose.profile.yml run --rm -T \
 python3 tools/profile_summary.py results/profile/cachegrind.out.<...>   # inclusive and self time per function
 ```
 
-Profiles are large (about 1 GB). To check that an optimisation keeps behaviour, compare a sweep
-against a saved one: copy `results/` to `baseline/` before the change, rerun `./sweep.sh` after, then
-`python3 tools/compare_sweep.py baseline results` (outcome of each card, and query and time totals).
+Profiles are large (about 1 GB).
+
+## Checking that a change keeps behaviour
+
+Sweep the code before the change (a worktree) and after, with both pickers, and compare the
+fingerprints card by card: any card whose notifications or final database differ changed behaviour.
+
+```bash
+git worktree add ../../../AlteredBGA-base <commit before the change>
+for pick in first last; do
+  GAME_DIR=$(cd ../../../AlteredBGA-base && pwd) SWEEP_PICK=$pick ./sweep.sh && cp -r results results-old-$pick
+  SWEEP_PICK=$pick ./sweep.sh && python3 tools/compare_sweep.py results-old-$pick results
+done
+./tools/replay.sh
+```
+
+The harness also records any database write made while the engine's read-only evaluation scope
+(`ALT\Helpers\Evaluation`) is open, in `results/evaluation_writes*.txt`: results shared in that
+scope assume nothing changes. Known writes: `Globals` creating a missing variable with its default
+value, and the Sam Spook condition latching `samSpookEverDiscarded` (monotonic, read by itself only).
 
 ## Helpers (`tests/AlteredTestCase.php`)
 

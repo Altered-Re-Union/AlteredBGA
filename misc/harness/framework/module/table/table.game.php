@@ -57,8 +57,29 @@ namespace {
       return self::$conn;
     }
 
+    /** @var string[] writes made while the game's read-only Evaluation scope was open */
+    public static array $evaluationWrites = [];
+    private static ?\ReflectionProperty $evaluationScope = null;
+
+    /** Whether ALT\Helpers\Evaluation (engine code that assumes nothing is written) is running */
+    private static function inEvaluation(): bool
+    {
+      if (self::$evaluationScope === null) {
+        if (!class_exists('ALT\\Helpers\\Evaluation', false)) {
+          return false;
+        }
+        self::$evaluationScope = new \ReflectionProperty('ALT\\Helpers\\Evaluation', 'results');
+      }
+      return self::$evaluationScope->getValue() !== null;
+    }
+
     public static function query(string $sql)
     {
+      if (preg_match('/^\s*(INSERT|UPDATE|DELETE|REPLACE)\b/i', $sql) && self::inEvaluation()) {
+        $frames = array_filter(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS), fn($f) => str_contains($f['file'] ?? '', '/modules/php/'));
+        $where = implode(' < ', array_map(fn($f) => basename($f['file']) . ':' . $f['line'], array_slice(array_values($frames), 0, 6)));
+        self::$evaluationWrites[] = substr(preg_replace('/\s+/', ' ', $sql), 0, 160) . " @ $where";
+      }
       self::$queryCount++;
       if (self::$profile !== null) {
         $key = preg_replace(['/\'[^\']*\'/', '/\b\d+\b/'], ['?', 'N'], $sql);
@@ -72,6 +93,48 @@ namespace {
       } finally {
         self::$queryTime += microtime(true) - $t;
       }
+    }
+
+    /**
+     * Copies every table of the game database to a template database, with the auto-increment
+     * counters, so that many tests can start from the same game without setting it up again.
+     */
+    public static function saveSnapshot(string $name): void
+    {
+      $db = self::conn();
+      $game = getenv('DB_NAME') ?: 'altered';
+      $template = "{$game}_$name";
+      $db->query("DROP DATABASE IF EXISTS `$template`");
+      $db->query("CREATE DATABASE `$template`");
+      self::$snapshots[$name] = [];
+      foreach ($db->query('SHOW TABLES')->fetch_all() as [$table]) {
+        $db->query("CREATE TABLE `$template`.`$table` LIKE `$game`.`$table`");
+        $db->query("INSERT INTO `$template`.`$table` SELECT * FROM `$game`.`$table`");
+        $next = $db->query("SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA = '$game' AND TABLE_NAME = '$table'")->fetch_row()[0];
+        self::$snapshots[$name][$table] = $next;
+      }
+    }
+
+    /** Puts back a snapshot taken by saveSnapshot (same database, same counters) */
+    public static function restoreSnapshot(string $name): void
+    {
+      $db = self::conn();
+      $template = (getenv('DB_NAME') ?: 'altered') . "_$name";
+      foreach (self::$snapshots[$name] as $table => $next) {
+        $db->query("DELETE FROM `$table`");
+        $db->query("INSERT INTO `$table` SELECT * FROM `$template`.`$table`");
+        if ($next !== null) {
+          $db->query("ALTER TABLE `$table` AUTO_INCREMENT = $next");
+        }
+      }
+    }
+
+    /** @var array<string, array<string, ?int>> snapshot name => table => next auto-increment */
+    private static array $snapshots = [];
+
+    public static function hasSnapshot(string $name): bool
+    {
+      return isset(self::$snapshots[$name]);
     }
 
     /** Drop and recreate the game database from the framework schema + dbmodel.sql */

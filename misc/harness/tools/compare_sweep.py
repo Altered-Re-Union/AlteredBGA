@@ -37,6 +37,25 @@ print(f'{len(after)} cards, outcome changed for {len(changed)}')
 for card, (b, a) in sorted(changed.items()):
     print(f'  {card}: {b} -> {a}')
 
+def fingerprints(directory):
+    path = os.path.join(directory, 'fingerprints.csv')
+    if not os.path.exists(path):
+        return {}
+    with open(path) as f:
+        return {row[0]: row[2:] for row in csv.reader(f)}
+
+
+fb, fa = fingerprints(before_dir), fingerprints(after_dir)
+if fb and fa:
+    differing = sorted(c for c in set(fb) & set(fa) if fb[c] != fa[c])
+    print(f'fingerprints: {len(set(fb) & set(fa))} cards compared, {len(differing)} differ')
+    for card in differing:
+        parts = [name for name, i in (('outcome', 0), ('notifications', 1), ('database', 2)) if fb[card][i] != fa[card][i]]
+        print(f'  {card}: {", ".join(parts)} ({fb[card][0]} -> {fa[card][0]})')
+    missing = sorted(set(fb) ^ set(fa))
+    if missing:
+        print(f'  only in one sweep: {missing[:20]}')
+
 cb, ca = costs(before_dir), costs(after_dir)
 common = set(cb) & set(ca)
 qb, qa = sum(cb[c][0] for c in common), sum(ca[c][0] for c in common)

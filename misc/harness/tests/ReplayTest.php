@@ -36,6 +36,9 @@ class ReplayTest extends AlteredTestCase
     @mkdir('/harness/results');
     file_put_contents('/harness/results/replay_' . basename($file, '.json') . '.log', $report . "\n");
     file_put_contents('/harness/results/replay_' . basename($file, '.json') . '.json', json_encode($runner->divergence ? $runner->divergence + ['attempts' => $runner->attempts] : null, JSON_PRETTY_PRINT));
+    foreach (BgaDb::$evaluationWrites as $write) {
+      file_put_contents('/harness/results/evaluation_writes_replays.txt', basename($file) . ": $write\n", FILE_APPEND);
+    }
     $this->assertTrue($ok, "Divergence:\n" . json_encode($runner->divergence, JSON_PRETTY_PRINT) . "\n" . $report);
   }
 }
