@@ -2080,7 +2080,7 @@ abstract class Conditions
 
   public static function countOwnerBoosts($card, $event, $n = 1, $op = 'GTE')
   {
-    $boosts = Meeples::getFilteredQuery($card->getPId(), null, BOOST)->get()->count();
+    $boosts = Meeples::getFiltered($card->getPId(), null, BOOST)->count();
     if ($op == 'GTE') {
       return $boosts >= $n;
     } elseif ($op == 'LTE') {

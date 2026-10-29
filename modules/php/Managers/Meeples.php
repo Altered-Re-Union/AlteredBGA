@@ -76,41 +76,28 @@ class Meeples extends \ALT\Helpers\CachedPieces
 
   public static function getOfType($location, $type)
   {
-    return self::getFilteredQuery(null, $location, $type)->get();
+    return self::getFilteredOrdered(null, $location, $type);
   }
 
   public static function getStormTokens($pId)
   {
-    return self::getFilteredQuery($pId, null, [COMPANION, HERO])->get();
+    return self::getFilteredOrdered($pId, null, [COMPANION, HERO]);
   }
 
   public static function getAscended($pId, $location)
   {
-    return self::getFilteredQuery($pId, $location, [ASCEND])->get();
+    return self::getFilteredOrdered($pId, $location, [ASCEND]);
   }
 
   /**
-   * Generic base query
+   * Meeples filtered by player, location and type, ordered by state.
+   * Served from the cached meeples (one query per request instead of one per call, e.g. for every
+   * Card::hasToken), and returns the cached instances so that changes made on them keep the cache
+   * up to date.
    */
-  public static function getFilteredQuery($pId = null, $location, $type)
+  public static function getFilteredOrdered($pId = null, $location = null, $type = null)
   {
-    $query = self::getSelectQuery();
-
-    if ($pId != null) {
-      $query = $query->wherePlayer($pId);
-    }
-    if ($location != null) {
-      $query = $query->where('meeple_location', strpos($location, '%') === false ? '=' : 'LIKE', $location);
-    }
-    if ($type != null) {
-      if (is_array($type)) {
-        $query = $query->whereIn('type', $type);
-      } else {
-        $query = $query->where('type', strpos($type, '%') === false ? '=' : 'LIKE', $type);
-      }
-    }
-    $query = $query->orderBy('meeple_state', 'ASC');
-    return $query;
+    return self::getFiltered($pId, $location, $type)->orderBy('state', 'ASC');
   }
 
   public static function createOnCard($type, $cardId, $pId, $nbr = 1)
@@ -127,7 +114,7 @@ class Meeples extends \ALT\Helpers\CachedPieces
 
   public static function nightCleanup()
   {
-    $ascended =  self::getFilteredQuery(null, null, [ASCEND])->get();
+    $ascended = self::getFilteredOrdered(null, null, [ASCEND]);
     $toDelete = $ascended->getIds();
     if (count($ascended) >= 1) {
       self::delete($ascended->getIds());
