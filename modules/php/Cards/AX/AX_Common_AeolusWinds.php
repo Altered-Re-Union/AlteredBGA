@@ -17,10 +17,10 @@ class AX_Common_AeolusWinds extends \ALT\Models\Card
       'type' => SPELL,
       'artist' => 'Gamon Studio',
       'extension' => 'NEJ',
+      'subtypes'  => [DISRUPTION],
       'effectDesc' => clienttranslate('$<FLEETING>.  Send to Reserve target Character with Base Cost less than or equal to the number of cards in your Landmarks.'),
       'costHand' => 2,
       'costReserve' => 2,
-      'fleeting' => true,
       'effectPlayed' => FT::SEQ(FT::GAIN(ME, FLEETING),
         FT::ACTION(TARGET, [
           'targetType' => [CHARACTER],

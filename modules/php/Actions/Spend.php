@@ -25,6 +25,13 @@ class Spend extends \ALT\Models\Action
   {
     $n = $this->getCtxArg('n') ?? 1;
 
+    if (empty($this->getCtxArg('effect'))) {
+      return [
+        'log' => clienttranslate('Spend ${n}'),
+        'args' => ['n' => $n],
+      ];
+    }
+
     return [
       'log' => clienttranslate('Spend ${n} to ${effect_desc}'),
       'args' => [
@@ -116,7 +123,9 @@ class Spend extends \ALT\Models\Action
       'source' => $this->getSource(),
       'n' => $this->getArg('automatic') == false  ? $this->getCard()->countCounters() : $this->getArg('n'),
       'descSuffix' => $this->getArg('automatic') == false ? 'choice' : '',
-      'effect_desc' => Engine::buildTree($this->getCtxArg('effect'))->getDescription(),
+      'effect_desc' => empty($this->getCtxArg('effect'))
+        ? ''
+        : Engine::buildTree($this->getCtxArg('effect'))->getDescription(),
     ];
   }
 
@@ -188,7 +197,7 @@ class Spend extends \ALT\Models\Action
     }
 
     $effect = $this->getArg('effect');
-    if ($effect !== null) {
+    if (!empty($effect)) {
       // Keep GAIN(EFFECT)/etc. referring to the trigger event card, not the card boosts were spent from.
       $effect = $this->updateCardId($effect, $card->getId(), $card->getLocation(), $this->getSourceId(), $card->getPlayer()->getId(), true);
       if ($this->getArg('updateN') == true) {

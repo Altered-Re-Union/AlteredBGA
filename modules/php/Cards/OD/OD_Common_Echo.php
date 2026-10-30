@@ -13,7 +13,7 @@ class OD_Common_Echo extends \ALT\Models\Card
       'faction' => FACTION_OD,
       'rarity' => RARITY_COMMON,
       'name' => clienttranslate('Echo'),
-      'typeline' => clienttranslate('Character - Soldier, Companion'),
+      'typeline' => clienttranslate('Token Character - Soldier, Companion'),
       'type' => CHARACTER,
       'artist' => 'Tristan Bideau',
       'extension' => 'NEJ',

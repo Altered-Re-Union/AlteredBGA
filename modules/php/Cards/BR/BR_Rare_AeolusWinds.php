@@ -15,12 +15,12 @@ class BR_Rare_AeolusWinds extends \ALT\Models\Card
       'name' => clienttranslate('Aeolus\' Winds'),
       'typeline' => clienttranslate('Spell'),
       'type' => SPELL,
+      'subtypes'  => [DISRUPTION],
       'artist' => 'Gamon Studio',
       'extension' => 'NEJ',
       'effectDesc' => clienttranslate('$<FLEETING>.  Send to Reserve target Character with Base Cost less than or equal to the number of cards in your Landmarks.#  If there are three or more cards in your Landmarks, discard it instead.#'),
       'costHand' => 2,
       'costReserve' => 2,
-      'fleeting' => true,
       'effectPlayed' => FT::SEQ(FT::GAIN(ME, FLEETING),
         FT::ACTION(TARGET, [
           'targetType' => [CHARACTER],
