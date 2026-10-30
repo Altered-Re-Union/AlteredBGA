@@ -336,6 +336,29 @@ abstract class Utils extends \APP_DbObject
     }
   }
 
+  public static function countCharactersInExpeditions($player, $subtype = null)
+  {
+    return $player->getPlayedCards([CHARACTER, TOKEN])->filter(function ($c) use ($subtype) {
+      return ($c->isGigantic() || in_array($c->getLocation(), STORMS))
+        && ($subtype === null || in_array($subtype, $c->getSubtypes()));
+    })->count();
+  }
+
+
+  public static function resolveMaxStatistic($maxStatistic, $player)
+  {
+    if (is_int($maxStatistic)) {
+      return $maxStatistic;
+    }
+    if ($maxStatistic === 'soldiersInExpeditions') {
+      return self::countCharactersInExpeditions($player, SOLDIER);
+    }
+    elseif ($maxStatistic === 'charactersInExpeditions') {
+      return self::countCharactersInExpeditions($player);
+    }
+    return $maxStatistic;
+  }
+
   public static function checkAttributeCondition($attribute, $data, $player, $card)
   {
     $attributeData = explode(':', $data);
@@ -404,6 +427,28 @@ abstract class Utils extends \APP_DbObject
       ['type' => TOKEN, 'additionalTypes' => [], 'subtypes' => []],
       ['type' => CHARACTER, 'additionalTypes' => [FEAT], 'subtypes' => []],
     ];
+  }
+
+  public static function getRevealedCard($player)
+  {
+    $revealed = \ALT\Managers\Cards::getInLocation('reveal-' . $player->getId())->first();
+    if ($revealed === null) {
+      $revealed = \ALT\Managers\Cards::getInLocation('reveal-%')->first();
+    }
+    return $revealed;
+  }
+
+  public static function resolveMaxBaseCost($maxBaseCost, $player)
+  {
+    if (is_int($maxBaseCost)) {
+      return $maxBaseCost;
+    }
+    if ($maxBaseCost === 'revealedCardHandCost') {
+      $revealed = self::getRevealedCard($player);
+      return $revealed !== null ? (int) $revealed->getCostHand() : 0;
+    }
+    // PHP 8.5: `3 <= 'revealedCardHandCost'` is true (string compare). Never leave a string cap.
+    return is_numeric($maxBaseCost) ? (int) $maxBaseCost : 0;
   }
 }
 
