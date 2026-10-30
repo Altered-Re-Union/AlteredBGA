@@ -16,7 +16,6 @@ class LY_Rare_DoubleCross extends \ALT\Models\Card
       'name' => clienttranslate('Double-Cross'),
       'typeline' => clienttranslate('Spell - Maneuver'),
       'type' => SPELL,
-      'flavorText' => clienttranslate('Are the Oneiroi truly your allies ?'),
       'artist' => 'Ba Vo',
       'extension' => 'NEJ',
       'subtypes' => [MANEUVER],
