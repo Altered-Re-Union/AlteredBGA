@@ -737,11 +737,11 @@
                 }
 
                 .card-typeline {
-                    top: 278px;
+                    top: 272px;
                 }
 
                 .card-subpermanent {
-                    top: 302px;
+                    top: 315px;
                 }
             }
 
@@ -751,11 +751,11 @@
                 }
 
                 .card-typeline {
-                    top: 248px;
+                    top: 242px;
                 }
 
                 .card-subpermanent {
-                    top: 272px;
+                    top: 245px;
                 }
             }
         }
@@ -1212,27 +1212,45 @@
 
         // Exalted permanent rules box matches the taller grey area on the new frames,
         // so short effects (e.g. Fane of Helios) stay on size=1 instead of upsizing.
+        // QR: keep the float/shape-outside box intact for text wrap; nudge only the
+        // visible QR with position:relative so it sits in the frame cutout.
         .card-frame[data-type="permanent"][data-rarity="3"][data-size="1"]~.card-text {
             left: 25px;
             right: 25px;
-            top: 328px;
-            height: 97px;
+            top: 346px;
+            height: 89px;
 
             .card-qrcode-container {
                 margin-right: -5px;
-                shape-outside: polygon(8px 30px, 8px 100px, 70px 100px, 70px 30px);
+                shape-outside: polygon(0px 15px, 0px 89px, 70px 89px, 70px 15px);
+
+                .card-qrcode {
+                    position: relative;
+                    left: 4px;
+                    bottom: 11px;
+                    margin-right: 0;
+                    margin-bottom: 0;
+                }
             }
         }
 
         .card-frame[data-type="permanent"][data-rarity="3"][data-size="2"]~.card-text {
             left: 25px;
             right: 25px;
-            top: 298px;
-            height: 127px;
+            top: 315px;
+            height: 119px;
 
             .card-qrcode-container {
                 margin-right: -5px;
-                shape-outside: polygon(8px 55px, 8px 130px, 70px 130px, 70px 55px);
+                shape-outside: polygon(0px 40px, 0px 119px, 70px 119px, 70px 40px);
+
+                .card-qrcode {
+                    position: relative;
+                    left: 4px;
+                    bottom: 11px;
+                    margin-right: 0;
+                    margin-bottom: 0;
+                }
             }
         }
 

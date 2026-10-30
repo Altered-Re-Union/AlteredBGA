@@ -19,53 +19,90 @@ class Ready extends \ALT\Models\Action
 
   public function getDescription()
   {
-    if ($this->getCtxArg('cardId') == MANA) {
+    $cardId = $this->getCtxArg('cardId');
+    if (is_array($cardId)) {
+      if (!empty($cardId) && Cards::getSingle($cardId[0])->getLocation() == MANA) {
+        return clienttranslate('Ready mana orbs');
+      }
+      return clienttranslate('Ready the cards');
+    }
+    if ($cardId == MANA) {
       return clienttranslate('Ready a mana orb');
     } else {
       return clienttranslate('Ready the card');
     }
   }
 
+  public function isAutomatic($player = null)
+  {
+    return is_array($this->getCtxArg('cardId'));
+  }
+
+  public function isIndependent($player = null)
+  {
+    return $this->isAutomatic($player);
+  }
+
   public function isDoable($player)
   {
-    return true;
-    // if ($this->getCtxArg('cardId') == MANA) {
-    //   if (empty($this->getSource()->getPlayer()->getManaCards(true))) {
-    //     return false;
-    //   }
-    // }
+    $cardIds = $this->getResolvedCardIds();
+    if (is_array($this->getCtxArg('cardId'))) {
+      if (empty($cardIds)) {
+        return false;
+      }
+      foreach ($cardIds as $cardId) {
+        if (!Cards::getSingle($cardId)->isTapped() && is_null($this->getCtxArg('optionalExhaust'))) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     return $this->getCard()->isTapped() == true;
   }
 
-  public function getCard()
+  private function getResolvedCardIds()
   {
     $cardId = $this->getCtxArg('cardId');
+    if (is_array($cardId)) {
+      return $cardId;
+    }
     if ($cardId == ME) {
       $cardId = $this->ctx->getSourceId() ?? null;
     } elseif ($cardId == EFFECT) {
       $cardId = $this->getCtx()->toArray()['event']['cardId'] ?? null;
     } elseif ($cardId == MANA) {
-      return $this->getPlayer()->getManaCards(true)->first();
+      $mana = $this->getPlayer()->getManaCards(true)->first();
+      return is_null($mana) ? [] : [$mana->getId()];
     }
 
     if (is_null($cardId)) {
-      throw new \Bga\GameFramework\VisibleSystemException('no card in args (Ready). Should not happen');
+      throw new \BgaVisibleSystemException('no card in args (Ready). Should not happen');
     }
-    return Cards::getSingle($cardId);
-  }
+    return [$cardId];
+    }
+  
+    public function getCard()
+    {
+      $cardIds = $this->getResolvedCardIds();
+      if (count($cardIds) === 1) {
+        return Cards::getSingle($cardIds[0]);
+      }
+      return null;
+    }
 
   public function stReady()
   {
     $player = $this->getPlayer();
-    $card = $this->getCard();
+    $cards = Cards::getMany($this->getResolvedCardIds());
 
-    if (!is_null($card)) {
+    foreach ($cards as $card) {
       if (!$card->isTapped() && is_null($this->getCtxArg('optionalExhaust'))) {
-        throw new \Bga\GameFramework\VisibleSystemException('Card is not tapped. Should not happen');
+        throw new \BgaVisibleSystemException('Card is not tapped. Should not happen');
       }
       $card->setTapped(false);
       Notifications::readyEffect($player, $card, $this->getSource());
     }
-    $this->resolveAction();
+    $this->resolveAction(['automatic' => count($cards) > 1]);
   }
 }

@@ -10,6 +10,7 @@ use ALT\Core\Notifications;
 use ALT\Core\Stats;
 use ALT\Helpers\Utils;
 use ALT\Core\Engine;
+use ALT\Helpers\FT;
 
 class MoveCard extends \ALT\Models\Action
 {
@@ -39,7 +40,7 @@ class MoveCard extends \ALT\Models\Action
     return true;
   }
 
-  protected $args = ['location' => 'opposite', 'player' => ME, 'cards' => 1];
+  protected $args = ['location' => 'opposite', 'player' => ME, 'cards' => 1, 'skipProtectAnchored' => false, 'skipProtectAsleep' => false];
 
   public function getCard()
   {
@@ -74,14 +75,81 @@ class MoveCard extends \ALT\Models\Action
       $fromLocation = $card->getLocation();
 
       // Floral Tent
-      if (Globals::isDayPhase() && in_array($fromLocation, STORMS) && in_array($card->getType(), [TOKEN, CHARACTER]) && $card->getPlayer()->hasProtectAnchoredInExpedition($fromLocation) && $card->hasToken(ANCHORED)) {
+      if (
+        !$this->getArg('skipProtectAnchored') &&
+        Globals::isDayPhase() &&
+        in_array($fromLocation, STORMS) &&
+        in_array($card->getType(), [TOKEN, CHARACTER]) &&
+        $card->getPlayer()->hasProtectAnchoredInExpedition($fromLocation) &&
+        $card->hasToken(ANCHORED)
+      ) {
         unset($cards[$cId]);
         Notifications::message(clienttranslate('${card_name} is not discarded but loose <ANCHORED> instead'), ['card' => $card]);
         $this->insertAsChild(['action' => LOOSE, 'args' => ['cardId' => $card->getId(), 'type' => ANCHORED]]);
         continue;
       }
+
+      // Fane of Calypso (Anchored)
+      if (
+        !$this->getArg('skipProtectAnchored') &&
+        Globals::isDayPhase() &&
+        in_array($fromLocation, STORMS) &&
+        in_array($card->getType(), [TOKEN, CHARACTER]) &&
+        $card->hasToken(ANCHORED)
+      ) {
+        $player = $card->getPlayer();
+        if (!$player->hasProtectAnchoredInExpedition($fromLocation, $card->isGigantic())) {
+          $altNode = FT::ACTION(MOVE_CARD, [
+            'cardId' => $cId,
+            'location' => $this->getArg('location'),
+            'player' => $this->getArg('player'),
+            'skipProtectAnchored' => true,
+            'skipProtectAsleep' => true,
+          ], ['pId' => $card->getPId()]);
+          $toAdd = $player->buildSacrificeProtectAnchoredChoice($cId, $altNode);
+          if ($toAdd) {
+            unset($cards[$cId]);
+            $toAdd['sourceId'] = $cId;
+            $this->insertAsChild($toAdd);
+            continue;
+          }
+        }
+      }
+
+      // Fane of Calypso (Ordis)
+      if (
+        !$this->getArg('skipProtectAsleep') &&
+        Globals::isDayPhase() &&
+        in_array($fromLocation, STORMS) &&
+        in_array($card->getType(), [TOKEN, CHARACTER]) &&
+        $card->hasToken(ASLEEP)
+      ) {
+        $player = $card->getPlayer();
+        $altNode = FT::ACTION(MOVE_CARD, [
+          'cardId' => $cId,
+          'location' => $this->getArg('location'),
+          'player' => $this->getArg('player'),
+          'skipProtectAnchored' => true,
+          'skipProtectAsleep' => true,
+        ], ['pId' => $card->getPId()]);
+        $toAdd = $player->buildSacrificeProtectAsleepChoice($cId, $altNode);
+        if ($toAdd) {
+          unset($cards[$cId]);
+          $toAdd['sourceId'] = $cId;
+          $this->insertAsChild($toAdd);
+          continue;
+        }
+      }
+
       // Floral tent bravos
-      if (Globals::isDayPhase() && in_array($fromLocation, STORMS) && in_array($card->getType(), [TOKEN, CHARACTER]) && $card->getPlayer()->hasProtectBoostedInExpedition($fromLocation) && $card->hasToken(BOOST)) {
+      if (
+        !$this->getArg('skipProtectAnchored') &&
+        Globals::isDayPhase() &&
+        in_array($fromLocation, STORMS) &&
+        in_array($card->getType(), [TOKEN, CHARACTER]) &&
+        $card->getPlayer()->hasProtectBoostedInExpedition($fromLocation) &&
+        $card->hasToken(BOOST)
+      ) {
         unset($cards[$cId]);
         Notifications::message(clienttranslate('${card_name} is not discarded but loose <BOOST> instead'), ['card' => $card]);
         $this->insertAsChild(['action' => LOOSE, 'args' => ['cardId' => $card->getId(), 'type' => BOOST, 'n' => 99]]);

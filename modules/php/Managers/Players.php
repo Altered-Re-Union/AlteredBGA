@@ -429,6 +429,18 @@ class Players extends \ALT\Helpers\CachedDB_Manager
     }
   }
 
+  public static function getIncreaseHandCost($type = null, $playerId = null)
+  {
+    $cost = 0;
+    foreach (Cards::getPlayedCards(null) as $cId => $card) {
+      if ($playerId !== null && $card->getPId() != $playerId) {
+        continue;
+      }
+      $cost += $card->getIncreaseHandCost($type);
+    }
+    return $cost;
+  }
+
   public static function getIncreaseReserveCost($type = null)
   {
     $cost = 0;
@@ -455,6 +467,12 @@ class Players extends \ALT\Helpers\CachedDB_Manager
       }
     }
     return false;
+  }
+
+  public static function isCardNameBlockedThisDay($pId, $cardName)
+  {
+    $blockedCardNames = Globals::getBlockedCardNamesThisDay() ?? [];
+    return in_array($cardName, $blockedCardNames[$pId] ?? [], true);
   }
 
   public static function getBlockedExpeditions()

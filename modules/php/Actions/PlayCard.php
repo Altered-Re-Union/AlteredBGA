@@ -79,7 +79,8 @@ class PlayCard extends \ALT\Models\Action
     $card = $this->getCard();
     return !$card->isExhaustedReservePlayBlocked($player)
       && !empty($card->getPlayableLocation($player, null, $this->getArg('free')))
-      && $card->getMinManaOrbs() <= $player->getTotalMana();
+      && $card->getMinManaOrbs() <= $player->getTotalMana()
+      && !$card->isNameBlockedThisDay($player);
   }
 
   public function argsPlayCard()

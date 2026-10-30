@@ -21,6 +21,7 @@ class AX_Exalted_FaneofHelios extends \ALT\Models\Card
       'effectDesc' => clienttranslate('<TOUGH_1>.  At Noon — Draw two cards, then you may put a card from your hand in your Mana zone, as a ready Mana Orb.'),
       'costHand' => 6,
       'costReserve' => 6,
+      'frame' => 2,
       'tough' => 1,
       'effectPassive' => [
         'Noon' => [

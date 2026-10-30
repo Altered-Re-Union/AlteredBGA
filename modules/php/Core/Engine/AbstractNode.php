@@ -415,6 +415,18 @@ class AbstractNode
 
       $isDoable = $child->isDoable($playerTest);
       if ((!$child->isResolved() || ($this instanceof \ALT\Core\Engine\OrNode && isset($this->getArgs()['canReuse']))) && ($displayAllChoices || $isDoable)) {
+        // ActivateCard already embeds "(Card Name)" in its description. Other leaves
+        // (e.g. Athena temple Noon discard under PARALLEL) only have sourceId — resolve
+        // the name so the client can append it the same way.
+        $source = $child->getSource();
+        if (
+          is_null($source) &&
+          ($child->getAction() ?? null) !== ACTIVATE_CARD &&
+          !is_null($child->getSourceId())
+        ) {
+          $sourceCard = Cards::get($child->getSourceId(), false);
+          $source = is_null($sourceCard) ? null : $sourceCard->getName();
+        }
         $choice = [
           'id' => $id,
           'description' => $this->getType() == NODE_SEQ ? $this->getDescription() : $child->getDescription(),
@@ -423,7 +435,7 @@ class AbstractNode
           'automaticAction' => $child->isAutomatic($playerTest),
           'independentAction' => $child->isIndependent($playerTest),
           'irreversibleAction' => $child->isIrreversible($playerTest),
-          'source' => $child->getSource(),
+          'source' => $source,
           'sourceId' => $child->getSourceId(),
           'player' => $child->getPId() ?? $playerTest->getId(),
           'forceManualChoice' => $this->isManualChoice()

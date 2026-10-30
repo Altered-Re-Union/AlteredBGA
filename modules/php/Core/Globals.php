@@ -96,6 +96,10 @@ class Globals extends \ALT\Helpers\DB_Manager
     'testingOption' => 'bool',
     'beginner' => 'int',
     'firstPass' => 'int',
+
+    // Fugue
+    'blockedCardNamesThisDay' => 'obj', // pId => card name[]
+    'dieRolledThisDay' => 'obj', // pId => bool
   ];
 
   protected static $table = 'global_variables';

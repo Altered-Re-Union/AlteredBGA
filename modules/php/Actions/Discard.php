@@ -408,6 +408,46 @@ class Discard extends \ALT\Models\Action
         continue;
       }
 
+      // Fane of Calypso (Anchored)
+      if (Globals::isDayPhase() && in_array($originalLocation, STORMS) && in_array($card->getType(), [TOKEN, CHARACTER]) && $card->hasToken(ANCHORED) && !$this->getArg('force')) {
+        $player = $card->getPlayer();
+        if (!$player->hasProtectAnchoredInExpedition($originalLocation, $card->isGigantic())) {
+          $altNode = FT::ACTION(DISCARD, [
+            'cardId' => $cId,
+            'destination' => $args['destination'],
+            'tapped' => $this->getArg('tapped') ?? false,
+            'force' => true,
+            'seasoned' => $card->isSeasoned(),
+          ], ['pId' => $card->getPId()]);
+          $toAdd = $player->buildSacrificeProtectAnchoredChoice($cId, $altNode);
+          if ($toAdd) {
+            unset($cards[$cId]);
+            $toAdd['sourceId'] = $cId;
+            $this->insertAsChild($toAdd);
+            continue;
+          }
+        }
+      }
+
+      // Fane of Calypso (Ordis)
+      if (Globals::isDayPhase() && in_array($originalLocation, STORMS) && in_array($card->getType(), [TOKEN, CHARACTER]) && $card->hasToken(ASLEEP) && !$this->getArg('force')) {
+        $player = $card->getPlayer();
+        $altNode = FT::ACTION(DISCARD, [
+          'cardId' => $cId,
+          'destination' => $args['destination'],
+          'tapped' => $this->getArg('tapped') ?? false,
+          'force' => true,
+          'seasoned' => $card->isSeasoned(),
+        ], ['pId' => $card->getPId()]);
+        $toAdd = $player->buildSacrificeProtectAsleepChoice($cId, $altNode);
+        if ($toAdd) {
+          unset($cards[$cId]);
+          $toAdd['sourceId'] = $cId;
+          $this->insertAsChild($toAdd);
+          continue;
+        }
+      }
+
       // Special case of MoonlightJellyFish
       if ($this->isSacrifice()) {
         // Sactifice a fleeting

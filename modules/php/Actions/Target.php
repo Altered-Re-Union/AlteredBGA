@@ -62,10 +62,31 @@ class Target extends \ALT\Models\Action
     'isNotTapped' => false,
     'compareTargetBiome' => null, // e.g. ['biome' => FOREST, 'op' => 'lte', 'source' => 'source' or 'cardId']
     'noBoostIfBoosted' => false, // Eole: e.g. Deploy the Shields; omit from card defs unless true
+    'giganticOnly' => false, // Fugue: Rare Blinding Blow
   ];
 
   public function getDescription()
   {
+    if ($this->getArg('discardRemaining') && is_null($this->getCtxArg('effect'))) {
+      $n = $this->getArg('n');
+      $upTo = $this->getCtxArg('upTo') ?? false;
+      $inReserve = in_array(RESERVE, $this->getArg('targetLocation'), true);
+      if ($inReserve) {
+        $msg = $upTo
+          ? clienttranslate('Choose up to ${n} card(s) to keep in Reserve')
+          : clienttranslate('Choose ${n} card(s) to keep in Reserve');
+      } else {
+        $msg = $upTo
+          ? clienttranslate('Choose up to ${n} card(s) to keep')
+          : clienttranslate('Choose ${n} card(s) to keep');
+      }
+
+      return [
+        'log' => $msg,
+        'args' => ['n' => $n],
+      ];
+    }
+    
     $targetType = $this->getArg('targetType');
     $upTo = $this->getCtxArg('upTo') ?? false;
     $totalCost = $this->getArg('totalCost');
@@ -257,18 +278,19 @@ class Target extends \ALT\Models\Action
     // What cards ?
     $targetType = $this->getArg('targetType');
     $targetLocation = $this->getArg('targetLocation');
+    $sourceStorm = $this->resolveSourceStormLocation();
     if ($targetLocation == ['source']) {
-      $targetLocation = [$this->getSource()->getLocation()];
+      $targetLocation = [$sourceStorm];
       if (Cards::get($this->getSourceId())->isGigantic()) {
         $targetLocation = STORMS;
       }
     } elseif ($targetLocation == ['oppositeSource']) {
-      $targetLocation = [$this->getSource()->getLocation() == STORM_RIGHT ? STORM_LEFT : STORM_RIGHT];
+      $targetLocation = [$sourceStorm == STORM_RIGHT ? STORM_LEFT : STORM_RIGHT];
       if (Cards::get($this->getSourceId())->isGigantic()) {
         $targetLocation = STORMS;
       }
     } elseif ($targetLocation == ['opponentSource']) {
-      $targetLocation = [$this->getSource()->getLocation()];
+      $targetLocation = [$sourceStorm];
       if (Cards::get($this->getSourceId())->isGigantic()) {
         $targetLocation = STORMS;
       }
@@ -277,6 +299,7 @@ class Target extends \ALT\Models\Action
     $excludeTokens = $this->getArg('excludeToken');
     $onlyTokens = $this->getArg('onlyToken');
     $ascendedOnly = $this->getArg('ascendedOnly');
+    $giganticOnly = $this->getArg('giganticOnly');
 
     if (!empty($this->getArg('cards'))) {
       $cards = Cards::getMany($this->getArg('cards'))->filter(function ($c) use ($targetLocation, $targetType) {
@@ -323,7 +346,7 @@ class Target extends \ALT\Models\Action
     $compareFilter = $this->resolveCompareTargetBiomeFilter();
 
     // Which criteria ?
-    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic, $maxStatisticBiome, $augmentOnly, $ascendedOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter,$noBoostIfBoosted) {
+    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic, $maxStatisticBiome, $augmentOnly, $ascendedOnly, $giganticOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter,$noBoostIfBoosted) {
       if ($excludeSelf && $c->getId() == $sourceId) {
         return false;
       }
@@ -365,9 +388,16 @@ class Target extends \ALT\Models\Action
       if($noBoostIfBoosted && $c->countToken(BOOST) > 0){
         return false;
       }
+            
+      if ($giganticOnly && !$c->isGigantic()) {
+        return false;
+      }
 
       $handCost = $c->getCostHand();
       $reserveCost = $c->getCostReserve();
+      $templeCost = $c->getCostTemple();
+      $isPlayedAsTemple = $c->isPlayedAsTemple();
+      $isOnLandmarkWithTempleCost = $c->getLocation() == LANDMARK && $templeCost > 0;
       $statuses = $this->getArg('statuses');
       $excludedStatuses = $this->getArg('excludedStatuses');
       $effects = $this->getArg('hasEffects');
@@ -430,14 +460,15 @@ class Target extends \ALT\Models\Action
         }
       }
 
+      $baseCostForComparison = $c->hasToken(FLEETING) ? $reserveCost : $handCost;
       $costCheck =
         $this->getArg('minHandCost') <= $handCost &&
         $handCost <= $maxHandCost &&
         $this->getArg('minReserveCost') <= $reserveCost &&
         $reserveCost <= $this->getArg('maxReserveCost') &&
-        (($c->hasToken(FLEETING) && $reserveCost <= $maxBaseCost) || (!$c->hasToken(FLEETING) && $handCost <= $maxBaseCost)) &&
-        (($c->hasToken(FLEETING) && $reserveCost >= $minBaseCost) || (!$c->hasToken(FLEETING) && $handCost >= $minBaseCost));
-
+        $baseCostForComparison <= $maxBaseCost &&
+        $baseCostForComparison >= $minBaseCost;
+        
       if ($statuses == 'disabled' || $c->getType() == PERMANENT) {
         return $costCheck;
       } else {
@@ -521,17 +552,17 @@ class Target extends \ALT\Models\Action
     $totalOcean = $this->getArg('totalOcean');
 
     if (!empty(array_diff($cardIds, $args['cardIds']))) {
-      throw new \Bga\GameFramework\VisibleSystemException('You cannot target these cards. Should not happen');
+      throw new \BgaVisibleSystemException('You cannot target these cards. Should not happen');
     }
     if (count($cardIds) > $args['n']) {
-      throw new \Bga\GameFramework\VisibleSystemException('You selected too many cards. Should not happen');
+      throw new \BgaVisibleSystemException('You selected too many cards. Should not happen');
     }
     if (
       !$args['upTo'] &&
       ((count($args['cardIds']) >= $args['n'] && count($cardIds) < $args['n']) ||
         (count($args['cardIds']) < $args['n'] && count($cardIds) != count($args['cardIds'])))
     ) {
-      throw new \Bga\GameFramework\VisibleSystemException('You havent selected enough cards. Should not happen');
+      throw new \BgaVisibleSystemException('You havent selected enough cards. Should not happen');
     }
 
     // Tough
@@ -766,4 +797,68 @@ class Target extends \ALT\Models\Action
     ];
     return $labels[$subType] ?? $defaultLabel;
   }
+  
+   /**
+   * Expedition used by source / oppositeSource / opponentSource targeting.
+   * Spells resolve in LIMBO, so fall back to ctx expedition or a prior InvokeToken in the same sequence.
+   */
+   private function resolveSourceStormLocation()
+   {
+     $source = $this->getSource();
+     if (is_null($source)) {
+       return null;
+     }
+ 
+     $srcLoc = $source->getLocation();
+     $event = $this->getEventRecursive();
+     if (!is_null($event) && in_array($event['method'] ?? '', ['LeaveExpedition', 'LeaveLandmark']) && isset($event['from'])) {
+       $srcLoc = $event['from'];
+     }
+ 
+     if (in_array($srcLoc, STORMS)) {
+       return $srcLoc;
+     }
+ 
+     $expedition = $this->getCtxArg('expedition');
+     if (!is_null($expedition) && in_array($expedition, STORMS)) {
+       return $expedition;
+     }
+ 
+     $forceExpedition = $this->getCtxArg('forceExpedition');
+     if (!is_null($forceExpedition) && in_array($forceExpedition[1] ?? null, STORMS)) {
+       return $forceExpedition[1];
+     }
+ 
+     $index = $this->ctx->getIndex();
+     if (!is_null($index) && $index > 0 && !is_null($this->ctx->getParent())) {
+       $siblings = $this->ctx->getParent()->getChilds();
+       for ($i = $index - 1; $i >= 0; $i--) {
+         $sibling = $siblings[$i];
+         if (!$sibling->isActionResolved()) {
+           continue;
+         }
+         if ($sibling->getAction() !== INVOKE_TOKEN) {
+           continue;
+         }
+         $resolution = $sibling->getActionResolutionArgs();
+         if (empty($resolution) || $resolution === PASS) {
+           continue;
+         }
+         $tokenId = is_array($resolution) ? ($resolution[0] ?? null) : $resolution;
+         if (empty($tokenId)) {
+           continue;
+         }
+         $token = Cards::get($tokenId);
+         if (in_array($token->getLocation(), STORMS)) {
+           return $token->getLocation();
+         }
+       }
+     }
+ 
+     if (!is_null($event) && isset($event['to']) && in_array($event['to'], STORMS)) {
+       return $event['to'];
+     }
+ 
+     return $srcLoc;
+   }
 }

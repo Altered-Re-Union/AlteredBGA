@@ -204,6 +204,11 @@ class Card extends \ALT\Helpers\DB_Model
 
      // Fugue
      'costReductionIfConstructionPlayed' => 'int',
+     'sacrificeProtectAnchored' => 'bool', // Fane of Calypso
+     'sacrificeProtectAsleep' => 'bool', // Fane of Calypso (Ordis)
+     'universalToughScope' => 'str', // Restricts a universalCharacter Tough aura, e.g. Trireme Captain
+     'increaseHandCost' => 'int', // Fane of Nausicaa
+     'dynamicIncreaseHandCost' => 'str',
   ];
 
   /********* DB ACCESS *********/
@@ -415,6 +420,10 @@ class Card extends \ALT\Helpers\DB_Model
       return false;
     }
 
+    if ($this->isNameBlockedThisDay($player)) {
+      return false;
+    }
+
     $playCondition = $this->getPlayCondition();
     if ($playCondition != null) {
       if (!Conditions::check(['condition' => $playCondition], $this, null)) {
@@ -494,6 +503,14 @@ class Card extends \ALT\Helpers\DB_Model
       }
     }
     return $cost <= $mana && $this->getMinManaOrbs() <= $totalMana;
+  }
+
+  /**
+   * Ship Security Officer (and similar): opponents can't play cards with that name this Day.
+   */
+  public function isNameBlockedThisDay($player)
+  {
+    return Players::isCardNameBlockedThisDay($player->getId(), $this->getName());
   }
 
   /**
@@ -1120,6 +1137,7 @@ class Card extends \ALT\Helpers\DB_Model
     }
 
     $increaseReserveCost = Players::getIncreaseReserveCost($this->getType());
+    $increaseHandCost = Players::getIncreaseHandCost($this->getType(), $this->getPId());
     $reduceReserveCost = Players::getReduceReserveCost($this->getType(), $this->getSubtypes(), $this->getPId(), $this->id);
     if ($reduceReserveCost > 0 && $this->getLocation() == RESERVE) {
       $minimumCost = max(1, $minimumCost);
@@ -1141,8 +1159,7 @@ class Card extends \ALT\Helpers\DB_Model
         } else {
           $initialCost = $this->getCostHand();
         }
-        return max($minimumCost, $initialCost - $typeReduction  - (int) $dynamicReduc);
-        break;
+        return max($minimumCost, $initialCost - $typeReduction  - (int) $dynamicReduc + $increaseHandCost);
       case RESERVE:
         if ($reserveFlipCost) {
           return min(
@@ -1151,7 +1168,6 @@ class Card extends \ALT\Helpers\DB_Model
           );
         }
         return max($minimumCost, $this->getCostReserve() - $typeReduction - (int) $dynamicReduc + $increaseReserveCost - $reduceReserveCost);
-        break;
     }
   }
 
@@ -1328,6 +1344,13 @@ class Card extends \ALT\Helpers\DB_Model
       if ($anchoredAsleep > 0 && ($this->hasToken(ANCHORED) || $this->hasToken(ASLEEP))) {
         $tough += 1;
       }
+      
+      if ($this->hasToken(ANCHORED)) {
+        $tough += $this->getPlayer()->countUniversalToughAnchored();
+      }
+      if ($this->hasToken(FLEETING)) {
+        $tough += $this->getPlayer()->countUniversalToughFleeting();
+      }
     }
 
     if (in_array($this->getType(), [PERMANENT])) {
@@ -1422,6 +1445,14 @@ class Card extends \ALT\Helpers\DB_Model
     }
 
     if ($this->isToken() && $this->getPlayer()->countUniversalTokenGigantic() > 0) {
+      return true;
+    }
+
+    if (
+      in_array(COMPANION, $this->getSubtypes())
+      && in_array($this->getLocation(), STORMS)
+      && $this->getPlayer()->countUniversalCompanionGigantic() > 0
+    ) {
       return true;
     }
 
@@ -1528,6 +1559,22 @@ class Card extends \ALT\Helpers\DB_Model
         return 0;
       } elseif (!is_null($result)) {
         return $result;
+      }
+    }
+    return 0;
+  }
+
+  public function getIncreaseHandCost($type = null)
+  {
+    if (($this->properties['increaseHandCost'] ?? 0) > 0) {
+      return $this->properties['increaseHandCost'];
+    }
+
+    $dynamicIncrease = $this->getDynamicIncreaseHandCost();
+    if ($dynamicIncrease != '') {
+      $result = Utils::checkAttributeCondition('cost', $dynamicIncrease, $this->getPlayer(), $this);
+      if (!is_null($result)) {
+        return (int) $result;
       }
     }
     return 0;

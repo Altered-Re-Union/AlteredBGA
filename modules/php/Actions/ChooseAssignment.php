@@ -12,6 +12,7 @@ use ALT\Core\Globals;
 use ALT\Core\Stats;
 use ALT\Helpers\FlowConvertor;
 use ALT\Helpers\Utils;
+use ALT\Models\Card;
 use ALT\Models\Player;
 use ALT\Helpers\FT;
 
@@ -122,7 +123,8 @@ class ChooseAssignment extends \ALT\Models\Action
           }
           // Free gifts skip mana cost but keep the same exhausted-reserve rules as canBePlayed /
           // getPlayableLocation (Vaike, Kelonic Heater, …). Empty destinations are dropped below.
-          return $card->getMinManaOrbs() <= $player->getTotalMana()
+          return !$card->isNameBlockedThisDay($player)
+            && $card->getMinManaOrbs() <= $player->getTotalMana()
             && !$card->isExhaustedReservePlayBlocked($player)
             && $this->cardMeetsExplicitFreeCostLimits($card, $freeCostLimits);
         })
@@ -137,6 +139,7 @@ class ChooseAssignment extends \ALT\Models\Action
       $scouts = $handCards
         ->filter(function ($card) use ($player, $authorizedTypes, $free, $freeCostLimits, $matchesSubType) {
           $meetsFreeScoutCost = $free
+            && !$card->isNameBlockedThisDay($player)
             && $this->cardMeetsExplicitFreeCostLimits($card, $freeCostLimits);
           return $card->getScout() > 0
             && in_array($card->getType(), $authorizedTypes)
@@ -154,6 +157,7 @@ class ChooseAssignment extends \ALT\Models\Action
         ->merge($reserveCards)
         ->filter(function ($card) use ($player, $authorizedTypes, $free, $freeCostLimits, $matchesSubType) {
           $meetsFreeTempleCost = $free
+            && !$card->isNameBlockedThisDay($player)
             && $this->cardMeetsExplicitFreeCostLimits($card, $freeCostLimits);
           return $card->hasTemple()
             && in_array($card->getType(), $authorizedTypes)
@@ -288,6 +292,10 @@ class ChooseAssignment extends \ALT\Models\Action
     if ($card->getPId() != $player->getId()) {
       throw new \BgaVisibleSystemException('You do not own this card. Should not happen');
     }
+    
+    if ($card->isNameBlockedThisDay($player)) {
+      throw new \BgaUserException(clienttranslate('You cannot play cards with that name this Day'));
+    }
 
     if ($free == false) {
       // Calculate cost
@@ -366,6 +374,73 @@ class ChooseAssignment extends \ALT\Models\Action
           $this->resolveAction(['CostReduction']);
           return;
         }
+        } elseif ($card->getCostReductionSacrificeCharacter() > 0) {
+          $nbCharacters = $player->getPlayedCards()->filter(function ($c2) {
+            return in_array($c2->getType(), [CHARACTER, TOKEN])
+              || count(array_intersect([CHARACTER, TOKEN], $c2->getAdditionalType())) > 0;
+          })->count();
+  
+          if ($nbCharacters > 0) {
+            $this->insertAsChild(
+              FT::XOR(
+                FT::ACTION(PLAY_CARD, ['cardId' => $cardId, 'free' => true, 'location' => $location, 'cost' => $cost]),
+                FT::SEQ(
+                  FT::ACTION(
+                    TARGET,
+                    [
+                      'targetType' => [CHARACTER, TOKEN],
+                      'targetPlayer' => ME,
+                      'effect' => FT::ACTION(DISCARD, ['desc' => 'sacrifice']),
+                    ],
+                    ['sourceId' => $cardId]
+                  ),
+                  FT::ACTION(PLAY_CARD, [
+                    'cardId' => $cardId,
+                    'free' => true,
+                    'cost' => $cost - $card->getCostReductionSacrificeCharacter(),
+                    'location' => $location,
+                  ])
+                )
+              )
+            );
+            $this->resolveAction(['CostReduction']);
+            return;
+          }
+        } elseif (!empty($card->getCostReductionSpendBoost())) {
+          $spendBoost = $card->getCostReductionSpendBoost();
+          $boostCost = (int) ($spendBoost['boostCost'] ?? 2);
+          $reduction = (int) ($spendBoost['reduction'] ?? 1);
+  
+          if (Card::countExpeditionCharacterBoosts($player) >= $boostCost) {
+            $spendNodes = [];
+            for ($i = 0; $i < $boostCost; $i++) {
+              $spendNodes[] = FT::ACTION(
+                TARGET,
+                [
+                  'targetType' => [CHARACTER, TOKEN],
+                  'targetLocation' => STORMS,
+                  'targetPlayer' => ME,
+                  'augmentOnly' => true,
+                  'effect' => FT::ACTION(SPEND, ['n' => 1]),
+                ],
+                ['sourceId' => $cardId]
+              );
+            }
+            $spendNodes[] = FT::ACTION(PLAY_CARD, [
+              'cardId' => $cardId,
+              'free' => true,
+              'cost' => $cost - $reduction,
+              'location' => $location,
+            ]);
+            $this->insertAsChild(
+              FT::XOR(
+                FT::ACTION(PLAY_CARD, ['cardId' => $cardId, 'free' => true, 'location' => $location, 'cost' => $cost]),
+                FT::SEQ(...$spendNodes)
+              )
+            );
+            $this->resolveAction(['CostReduction']);
+            return;
+          }
       } elseif ($card->getCostReductionSacrificePermanent() > 0) {
         $nbPermanents = $player->getPlayedCards()->filter(function ($c2) {
           return $c2->getType() == PERMANENT || in_array(PERMANENT, $c2->getAdditionalType());
@@ -642,6 +717,7 @@ class ChooseAssignment extends \ALT\Models\Action
     }
 
 
+    $hasPlayedEffects = false;
     if (
       ($card->getType() == CHARACTER && !Players::hasOpponentBlockingPower($player, $location, $card->isGigantic())) ||
       $card->getType() != CHARACTER
@@ -935,6 +1011,7 @@ class ChooseAssignment extends \ALT\Models\Action
         $effects = Utils::updateTree($effects, [0 => 'dioclesLocation'], $card->getLocation(), ['expedition']);
         // $effects = Utils::tagTree($effects, ['pId' => $player->getId()]);
         $this->pushAfterFinishingChilds($effects['childs']);
+        $hasPlayedEffects = true;
         if ($card->getRarity() == RARITY_UNIQUE) {
           $this->updateAfterFinishingChilds(['noIndependent' => true]);
         }
@@ -994,6 +1071,12 @@ class ChooseAssignment extends \ALT\Models\Action
           'stealOwnership' => $stealOwnership,
         ], true, 'EatMeEnergyBars');
       }
+    }
+    
+    // Force resolve-order choice when played effects coincide with after-listeners
+    // (e.g. Rinku {J} TARGET vs Yeti join boost). Unique already sets this earlier.
+    if ($hasPlayedEffects) {
+      $this->updateAfterFinishingChilds(['noIndependent' => true]);
     }
     // throw new \feException(print_r(Globals::getEngine()));
 

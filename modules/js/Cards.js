@@ -1520,7 +1520,7 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
       this._playerCounters[n.args.player_id]['handCount'].incValue(-1);
     },
 
-        refreshCardDom(card) {
+    refreshCardDom(card) {
       let id = `card-${card.id}`;
       CARDS_DATA[card.id] = card;
       if (!$(id)) {
@@ -2127,7 +2127,7 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
       }
 
       let infos = {
-        frameSize: 1,
+        frameSize: parseInt(card.properties.frame, 10) || 1,
         textFontSize: '14px',
         nameFontSize: '16px',
         boost: 0,
@@ -2182,6 +2182,12 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
         let contentSize = oCard.querySelector('.card-effect').offsetHeight;
         return frameSize >= contentSize;
       };
+
+      // Optional card property `frame` forces a minimum box size (1 or 2)
+      if (i.frameSize >= 2) {
+        oCard.querySelector('.card-frame').dataset.size = 2;
+        oCard.offsetHeight;
+      }
 
       if (!isEffectSizeOk()) {
         oCard.querySelector('.card-frame').dataset.size = 2;
