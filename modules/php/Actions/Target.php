@@ -337,7 +337,7 @@ class Target extends \ALT\Models\Action
     $monoBiome = $this->getArg('monoBiome');
 
     // Duster
-    $maxBaseCost = Utils::resolveMaxBaseCost($this->getArg('maxBaseCost'), $player); // Updated FUGUE for Poseidon's Fury
+    $maxBaseCost = Utils::resolveMaxBaseCost($this->getArg('maxBaseCost'), $player); // Updated FUGUE for Aeolus' Wind
     $minBaseCost = $this->getArg('minBaseCost');
 
     // Eole
@@ -346,7 +346,7 @@ class Target extends \ALT\Models\Action
     $compareFilter = $this->resolveCompareTargetBiomeFilter();
 
     // Which criteria ?
-    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic, $maxStatisticBiome, $augmentOnly, $ascendedOnly, $giganticOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter,$noBoostIfBoosted) {
+    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic, $maxStatisticBiome, $augmentOnly, $ascendedOnly, $giganticOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter, $noBoostIfBoosted) {
       if ($excludeSelf && $c->getId() == $sourceId) {
         return false;
       }

@@ -329,6 +329,22 @@ abstract class Utils extends \APP_DbObject
         return FACTION_YZ;
     }
   }
+  
+  public static function resolveMaxBaseCost($maxBaseCost, $player)
+  {
+    if (is_int($maxBaseCost)) {
+      return $maxBaseCost;
+    }
+    if ($maxBaseCost === 'landmarks') {
+      return $player->getLandmarks()->count();
+    }
+    if ($maxBaseCost === 'revealedCardHandCost') {
+      $revealed = self::getRevealedCard($player);
+      return $revealed !== null ? (int) $revealed->getCostHand() : 0;
+    }
+    // PHP 8.5: `3 <= 'revealedCardHandCost'` is true (string compare). Never leave a string cap.
+    return is_numeric($maxBaseCost) ? (int) $maxBaseCost : 0;
+  }
 
   public static function countCharactersInExpeditions($player, $subtype = null)
   {
@@ -337,7 +353,6 @@ abstract class Utils extends \APP_DbObject
         && ($subtype === null || in_array($subtype, $c->getSubtypes()));
     })->count();
   }
-
 
   public static function resolveMaxStatistic($maxStatistic, $player)
   {
@@ -466,19 +481,6 @@ abstract class Utils extends \APP_DbObject
       }
     }
     return $effect;
-  }
-  
-  public static function resolveMaxBaseCost($maxBaseCost, $player)
-  {
-    if (is_int($maxBaseCost)) {
-      return $maxBaseCost;
-    }
-    if ($maxBaseCost === 'revealedCardHandCost') {
-      $revealed = self::getRevealedCard($player);
-      return $revealed !== null ? (int) $revealed->getCostHand() : 0;
-    }
-    // PHP 8.5: `3 <= 'revealedCardHandCost'` is true (string compare). Never leave a string cap.
-    return is_numeric($maxBaseCost) ? (int) $maxBaseCost : 0;
   }
 }
 
