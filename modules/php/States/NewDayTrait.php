@@ -166,6 +166,7 @@ trait NewDayTrait
     Globals::setTurnCards([]);
     Globals::setConstructionPlayedThisDay([]);
     Globals::setBlockedCardNamesThisDay([]);
+    Globals::setDieRolledThisDay([]);
     Globals::setNextCharacterInExpeditionBoost([]);
     Cards::untapAll();
     Stats::incDays();

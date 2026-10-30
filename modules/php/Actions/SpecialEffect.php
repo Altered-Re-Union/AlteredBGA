@@ -2615,6 +2615,12 @@ class SpecialEffect extends \ALT\Models\Action
           Globals::setBlockedCardNamesThisDay($blocked);
         }
         break; 
+      case 'boostXMonoVisibleRegions':
+        $n = Conditions::getCountMonoVisibleRegions();
+        if ($n > 0) {
+          $this->insertAsChild(FT::GAIN($card, BOOST, $n));
+        }
+        break;   
       case 'boostExpeditions':
         $player = $card->getPlayer();
         $n = $args['n'] ?? 1;
