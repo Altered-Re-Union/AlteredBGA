@@ -438,6 +438,42 @@ abstract class Utils extends \APP_DbObject
     return $revealed;
   }
 
+  public static function resolveBranchingEffect($value, array $branches)
+  {
+    $effect = null;
+    $value = (int) $value;
+    foreach ($branches as $qty => $gain) {
+      if ($qty === 'effect' || $qty === 'sourceId' || $qty === 'args' || $qty === 'action' || $qty === 'type') {
+        continue;
+      }
+      $qty = (string) $qty;
+      $lower = 0;
+      $upper = null;
+
+      if (\stripos($qty, '-') !== false) {
+        $t = \explode('-', $qty);
+        $lower = (int) $t[0];
+        $upper = (int) $t[1];
+      } elseif (\stripos($qty, '+') !== false) {
+        $t = \explode('+', $qty);
+        $lower = (int) $t[0];
+      } elseif (is_numeric($qty)) {
+        $lower = (int) $qty;
+        $upper = (int) $qty;
+      } else {
+        continue;
+      }
+
+      if ($value >= $lower && ($upper === null || $value <= $upper)) {
+        if ($effect != null) {
+          throw new \feException("Duplicate effect found for value : $value");
+        }
+        $effect = $gain;
+      }
+    }
+    return $effect;
+  }
+  
   public static function resolveMaxBaseCost($maxBaseCost, $player)
   {
     if (is_int($maxBaseCost)) {
