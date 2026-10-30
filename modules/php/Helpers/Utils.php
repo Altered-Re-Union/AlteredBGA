@@ -317,23 +317,40 @@ abstract class Utils extends \APP_DbObject
     switch ($faction) {
       case 'AX':
         return FACTION_AX;
-        break;
       case 'OR':
         return FACTION_OD;
-        break;
       case 'BR':
         return FACTION_BR;
-        break;
       case 'LY':
         return FACTION_LY;
-        break;
       case 'MU':
         return FACTION_MU;
-        break;
       case 'YZ':
         return FACTION_YZ;
-        break;
     }
+  }
+
+  public static function countCharactersInExpeditions($player, $subtype = null)
+  {
+    return $player->getPlayedCards([CHARACTER, TOKEN])->filter(function ($c) use ($subtype) {
+      return ($c->isGigantic() || in_array($c->getLocation(), STORMS))
+        && ($subtype === null || in_array($subtype, $c->getSubtypes()));
+    })->count();
+  }
+
+
+  public static function resolveMaxStatistic($maxStatistic, $player)
+  {
+    if (is_int($maxStatistic)) {
+      return $maxStatistic;
+    }
+    if ($maxStatistic === 'soldiersInExpeditions') {
+      return self::countCharactersInExpeditions($player, SOLDIER);
+    }
+    elseif ($maxStatistic === 'charactersInExpeditions') {
+      return self::countCharactersInExpeditions($player);
+    }
+    return $maxStatistic;
   }
 
   public static function checkAttributeCondition($attribute, $data, $player, $card)
@@ -413,6 +430,55 @@ abstract class Utils extends \APP_DbObject
       $revealed = \ALT\Managers\Cards::getInLocation('reveal-%')->first();
     }
     return $revealed;
+  }
+
+  public static function resolveBranchingEffect($value, array $branches)
+  {
+    $effect = null;
+    $value = (int) $value;
+    foreach ($branches as $qty => $gain) {
+      if ($qty === 'effect' || $qty === 'sourceId' || $qty === 'args' || $qty === 'action' || $qty === 'type') {
+        continue;
+      }
+      $qty = (string) $qty;
+      $lower = 0;
+      $upper = null;
+
+      if (\stripos($qty, '-') !== false) {
+        $t = \explode('-', $qty);
+        $lower = (int) $t[0];
+        $upper = (int) $t[1];
+      } elseif (\stripos($qty, '+') !== false) {
+        $t = \explode('+', $qty);
+        $lower = (int) $t[0];
+      } elseif (is_numeric($qty)) {
+        $lower = (int) $qty;
+        $upper = (int) $qty;
+      } else {
+        continue;
+      }
+
+      if ($value >= $lower && ($upper === null || $value <= $upper)) {
+        if ($effect != null) {
+          throw new \feException("Duplicate effect found for value : $value");
+        }
+        $effect = $gain;
+      }
+    }
+    return $effect;
+  }
+  
+  public static function resolveMaxBaseCost($maxBaseCost, $player)
+  {
+    if (is_int($maxBaseCost)) {
+      return $maxBaseCost;
+    }
+    if ($maxBaseCost === 'revealedCardHandCost') {
+      $revealed = self::getRevealedCard($player);
+      return $revealed !== null ? (int) $revealed->getCostHand() : 0;
+    }
+    // PHP 8.5: `3 <= 'revealedCardHandCost'` is true (string compare). Never leave a string cap.
+    return is_numeric($maxBaseCost) ? (int) $maxBaseCost : 0;
   }
 }
 

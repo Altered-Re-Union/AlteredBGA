@@ -41,6 +41,30 @@ class InvokeToken extends \ALT\Models\Action
     ];
   }
 
+  protected function resolveTargetOwnerId()
+  {
+    $ownerId = $this->getCtxArg('ownerId');
+    if (is_null($ownerId) && !is_array($this->ctx)) {
+      $ownerId = $this->ctx->infos['ownerId'] ?? null;
+    }
+    if (!is_null($ownerId) && $ownerId != -1) {
+      return $ownerId;
+    }
+    $event = $this->getEvent();
+    if (!is_null($event) && isset($event['owner'])) {
+      return $event['owner'];
+    }
+    $source = $this->getSource();
+    if (!is_null($source)) {
+      return $source->getOwner();
+    }
+    $cardId = $this->getCtxArg('cardId') ?? $this->getSourceId();
+    if (!is_null($cardId)) {
+      return Cards::get($cardId)->getOwner();
+    }
+    return $this->getPlayer()->getId();
+  }
+
   public function getInvokePlayerId()
   {
     if (isset($this->getCtxArgs()['expedition'])) {
@@ -58,12 +82,9 @@ class InvokeToken extends \ALT\Models\Action
       return Players::getNextId($player);
     }
     if ($targetPlayer == 'owner') {
-      $invokePId = $this->getCtxArgs()['ownerId'] ?? -1;
-      if ($invokePId == -1) {
-        $effectId = $this->getCtxArg('cardId');
-        $invokePId = Cards::get($effectId)->getPId();
-      }
-      return $invokePId;
+      // LeaveExpedition (e.g. Trojan Horse) has no cardId/ownerId on the invoke node;
+      // resolve via event owner / source owner instead of Cards::get(null).
+      return $this->resolveTargetOwnerId();
     }
 
     return $invokePId;
@@ -73,12 +94,14 @@ class InvokeToken extends \ALT\Models\Action
   {
     $player = Players::getActive();
 
-    $tokenType = $this->getCtxArg('tokenType');
+    $tokenType = $this->resolveTokenType();
     $targetLocations = $this->getCtxArg('targetLocation') ?? STORMS;
     if (isset($this->getCtxArgs()['expedition'])) {
       // we come from a target Expedition
       $targetLocations = [$this->getCtxArgs()['expedition']];
     }
+
+    $invokePlayerId = $this->getInvokePlayerId();
 
     return [
       'token' => $tokenType,
@@ -87,7 +110,8 @@ class InvokeToken extends \ALT\Models\Action
       'canPass' => $this->getCtxArg('optional') ?? false,
       'locations' => $targetLocations,
       'allPlayers' => (is_null($this->getCtxArg('targetPlayer')) && count($targetLocations) > 1) || ($this->getCtxArg('allPlayers') ?? false),
-      'targetPlayer' => null,
+      'invokePlayerId' => $invokePlayerId,
+      'invokeOnOpponent' => $invokePlayerId != $player->getId(),
     ];
   }
 
@@ -105,10 +129,22 @@ class InvokeToken extends \ALT\Models\Action
 
   public function getToken()
   {
-    $tokenType = $this->getCtxArg('tokenType');
+    $tokenType = $this->resolveTokenType();
     $infos = explode('_', $tokenType);
     $className = "\\ALT\\Cards\\$infos[0]\\$tokenType";
     return new $className(null);
+  }
+
+  public function resolveTokenType()
+  {
+    $tokenType = $this->getCtxArg('tokenType');
+    if ($tokenType === HERO_SIGNATURE) {
+      $tokenType = $this->getPlayer()->getHeroSignatureTokenType();
+      if (is_null($tokenType)) {
+        throw new \BgaVisibleSystemException('Hero has no Signature token. Should not happen');
+      }
+    }
+    return $tokenType;
   }
 
   public function isAutomatic($player = null)
@@ -251,11 +287,7 @@ class InvokeToken extends \ALT\Models\Action
       if ($targetPlayer == OPPONENT) {
         $invokePId = Players::getNextId($player);
       } elseif ($targetPlayer == 'owner') {
-        $invokePId = $this->getCtxArgs()['ownerId'] ?? -1;
-        if ($invokePId == -1) {
-          $effectId = $this->getCtxArg('cardId');
-          $invokePId = Cards::get($effectId)->getPId();
-        }
+        $invokePId = $this->resolveTargetOwnerId();
       }
     }
 
@@ -314,7 +346,7 @@ class InvokeToken extends \ALT\Models\Action
       }
 
 
-      $this->checkAfterListeners($player, [
+      $listenerArgs = [
         'playCard' => true,
         'cardId' => $card->getId(),
         'cardType' => $card->getType(),
@@ -324,21 +356,15 @@ class InvokeToken extends \ALT\Models\Action
         'locationPId' => $invokePId,
         'gigantic' => $card->isGigantic(),
         'token' => true,
-        'invoked' => $this->getCtxArg('tokenType')
-      ]);
+        'invoked' => $this->resolveTokenType(),
+      ];
+      $sourceId = $this->getSourceId();
+      if (!is_null($sourceId)) {
+        $listenerArgs['sourceId'] = $sourceId;
+      }
+      $this->checkAfterListeners($player, $listenerArgs);
       if (!$this->getArg('moreThan1') && $i == 0) {
-        $this->checkAfterListeners($player, [
-          'playCard' => true,
-          'cardId' => $card->getId(),
-          'cardType' => $card->getType(),
-          'additionalType' => $card->getAdditionalType(),
-          'from' => 'invoke',
-          'to' => $location,
-          'locationPId' => $invokePId,
-          'gigantic' => $card->isGigantic(),
-          'token' => true,
-          'invoked' => $this->getCtxArg('tokenType')
-        ], true, 'InvokeTokenOnce');
+        $this->checkAfterListeners($player, $listenerArgs, true, 'InvokeTokenOnce');
       }
     }
     if ($this->getN() <= 0) {

@@ -40,6 +40,7 @@ class Target extends \ALT\Models\Action
     'excludePreviousTarget' => false, // exclude ctx cardId (nested target after updateCardId)
     'totalCost' => INFTY,
     'totalMountain' => INFTY,
+    'totalOcean' => INFTY,
     'hasEffects' => 'disabled',
     'cards' => [],
     'discardRemaining' => false,
@@ -49,6 +50,7 @@ class Target extends \ALT\Models\Action
     'excludeBiomes' => false,
     'isTapped' => false,
     'maxStatistic' => 99,
+    'maxStatisticBiome' => null, // FOREST, MOUNTAIN, or OCEAN; null checks all biomes
     'augmentOnly' => false,
     'effect' => null,
     'allIds' => false, // we put all the Ids instead of duplicating for each card
@@ -65,11 +67,32 @@ class Target extends \ALT\Models\Action
 
   public function getDescription()
   {
+    if ($this->getArg('discardRemaining') && is_null($this->getCtxArg('effect'))) {
+      $n = $this->getArg('n');
+      $upTo = $this->getCtxArg('upTo') ?? false;
+      $inReserve = in_array(RESERVE, $this->getArg('targetLocation'), true);
+      if ($inReserve) {
+        $msg = $upTo
+          ? clienttranslate('Choose up to ${n} card(s) to keep in Reserve')
+          : clienttranslate('Choose ${n} card(s) to keep in Reserve');
+      } else {
+        $msg = $upTo
+          ? clienttranslate('Choose up to ${n} card(s) to keep')
+          : clienttranslate('Choose ${n} card(s) to keep');
+      }
+
+      return [
+        'log' => $msg,
+        'args' => ['n' => $n],
+      ];
+    }
+    
     $targetType = $this->getArg('targetType');
     $upTo = $this->getCtxArg('upTo') ?? false;
     $totalCost = $this->getArg('totalCost');
     $totalMountain = $this->getArg('totalMountain');
-    $baseCost = $this->getArg('maxBaseCost');
+    $totalOcean = $this->getArg('totalOcean');
+    $baseCost = Utils::resolveMaxBaseCost($this->getArg('maxBaseCost'), $this->getPlayer());
     $minBaseCost = $this->getArg('minBaseCost');
     $typeLabel = null;
     $msg = '';
@@ -79,6 +102,8 @@ class Target extends \ALT\Models\Action
           $msg = clienttranslate('Target up to ${n} character(s) (of max hand cost of ${totalCost}) to ${effect_desc}');
         } elseif ($totalMountain != INFTY) {
           $msg = clienttranslate('Target up to ${n} character(s) (of max mountain attribute of ${totalMountain}) to ${effect_desc}');
+        } elseif ($totalOcean != INFTY) {
+          $msg = clienttranslate('Target up to ${n} character(s) (of max ocean attribute of ${totalOcean}) to ${effect_desc}');
         } else {
           if ($this->getArg('n') == INFTY) {
             $msg = clienttranslate('All valid characters ${effect_desc}');
@@ -96,6 +121,8 @@ class Target extends \ALT\Models\Action
           $msg = clienttranslate('Target up to ${n} ${type_label}(s) (of max hand cost of ${totalCost}) to ${effect_desc}');
         } elseif ($totalMountain != INFTY) {
           $msg = clienttranslate('Target up to ${n} ${type_label}(s) (of max mountain attribute of ${totalMountain}) to ${effect_desc}');
+        } elseif ($totalOcean != INFTY) {
+          $msg = clienttranslate('Target up to ${n} ${type_label}(s) (of max ocean attribute of ${totalOcean}) to ${effect_desc}');
         } else {
           $msg = clienttranslate('Target up to ${n} ${type_label}(s) to ${effect_desc}');
         }
@@ -108,6 +135,8 @@ class Target extends \ALT\Models\Action
           $msg = clienttranslate('Target up to ${n} non-character card(s) (of max hand cost of ${totalCost}) to ${effect_desc}');
         } elseif ($totalMountain != INFTY) {
           $msg = clienttranslate('Target up to ${n} non-character card(s) (of max mountain attribute of ${totalMountain}) to ${effect_desc}');
+        } elseif ($totalOcean != INFTY) {
+          $msg = clienttranslate('Target up to ${n} non-character card(s) (of max ocean attribute of ${totalOcean}) to ${effect_desc}');
         } else {
           $msg = clienttranslate('Target up to ${n} non-character card(s) to ${effect_desc}');
         }
@@ -122,6 +151,8 @@ class Target extends \ALT\Models\Action
           $msg = clienttranslate('Target up to ${n} card(s) (of max mountain attribute of ${totalMountain}) to ${effect_desc}');
         } elseif ($baseCost != INFTY) {
           $msg = clienttranslate('Target up to ${n} card(s) (of max base cost of ${baseCost}) to ${effect_desc}');
+        } elseif ($totalOcean != INFTY) {
+          $msg = clienttranslate('Target up to ${n} card(s) (of max ocean attribute of ${totalOcean}) to ${effect_desc}');
         } else {
           if ($this->getArg('n') == INFTY) {
             $msg = clienttranslate('All valid targets ${effect_desc}');
@@ -160,6 +191,7 @@ class Target extends \ALT\Models\Action
       'effect_desc' => Engine::buildTree($this->getCtxArg('effect'))->getDescription(),
       'totalCost' => $totalCost,
       'totalMountain' => $totalMountain,
+      'totalOcean' => $totalOcean,
       'baseCost' => $baseCost,
       'minBaseCost' => $minBaseCost,
       'i18n' => $i18n,
@@ -246,18 +278,19 @@ class Target extends \ALT\Models\Action
     // What cards ?
     $targetType = $this->getArg('targetType');
     $targetLocation = $this->getArg('targetLocation');
+    $sourceStorm = $this->resolveSourceStormLocation();
     if ($targetLocation == ['source']) {
-      $targetLocation = [$this->getSource()->getLocation()];
+      $targetLocation = [$sourceStorm];
       if (Cards::get($this->getSourceId())->isGigantic()) {
         $targetLocation = STORMS;
       }
     } elseif ($targetLocation == ['oppositeSource']) {
-      $targetLocation = [$this->getSource()->getLocation() == STORM_RIGHT ? STORM_LEFT : STORM_RIGHT];
+      $targetLocation = [$sourceStorm == STORM_RIGHT ? STORM_LEFT : STORM_RIGHT];
       if (Cards::get($this->getSourceId())->isGigantic()) {
         $targetLocation = STORMS;
       }
     } elseif ($targetLocation == ['opponentSource']) {
-      $targetLocation = [$this->getSource()->getLocation()];
+      $targetLocation = [$sourceStorm];
       if (Cards::get($this->getSourceId())->isGigantic()) {
         $targetLocation = STORMS;
       }
@@ -297,13 +330,14 @@ class Target extends \ALT\Models\Action
     $excludedBiomes = $this->getArg('excludeBiomes') ? Players::excludeBiomes($expeditionAttributes) : null;
     $isTapped = $this->getArg('isTapped');
     $isNotTapped = $this->getArg('isNotTapped');
-    $maxStatistic = $this->getArg('maxStatistic');
+    $maxStatistic = Utils::resolveMaxStatistic($this->getArg('maxStatistic'), $player);
+    $maxStatisticBiome = $this->getArg('maxStatisticBiome');
 
     $augmentOnly = $this->getArg('augmentOnly');
     $monoBiome = $this->getArg('monoBiome');
 
     // Duster
-    $maxBaseCost = $this->getArg('maxBaseCost');
+    $maxBaseCost = Utils::resolveMaxBaseCost($this->getArg('maxBaseCost'), $player); // Updated FUGUE for Poseidon's Fury
     $minBaseCost = $this->getArg('minBaseCost');
 
     // Eole
@@ -312,7 +346,7 @@ class Target extends \ALT\Models\Action
     $compareFilter = $this->resolveCompareTargetBiomeFilter();
 
     // Which criteria ?
-    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic, $augmentOnly, $ascendedOnly, $giganticOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter,$noBoostIfBoosted) {
+    $cards = $cards->filter(function ($c) use ($excludeSelf, $excludePreviousTarget, $previousTargetId, $sourceId, $maxHandCost, $subType, $notSubTypes, $player, $checkTough, $filteredBiomes, $excludedBiomes, $isTapped, $maxStatistic, $maxStatisticBiome, $augmentOnly, $ascendedOnly, $giganticOnly, $monoBiome, $maxBaseCost, $minBaseCost, $isNotTapped, $compareFilter,$noBoostIfBoosted) {
       if ($excludeSelf && $c->getId() == $sourceId) {
         return false;
       }
@@ -361,6 +395,9 @@ class Target extends \ALT\Models\Action
 
       $handCost = $c->getCostHand();
       $reserveCost = $c->getCostReserve();
+      $templeCost = $c->getCostTemple();
+      $isPlayedAsTemple = $c->isPlayedAsTemple();
+      $isOnLandmarkWithTempleCost = $c->getLocation() == LANDMARK && $templeCost > 0;
       $statuses = $this->getArg('statuses');
       $excludedStatuses = $this->getArg('excludedStatuses');
       $effects = $this->getArg('hasEffects');
@@ -398,9 +435,15 @@ class Target extends \ALT\Models\Action
       }
 
       $biomes = $c->getBiomes(true);
-      foreach ($biomes as $b => $value) {
-        if ($value > $maxStatistic) {
+      if ($maxStatisticBiome !== null) {
+        if (($biomes[$maxStatisticBiome] ?? 0) > $maxStatistic) {
           return false;
+        }
+      } else {
+        foreach ($biomes as $value) {
+          if ($value > $maxStatistic) {
+            return false;
+          }
         }
       }
 
@@ -417,14 +460,15 @@ class Target extends \ALT\Models\Action
         }
       }
 
+      $baseCostForComparison = $c->hasToken(FLEETING) ? $reserveCost : $handCost;
       $costCheck =
         $this->getArg('minHandCost') <= $handCost &&
         $handCost <= $maxHandCost &&
         $this->getArg('minReserveCost') <= $reserveCost &&
         $reserveCost <= $this->getArg('maxReserveCost') &&
-        (($c->hasToken(FLEETING) && $reserveCost <= $maxBaseCost) || (!$c->hasToken(FLEETING) && $handCost <= $maxBaseCost)) &&
-        (($c->hasToken(FLEETING) && $reserveCost >= $minBaseCost) || (!$c->hasToken(FLEETING) && $handCost >= $minBaseCost));
-
+        $baseCostForComparison <= $maxBaseCost &&
+        $baseCostForComparison >= $minBaseCost;
+        
       if ($statuses == 'disabled' || $c->getType() == PERMANENT) {
         return $costCheck;
       } else {
@@ -485,6 +529,7 @@ class Target extends \ALT\Models\Action
       'description' => $this->getDescription(),
       'totalCost' => $this->getArg('totalCost'),
       'totalMountain' => $this->getArg('totalMountain'),
+      'totalOcean' => $this->getArg('totalOcean'),
       'targetCosts' => $this->getTargetCosts($player),
       'manaOrbs' => $this->getArg('targetLocation') == [MANA],
     ];
@@ -504,19 +549,20 @@ class Target extends \ALT\Models\Action
     $args = $this->argsTarget();
     $totalCost = $this->getArg('totalCost');
     $totalMountain = $this->getArg('totalMountain');
+    $totalOcean = $this->getArg('totalOcean');
 
     if (!empty(array_diff($cardIds, $args['cardIds']))) {
-      throw new \Bga\GameFramework\VisibleSystemException('You cannot target these cards. Should not happen');
+      throw new \BgaVisibleSystemException('You cannot target these cards. Should not happen');
     }
     if (count($cardIds) > $args['n']) {
-      throw new \Bga\GameFramework\VisibleSystemException('You selected too many cards. Should not happen');
+      throw new \BgaVisibleSystemException('You selected too many cards. Should not happen');
     }
     if (
       !$args['upTo'] &&
       ((count($args['cardIds']) >= $args['n'] && count($cardIds) < $args['n']) ||
         (count($args['cardIds']) < $args['n'] && count($cardIds) != count($args['cardIds'])))
     ) {
-      throw new \Bga\GameFramework\VisibleSystemException('You havent selected enough cards. Should not happen');
+      throw new \BgaVisibleSystemException('You havent selected enough cards. Should not happen');
     }
 
     // Tough
@@ -584,6 +630,7 @@ class Target extends \ALT\Models\Action
 
         $biomes = $card->getBiomes(true,  $increaseBiome);
         $totalMountain -= $biomes[MOUNTAIN];
+        $totalOcean -= $biomes[OCEAN];
       }
 
       if ($totalCost < 0) {
@@ -591,6 +638,9 @@ class Target extends \ALT\Models\Action
       }
       if ($totalMountain < 0) {
         throw new \BgaUserException(clienttranslate('Total mountain attribute exceeds the limit of the effect'));
+      }
+      if ($totalOcean < 0) {
+        throw new \BgaUserException(clienttranslate('Total ocean attribute exceeds the limit of the effect'));
       }
 
       $cards = Cards::getMany($cardIds);
@@ -747,4 +797,68 @@ class Target extends \ALT\Models\Action
     ];
     return $labels[$subType] ?? $defaultLabel;
   }
+  
+   /**
+   * Expedition used by source / oppositeSource / opponentSource targeting.
+   * Spells resolve in LIMBO, so fall back to ctx expedition or a prior InvokeToken in the same sequence.
+   */
+   private function resolveSourceStormLocation()
+   {
+     $source = $this->getSource();
+     if (is_null($source)) {
+       return null;
+     }
+ 
+     $srcLoc = $source->getLocation();
+     $event = $this->getEventRecursive();
+     if (!is_null($event) && in_array($event['method'] ?? '', ['LeaveExpedition', 'LeaveLandmark']) && isset($event['from'])) {
+       $srcLoc = $event['from'];
+     }
+ 
+     if (in_array($srcLoc, STORMS)) {
+       return $srcLoc;
+     }
+ 
+     $expedition = $this->getCtxArg('expedition');
+     if (!is_null($expedition) && in_array($expedition, STORMS)) {
+       return $expedition;
+     }
+ 
+     $forceExpedition = $this->getCtxArg('forceExpedition');
+     if (!is_null($forceExpedition) && in_array($forceExpedition[1] ?? null, STORMS)) {
+       return $forceExpedition[1];
+     }
+ 
+     $index = $this->ctx->getIndex();
+     if (!is_null($index) && $index > 0 && !is_null($this->ctx->getParent())) {
+       $siblings = $this->ctx->getParent()->getChilds();
+       for ($i = $index - 1; $i >= 0; $i--) {
+         $sibling = $siblings[$i];
+         if (!$sibling->isActionResolved()) {
+           continue;
+         }
+         if ($sibling->getAction() !== INVOKE_TOKEN) {
+           continue;
+         }
+         $resolution = $sibling->getActionResolutionArgs();
+         if (empty($resolution) || $resolution === PASS) {
+           continue;
+         }
+         $tokenId = is_array($resolution) ? ($resolution[0] ?? null) : $resolution;
+         if (empty($tokenId)) {
+           continue;
+         }
+         $token = Cards::get($tokenId);
+         if (in_array($token->getLocation(), STORMS)) {
+           return $token->getLocation();
+         }
+       }
+     }
+ 
+     if (!is_null($event) && isset($event['to']) && in_array($event['to'], STORMS)) {
+       return $event['to'];
+     }
+ 
+     return $srcLoc;
+   }
 }
