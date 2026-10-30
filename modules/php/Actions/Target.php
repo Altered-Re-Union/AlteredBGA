@@ -65,6 +65,26 @@ class Target extends \ALT\Models\Action
 
   public function getDescription()
   {
+    if ($this->getArg('discardRemaining') && is_null($this->getCtxArg('effect'))) {
+      $n = $this->getArg('n');
+      $upTo = $this->getCtxArg('upTo') ?? false;
+      $inReserve = in_array(RESERVE, $this->getArg('targetLocation'), true);
+      if ($inReserve) {
+        $msg = $upTo
+          ? clienttranslate('Choose up to ${n} card(s) to keep in Reserve')
+          : clienttranslate('Choose ${n} card(s) to keep in Reserve');
+      } else {
+        $msg = $upTo
+          ? clienttranslate('Choose up to ${n} card(s) to keep')
+          : clienttranslate('Choose ${n} card(s) to keep');
+      }
+
+      return [
+        'log' => $msg,
+        'args' => ['n' => $n],
+      ];
+    }
+    
     $targetType = $this->getArg('targetType');
     $upTo = $this->getCtxArg('upTo') ?? false;
     $totalCost = $this->getArg('totalCost');
