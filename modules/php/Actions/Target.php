@@ -65,6 +65,26 @@ class Target extends \ALT\Models\Action
 
   public function getDescription()
   {
+    if ($this->getArg('discardRemaining') && is_null($this->getCtxArg('effect'))) {
+      $n = $this->getArg('n');
+      $upTo = $this->getCtxArg('upTo') ?? false;
+      $inReserve = in_array(RESERVE, $this->getArg('targetLocation'), true);
+      if ($inReserve) {
+        $msg = $upTo
+          ? clienttranslate('Choose up to ${n} card(s) to keep in Reserve')
+          : clienttranslate('Choose ${n} card(s) to keep in Reserve');
+      } else {
+        $msg = $upTo
+          ? clienttranslate('Choose up to ${n} card(s) to keep')
+          : clienttranslate('Choose ${n} card(s) to keep');
+      }
+
+      return [
+        'log' => $msg,
+        'args' => ['n' => $n],
+      ];
+    }
+    
     $targetType = $this->getArg('targetType');
     $upTo = $this->getCtxArg('upTo') ?? false;
     $totalCost = $this->getArg('totalCost');
@@ -246,18 +266,19 @@ class Target extends \ALT\Models\Action
     // What cards ?
     $targetType = $this->getArg('targetType');
     $targetLocation = $this->getArg('targetLocation');
+    $sourceStorm = $this->resolveSourceStormLocation();
     if ($targetLocation == ['source']) {
-      $targetLocation = [$this->getSource()->getLocation()];
+      $targetLocation = [$sourceStorm];
       if (Cards::get($this->getSourceId())->isGigantic()) {
         $targetLocation = STORMS;
       }
     } elseif ($targetLocation == ['oppositeSource']) {
-      $targetLocation = [$this->getSource()->getLocation() == STORM_RIGHT ? STORM_LEFT : STORM_RIGHT];
+      $targetLocation = [$sourceStorm == STORM_RIGHT ? STORM_LEFT : STORM_RIGHT];
       if (Cards::get($this->getSourceId())->isGigantic()) {
         $targetLocation = STORMS;
       }
     } elseif ($targetLocation == ['opponentSource']) {
-      $targetLocation = [$this->getSource()->getLocation()];
+      $targetLocation = [$sourceStorm];
       if (Cards::get($this->getSourceId())->isGigantic()) {
         $targetLocation = STORMS;
       }
@@ -297,7 +318,7 @@ class Target extends \ALT\Models\Action
     $excludedBiomes = $this->getArg('excludeBiomes') ? Players::excludeBiomes($expeditionAttributes) : null;
     $isTapped = $this->getArg('isTapped');
     $isNotTapped = $this->getArg('isNotTapped');
-    $maxStatistic = $this->getArg('maxStatistic');
+    $maxStatistic = Utils::resolveMaxStatistic($this->getArg('maxStatistic'), $player);
 
     $augmentOnly = $this->getArg('augmentOnly');
     $monoBiome = $this->getArg('monoBiome');
@@ -361,6 +382,9 @@ class Target extends \ALT\Models\Action
 
       $handCost = $c->getCostHand();
       $reserveCost = $c->getCostReserve();
+      $templeCost = $c->getCostTemple();
+      $isPlayedAsTemple = $c->isPlayedAsTemple();
+      $isOnLandmarkWithTempleCost = $c->getLocation() == LANDMARK && $templeCost > 0;
       $statuses = $this->getArg('statuses');
       $excludedStatuses = $this->getArg('excludedStatuses');
       $effects = $this->getArg('hasEffects');
@@ -417,14 +441,15 @@ class Target extends \ALT\Models\Action
         }
       }
 
+      $baseCostForComparison = $c->hasToken(FLEETING) ? $reserveCost : $handCost;
       $costCheck =
         $this->getArg('minHandCost') <= $handCost &&
         $handCost <= $maxHandCost &&
         $this->getArg('minReserveCost') <= $reserveCost &&
         $reserveCost <= $this->getArg('maxReserveCost') &&
-        (($c->hasToken(FLEETING) && $reserveCost <= $maxBaseCost) || (!$c->hasToken(FLEETING) && $handCost <= $maxBaseCost)) &&
-        (($c->hasToken(FLEETING) && $reserveCost >= $minBaseCost) || (!$c->hasToken(FLEETING) && $handCost >= $minBaseCost));
-
+        $baseCostForComparison <= $maxBaseCost &&
+        $baseCostForComparison >= $minBaseCost;
+        
       if ($statuses == 'disabled' || $c->getType() == PERMANENT) {
         return $costCheck;
       } else {
@@ -747,4 +772,68 @@ class Target extends \ALT\Models\Action
     ];
     return $labels[$subType] ?? $defaultLabel;
   }
+  
+   /**
+   * Expedition used by source / oppositeSource / opponentSource targeting.
+   * Spells resolve in LIMBO, so fall back to ctx expedition or a prior InvokeToken in the same sequence.
+   */
+   private function resolveSourceStormLocation()
+   {
+     $source = $this->getSource();
+     if (is_null($source)) {
+       return null;
+     }
+ 
+     $srcLoc = $source->getLocation();
+     $event = $this->getEventRecursive();
+     if (!is_null($event) && in_array($event['method'] ?? '', ['LeaveExpedition', 'LeaveLandmark']) && isset($event['from'])) {
+       $srcLoc = $event['from'];
+     }
+ 
+     if (in_array($srcLoc, STORMS)) {
+       return $srcLoc;
+     }
+ 
+     $expedition = $this->getCtxArg('expedition');
+     if (!is_null($expedition) && in_array($expedition, STORMS)) {
+       return $expedition;
+     }
+ 
+     $forceExpedition = $this->getCtxArg('forceExpedition');
+     if (!is_null($forceExpedition) && in_array($forceExpedition[1] ?? null, STORMS)) {
+       return $forceExpedition[1];
+     }
+ 
+     $index = $this->ctx->getIndex();
+     if (!is_null($index) && $index > 0 && !is_null($this->ctx->getParent())) {
+       $siblings = $this->ctx->getParent()->getChilds();
+       for ($i = $index - 1; $i >= 0; $i--) {
+         $sibling = $siblings[$i];
+         if (!$sibling->isActionResolved()) {
+           continue;
+         }
+         if ($sibling->getAction() !== INVOKE_TOKEN) {
+           continue;
+         }
+         $resolution = $sibling->getActionResolutionArgs();
+         if (empty($resolution) || $resolution === PASS) {
+           continue;
+         }
+         $tokenId = is_array($resolution) ? ($resolution[0] ?? null) : $resolution;
+         if (empty($tokenId)) {
+           continue;
+         }
+         $token = Cards::get($tokenId);
+         if (in_array($token->getLocation(), STORMS)) {
+           return $token->getLocation();
+         }
+       }
+     }
+ 
+     if (!is_null($event) && isset($event['to']) && in_array($event['to'], STORMS)) {
+       return $event['to'];
+     }
+ 
+     return $srcLoc;
+   }
 }

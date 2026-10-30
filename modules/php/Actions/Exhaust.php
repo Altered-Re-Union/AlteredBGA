@@ -2,12 +2,8 @@
 
 namespace ALT\Actions;
 
-use ALT\Managers\Meeples;
-use ALT\Managers\Players;
 use ALT\Managers\Cards;
 use ALT\Core\Notifications;
-use ALT\Core\Stats;
-use ALT\Helpers\Utils;
 
 class Exhaust extends \ALT\Models\Action
 {
@@ -45,14 +41,23 @@ class Exhaust extends \ALT\Models\Action
   {
     $player = $this->getPlayer();
     $card = $this->getCard();
+    if (is_null($card)) {
+      $this->resolveAction();
+      return;
+    }
+
+    // Heroes stay on their own board slot, they are exhaustable there
+    $location = $card->getLocation();
+    $onHeroBoard = $card->getType() == HERO && str_starts_with($location, 'board-hero-');
+
     // if the card was a token or has been discarded / put to hand
-    if (is_null($card) || !in_array($card->getLocation(), [STORM_LEFT, STORM_RIGHT, LANDMARK, RESERVE])) {
+    if (!$onHeroBoard && !in_array($location, [STORM_LEFT, STORM_RIGHT, LANDMARK, RESERVE])) {
       $this->resolveAction();
       return;
     }
 
     if ($card->isTapped()) {
-      throw new \Bga\GameFramework\VisibleSystemException('Card is already tapped. Should not happen');
+      throw new \BgaVisibleSystemException('Card is already tapped. Should not happen');
     }
     $card->setTapped(true);
 
