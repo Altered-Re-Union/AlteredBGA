@@ -268,6 +268,8 @@ class SpecialEffect extends \ALT\Models\Action
           ? clienttranslate('Target opponent may exhausted-resupply twice')
           : clienttranslate('Target opponent may exhausted-resupply');
       // FUGUE
+      case 'copyInvoke':
+        return clienttranslate('Create another copy of the token in the same place');
       case 'eachPlayerKeepOneReserve':
         return clienttranslate('Choose one card in each player\'s Reserve. Discard all other cards in Reserve.');
       case 'blockOpponentsCardNameThisDay':
@@ -2579,6 +2581,24 @@ class SpecialEffect extends \ALT\Models\Action
         ]);
         break;
       // FUGUE
+      case 'copyInvoke':
+        $event = $this->getEventRecursive();
+
+        if ($event['action'] == 'InvokeToken') {
+          $invokeArgs = [
+            'pId' => 'source',
+            'tokenType' => $event['invoked'],
+            'targetLocation' => [$event['to']],
+            'forcedLocation' => $event['to'],
+          ];
+          $ctxArgs = ['sourceId' => $card->getId()];
+          if (isset($event['locationPId']) && $event['locationPId'] != $card->getPId()) {
+            $invokeArgs['targetPlayer'] = 'owner';
+            $ctxArgs['ownerId'] = $event['locationPId'];
+          }
+          $this->insertAsChild(FT::ACTION(INVOKE_TOKEN, $invokeArgs, $ctxArgs));
+        }
+        break;         
       case 'eachPlayerKeepOneReserve':
         $nodes = [];
         $turnOrder = Players::getTurnOrder(Players::getActiveId());
