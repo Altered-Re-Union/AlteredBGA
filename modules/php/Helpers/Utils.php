@@ -317,22 +317,16 @@ abstract class Utils extends \APP_DbObject
     switch ($faction) {
       case 'AX':
         return FACTION_AX;
-        break;
       case 'OR':
         return FACTION_OD;
-        break;
       case 'BR':
         return FACTION_BR;
-        break;
       case 'LY':
         return FACTION_LY;
-        break;
       case 'MU':
         return FACTION_MU;
-        break;
       case 'YZ':
         return FACTION_YZ;
-        break;
     }
   }
 
