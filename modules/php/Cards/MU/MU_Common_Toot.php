@@ -13,7 +13,7 @@ class MU_Common_Toot extends \ALT\Models\Card
       'faction' => FACTION_MU,
       'rarity' => RARITY_COMMON,
       'name' => clienttranslate('Toot'),
-      'typeline' => clienttranslate('Character - Plant, Companion'),
+      'typeline' => clienttranslate('Token Character - Plant, Companion'),
       'type' => CHARACTER,
       'artist' => 'Ba Vo',
       'extension' => 'NEJ',

@@ -87,6 +87,12 @@ abstract class Conditions
     return !is_null($card->getPlayer()->getHeroSignatureTokenType());
   }
 
+  public static function isHeroSignatureToken($card, $event)
+  {
+    $tokenType = $card->getPlayer()->getHeroSignatureTokenType();
+    return !is_null($tokenType) && ($event['invoked'] ?? null) == $tokenType;
+  }
+
   public static function isAddedToMyExpedition($card, $event)
   {
     if (!isset($event['cardId'])) {
@@ -125,6 +131,11 @@ abstract class Conditions
   public static function isInStorms($card, $event)
   {
     return in_array($card->getLocation(), STORMS);
+  }
+
+  public static function isInLandmarks($card, $event)
+  {
+    return $card->getLocation() == LANDMARK;
   }
 
   public static function isSource($card, $event)
@@ -2238,6 +2249,11 @@ abstract class Conditions
     return $card->getPlayer()->getReserveCards()->count() == 0;
   }
 
+  public static function isReserveNotEmpty($card, $event)
+  {
+    return $card->getPlayer()->getReserveCards()->count() > 0;
+  }
+
   public static function hasXExhaustedReserve($card, $event, $n, $op = 'GTE', $player = null)
   {
     $cards = 0;
@@ -2621,7 +2637,7 @@ abstract class Conditions
     return $target->getForest() <= $card->getForest();
   }
 
-  public static function countMonoVisibleRegions($card, $event, $n = 1, $op = 'GTE')
+  public static function getCountMonoVisibleRegions()
   {
     $visibleRegions = Players::getRegionsInfo();
     $count = 0;
@@ -2630,6 +2646,12 @@ abstract class Conditions
         $count++;
       }
     }
+    return $count;
+  }
+
+  public static function countMonoVisibleRegions($card, $event, $n = 1, $op = 'GTE')
+  {
+    $count = self::getCountMonoVisibleRegions();
     if ($op == 'GTE' && $count >= $n) {
       return true;
     } elseif ($op == 'LTE' && $count <= $n) {
@@ -2740,6 +2762,15 @@ abstract class Conditions
   }
 
   /******************ROLLS*******************/
+
+  public static function hasNotRolledDieThisDay($card, $event)
+  {
+    if (!empty($event['firstRollThisDay'])) {
+      return true;
+    }
+    $pId = $event['pId'] ?? $card->getPId();
+    return !Players::get($pId)->hasRolledDieThisDay();
+  }
 
   public static function hasRolled($card, $event, $result = 1, $op = 'GTE')
   {

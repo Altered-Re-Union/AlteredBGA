@@ -41,6 +41,7 @@ require_once (dirname(__FILE__)) . '/DemoDecks/zhen.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/sam.roc.php';
 
 require_once (dirname(__FILE__)) . '/DemoDecks/sierra.nej.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/kojo.nej.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/eyota.nej.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/kojo.nej.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/zoe.nej.php';
@@ -85,6 +86,11 @@ const DEMO_ROC_DECKS = array(
     'deckId' => 'sierra.nej',
     'contents' => DEMO_NEJ_SIERRA,
   ),
+  array(
+    'faction' => FACTION_BR,
+    'deckId' => 'kojo.nej',
+    'contents' => DEMO_NEJ_KOJO,
+  ), 
   array(
     'faction' => FACTION_OD,
     'deckId' => 'eyota.nej',

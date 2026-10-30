@@ -66,7 +66,7 @@ class RollDie extends \ALT\Models\Action
   public function getSource()
   {
     $source = $this->ctx->getSource() ?? null;
-    $sourceId = $this->ctx->getSourceId() ?? null;
+    $sourceId = $this->resolveSourceId();
     if (is_null($source) && !is_null($sourceId)) {
       $source = Cards::getSingle($sourceId);
     }
@@ -182,7 +182,7 @@ class RollDie extends \ALT\Models\Action
     for ($i = 0; $i < $nTotal; $i++) {
       $roll = bga_rand(1, 6);
       if (Game::get()->getBgaEnvironment() == 'studio') {
-        $roll = 5;
+        $roll = 6;
       }
       $rolls[] = $roll;
     }
@@ -270,8 +270,17 @@ class RollDie extends \ALT\Models\Action
     $effect = $this->getGain($dieValue);
     if ($effect !== null) {
       $effect = Utils::updateTree($effect, 'die', $dieValue);
-      $effect['sourceId'] = $source->getId();
-      $effect = Utils::tagTree($effect, ['sourceId' => $source->getId()]);
+      $sourceId = $source->getId();
+      $effect['sourceId'] = $sourceId;
+      $effect = Utils::tagTree($effect, [
+        'sourceId' => $sourceId,
+        'event' => [
+          'cardId' => $sourceId,
+          'sourceId' => $sourceId,
+          'pId' => $player->getId(),
+          'selectedRoll' => $dieValue,
+        ],
+      ]);
       $cardId = $this->getCtxArg('cardId') ?? null;
       if (!is_null($cardId) && isset($effect['args']['cardId']) && $effect['args']['cardId'] != ME) {
         $effect['args']['cardId'] = $cardId;
@@ -290,7 +299,18 @@ class RollDie extends \ALT\Models\Action
       $this->insertAsChild($effects[0]);
     }
 
-    $this->checkAfterListeners($player, ['rolls' => Globals::getDiceRolls(), 'selectedRoll' => $dieValue, 'sourceId' => $source->getId()]);
+    $listenerArgs = [
+      'rolls' => Globals::getDiceRolls(),
+      'selectedRoll' => $dieValue,
+      'sourceId' => $source->getId(),
+    ];
+    // Deferred RollDie passives run after this call; flag the first roll so
+    // hasNotRolledDieThisDay still passes when those reactions execute.
+    if (!$player->hasRolledDieThisDay()) {
+      $listenerArgs['firstRollThisDay'] = true;
+    }
+    $this->checkAfterListeners($player, $listenerArgs);
+    $player->markDieRolledThisDay();
 
     Globals::setDiceRolls([]);
     $this->resolveAction([$dieValue]);
@@ -303,7 +323,7 @@ class RollDie extends \ALT\Models\Action
     $args = $this->argsRollDie();
 
     if (count(array_diff($cardId, $args['cardIds'])) != 0) {
-      throw new \Bga\GameFramework\VisibleSystemException('You cannot target this card. should not happen');
+      throw new \BgaVisibleSystemException('You cannot target this card. should not happen');
     }
     $this->duplicateAction(['canDiscard' => false, 'hasRolled' => true]);
     $this->insertAsChild(FT::ACTION(DISCARD, ['cardId' => $cardId]));
