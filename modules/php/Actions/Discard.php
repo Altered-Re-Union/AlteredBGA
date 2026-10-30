@@ -29,6 +29,8 @@ class Discard extends \ALT\Models\Action
     'n' => 1, // number of card to discard
     'cardId' => null, // Card to discard
     'source' => '',
+    'downTo' => null, // discard until this many cards remain in source zone
+    'eachPlayer' => false, // each player in turn order, starting with the active player
     'nLandmarks' => 0, // only for night clean up
     'special' => '',
     'tapped' => false,
@@ -146,7 +148,48 @@ class Discard extends \ALT\Models\Action
 
   public function isDoable($player)
   {
+    $downTo = $this->getArg('downTo');
+    if (!is_null($downTo)) {
+      return $this->getSourceCardCount($player) > $downTo;
+    }
+
     return is_null($this->getArg('from')) || Cards::get($this->getArg('cardId'))->getLocation() == $this->getArg('from');
+  }
+
+  protected function getSourceCardCount($player)
+  {
+    $source = $this->getArg('source') ?: HAND;
+    if ($source == HAND) {
+      return $player->getHand()->count();
+    }
+    if ($source == RESERVE) {
+      return $player->getReserveCards()->count();
+    }
+
+    return 0;
+  }
+
+  public function stPreDiscard()
+  {
+    if (!$this->getArg('eachPlayer')) {
+      return false;
+    }
+
+    $discardArgs = [
+      'source' => $this->getArg('source') ?: HAND,
+      'downTo' => $this->getArg('downTo'),
+      'destination' => $this->getArg('destination'),
+    ];
+    $nodes = [];
+    $turnOrder = Players::getTurnOrder(Players::getActiveId());
+    foreach ($turnOrder as $pId) {
+      $nodes[] = FT::ACTION(DISCARD, $discardArgs, ['pId' => $pId, 'sourceId' => $this->getSourceId()]);
+    }
+
+    $this->insertAsChild(['type' => NODE_SEQ, 'childs' => $nodes]);
+    $this->resolveAction([]);
+
+    return true;
   }
 
   public function getPlayer()
@@ -162,6 +205,11 @@ class Discard extends \ALT\Models\Action
 
     $cardId = $this->getArg('cardId');
     $source = $this->getArg('source');
+    $downTo = $this->getArg('downTo');
+
+    if (!is_null($downTo) && $source == '') {
+      $source = HAND;
+    }
 
     // Any card targeted ? (might be several cards)
     if (!is_null($cardId)) {
@@ -198,11 +246,22 @@ class Discard extends \ALT\Models\Action
       $cardIds = $player->getPlayedCards()->getIds();
     }
 
+    $n = $this->getArg('n');
+    if (!is_null($downTo)) {
+      $n = max(0, count($cardIds) - $downTo);
+    }
+
+    $descSuffix = $this->isOptional($player) ? 'CanPass' : '';
+    if (!is_null($downTo)) {
+      $descSuffix = 'downTo';
+    }
+
     return [
-      'n' => $this->getArg('n'),
+      'n' => $n,
+      'downTo' => $downTo,
       'source' => $source,
       'destination' => $this->getArg('destination'),
-      'descSuffix' => $this->isOptional($player) ? 'CanPass' : '',
+      'descSuffix' => $descSuffix,
       'upTo' => $this->getArg('upTo'),
       '_private' => [
         'active' => [
