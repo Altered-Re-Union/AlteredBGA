@@ -6103,7 +6103,7 @@ abstract class FlowConvertor
         'description' => clienttranslate('Target opponent may have me switch Expeditions.'),
         'output' => FT::ACTION(TARGET_PLAYER, [
           'opponentsOnly' => true,
-          'effect' => FT::ACTION(MOVE_CARD, ['cardId' => ME], ['optional' => true, 'pId' => 'active']),
+          'effect' => FT::SEQ_OPTIONAL(FT::ACTION(MOVE_CARD, ['cardId' => ME], ['pId' => 'active'])),
         ]),
       ],
       930 => [
