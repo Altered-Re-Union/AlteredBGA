@@ -2229,6 +2229,11 @@ abstract class Conditions
     return Cards::get($event['cardId'])->hasToken(ASLEEP);
   }
 
+  public static function isTargetNotAnchored($card, $event)
+  {
+    return !Cards::get($event['cardId'])->hasToken(ANCHORED);
+  }
+
   public static function isTargetSameOwner($card, $event)
   {
     return Cards::get($event['cardId'])->getPId() == $card->getPId();

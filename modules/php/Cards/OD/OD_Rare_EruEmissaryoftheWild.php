@@ -32,10 +32,13 @@ class OD_Rare_EruEmissaryoftheWild extends \ALT\Models\Card
       'effectHand' => FT::ACTION(TARGET, [
         'targetLocation' => ['opponentSource'],
         'upTo' => true,
-        'effect' => FT::SEQ(
-          FT::GAIN(EFFECT, ANCHORED),
-          FT::GAIN(ME, ANCHORED)
-        )
+        'effect' => FT::ACTION(CHECK_CONDITION, [
+          'condition' => 'isTargetNotAnchored',
+          'effect' => FT::SEQ(
+            FT::GAIN(EFFECT, ANCHORED),
+            FT::GAIN(ME, ANCHORED)
+          )
+        ])
       ])
     ];
   }
