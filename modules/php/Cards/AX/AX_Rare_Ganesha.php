@@ -10,7 +10,7 @@ class AX_Rare_Ganesha extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_AX_19_R',
+      'uid' => 'ALT_CORE_B_AX_19_R1',
       'asset' => 'ALT_CORE_B_AX_19_R',
 
       'faction' => FACTION_AX,

@@ -31,6 +31,7 @@ class MU_Exalted_PlagueofPrejudice extends \ALT\Models\Card
       'effectHand' => FT::ACTION(TARGET, [
         'targetType' => [CHARACTER],
         'excludeSelf' => true,
+        'ignoreTough' => true,
         'n' => INFTY,
         'compareTargetBiome' => ['biome' => FOREST, 'op' => 'lte', 'source' => 'source'],
         'effect' => FT::DISCARD_TO_RESERVE(),

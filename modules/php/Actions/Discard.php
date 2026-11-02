@@ -84,6 +84,11 @@ class Discard extends \ALT\Models\Action
 
   private function getDiscardControllerId()
   {
+    // "Each player discards their hand/reserve" (Loki...): each player discards their own cards
+    if (in_array($this->getArg('special'), ['allHand', 'allHandReserve', 'allReserve']) && !is_null($this->getArg('pId'))) {
+      return $this->getArg('pId');
+    }
+
     $source = $this->getSource();
     if (!is_null($source)) {
       return $source->getPId();
@@ -597,7 +602,11 @@ class Discard extends \ALT\Models\Action
         'sabotage' => $this->isSabotage() || ($this->getDiscardControllerId() != $pId && in_array($originalLocation, [HAND, RESERVE])),
         'controller' => $this->getDiscardControllerId(),
         'sourceId' => $this->getSourceId(),
-        'pId' => $pId
+        'pId' => $pId,
+        // $pId is snapshotted before the move, so it still is the controller that had the card
+        // in its zone. Card::discardTo() restores player_id to the owner right after, so this is
+        // the only reliable value for "who had this card" once the reaction resolves.
+        'cardPId' => $pId
       ]);
     }
 

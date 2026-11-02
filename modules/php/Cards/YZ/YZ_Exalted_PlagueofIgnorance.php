@@ -26,10 +26,13 @@ class YZ_Exalted_PlagueofIgnorance extends \ALT\Models\Card
       'ocean' => 3,
       'costHand' => 4,
       'costReserve' => 3,
-      'effectHand' => FT::SEQ_OPTIONAL(
-        FT::ACTION(DISCARD, ['source' => HAND]),
-        FT::ACTION(TARGET, ['effect' => FT::DISCARD_TO_RESERVE()])
-      ),
+      'effectHand' => FT::ACTION(CHECK_CONDITION, [
+        'condition' => 'hasCardsInHand',
+        'effect' => FT::SEQ_OPTIONAL(
+          FT::ACTION(DISCARD, ['source' => HAND]),
+          FT::ACTION(TARGET, ['effect' => FT::DISCARD_TO_RESERVE()])
+        ),
+      ]),
     ];
   }
 }

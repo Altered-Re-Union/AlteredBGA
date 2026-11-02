@@ -445,21 +445,31 @@ class CachedPieces extends DB_Manager
     self::move($id, $location, $pos - 1);
   }
 
+  /**
+   * 241815 - X Marks the Spots fix
+   * Place a piece at the Nth position from the top of an ordered location.
+   * Top = highest state. Other pieces keep their relative order.
+   */
   public static function moveAtPosition($id, $location, $position)
   {
-    $pieces = self::getInLocation($location);
-    $pos = $pieces->count();
-    foreach ($pieces as $pieceId => $piece) {
-      if ($pieceId == $id) {
-        continue;
+    // Order top-first so position 1 is the current top of deck
+    $pieces = self::getInLocation($location)->orderBy('state', 'DESC');
+
+    $ordered = [];
+    foreach ($pieces as $pieceId => $_piece) {
+      if ($pieceId != $id) {
+        $ordered[] = $pieceId;
       }
-      if ($position == 1) {
-        $pieces[$id]->setState($pos);
-        $pos--;
-      }
-      $piece->setState($pos);
+    }
+
+    $position = max(1, min((int) $position, count($ordered) + 1));
+    array_splice($ordered, $position - 1, 0, [$id]);
+
+    // Reassign states: top keeps the highest value
+    $pos = count($ordered);
+    foreach ($ordered as $pieceId) {
+      self::getSingle($pieceId)->setState($pos);
       $pos--;
-      $position--;
     }
   }
 

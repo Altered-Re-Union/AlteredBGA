@@ -10,7 +10,7 @@ class LY_Rare_MindApotheosis extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_LY_27_R',
+      'uid' => 'ALT_CORE_B_LY_27_R1',
       'asset' => 'ALT_CORE_B_LY_27_R',
 
       'faction' => FACTION_LY,

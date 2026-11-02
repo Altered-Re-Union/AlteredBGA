@@ -29,6 +29,7 @@ class YZ_Common_SamSpook extends \ALT\Models\Card
 
 			'effectTap' => FT::ACTION(CHECK_CONDITION, [
 				'condition' => 'isFirstPlayer',
+				'ignoreDeck' => true,
 				'effect' => FT::SEQ(
 					FT::ACTION(DRAW, ['players' => ME, 'n' => 1]),
 					FT::ACTION(DISCARD, ['source' => HAND]),

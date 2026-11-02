@@ -10,7 +10,7 @@ class BR_Rare_HavenBravosBastion extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_BR_30_R',
+      'uid' => 'ALT_CORE_B_BR_30_R1',
       'asset' => 'ALT_CORE_B_BR_30_R',
 
       'faction' => FACTION_BR,

@@ -10,7 +10,7 @@ class LY_Rare_LyraNavigator extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_LY_12_R',
+      'uid' => 'ALT_CORE_B_LY_12_R1',
       'asset' => 'ALT_CORE_B_LY_12_R',
 
       'faction' => FACTION_LY,

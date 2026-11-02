@@ -5,6 +5,7 @@ namespace ALT\Actions;
 use ALT\Managers\Meeples;
 use ALT\Managers\Players;
 use ALT\Managers\Cards;
+use ALT\Core\Engine;
 use ALT\Core\Notifications;
 use ALT\Core\Stats;
 use ALT\Helpers\Utils;
@@ -218,6 +219,30 @@ class Gain extends \ALT\Models\Action
     }
   }
 
+  /**
+   * Identifier of the distribution this gain belongs to, null if the gain stands alone.
+   *
+   * Effects distributing several counters at once (eg. "Distribute 4 boosts...", see
+   * FT::SEQ_DISTRIBUTE_GAINS) are a single gain event: abilities listening on a gain
+   * ("gains 1 or more boosts") must only trigger once for the whole distribution.
+   */
+  protected function getGainGroup()
+  {
+    $node = $this->ctx;
+    while (is_object($node)) {
+      if ($node->getInfos()['groupGains'] ?? false) {
+        if (is_null($node->getInfos()['gainGroupId'] ?? null)) {
+          $node->setInfo('gainGroupId', 'gains-' . substr(md5(uniqid('', true)), 0, 12));
+          Engine::save();
+        }
+        return $node->getInfos()['gainGroupId'];
+      }
+      $node = $node->getParent();
+    }
+
+    return null;
+  }
+
   public function gain($player, $card, $resource, $amount = 1, $source = null, $args = [])
   {
     $dynamicReplace = $card->getDynamicGainReplace();
@@ -269,7 +294,12 @@ class Gain extends \ALT\Models\Action
     $tokens = Meeples::createOnCard($resource, $card->getId(), $player->getId(), $amount);
     Notifications::gainMeeple($resource, $card, $tokens, $source, false);
 
-    $this->checkAfterListeners($player, ['gain' => $args, 'cardId' => $card->getId(), 'location' => $card->getLocation(), 'initialBoost' => $initialBoost, 'cardType' => $card->getType(), 'additionalType' => $card->getAdditionalType(), 'sourceId' =>  $sourceId, 'token' => $card->isToken(),]);
+    $listeners = ['gain' => $args, 'cardId' => $card->getId(), 'location' => $card->getLocation(), 'initialBoost' => $initialBoost, 'cardType' => $card->getType(), 'additionalType' => $card->getAdditionalType(), 'sourceId' =>  $sourceId, 'token' => $card->isToken(),];
+    $gainGroup = $this->getGainGroup();
+    if (!is_null($gainGroup)) {
+      $listeners['gainGroup'] = $gainGroup;
+    }
+    $this->checkAfterListeners($player, $listeners);
   }
 
   protected function isCantGainBoostRuleActive($sourceCard, $rule)

@@ -10,7 +10,7 @@ class LY_Rare_ClothCocoon extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_LY_24_R',
+      'uid' => 'ALT_CORE_B_LY_24_R1',
       'asset' => 'ALT_CORE_B_LY_24_R',
 
       'faction' => FACTION_LY,

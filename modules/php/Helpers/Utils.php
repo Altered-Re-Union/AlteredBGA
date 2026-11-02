@@ -368,7 +368,7 @@ abstract class Utils extends \APP_DbObject
     return $maxStatistic;
   }
 
-  public static function checkAttributeCondition($attribute, $data, $player, $card)
+  public static function checkAttributeCondition($attribute, $data, $player, $card, $location = null)
   {
     $attributeData = explode(':', $data);
     if (count($attributeData) == 1) {
@@ -376,7 +376,7 @@ abstract class Utils extends \APP_DbObject
     } else {
       $condArgs = array_slice($attributeData, 1);
       // there is a condition after
-      if (Conditions::check(['condition' => implode(':', $condArgs)], $card, [])) {
+      if (Conditions::check(['condition' => implode(':', $condArgs)], $card, ['location' => $location])) {
         return $attributeData[0];
       }
       return  null;

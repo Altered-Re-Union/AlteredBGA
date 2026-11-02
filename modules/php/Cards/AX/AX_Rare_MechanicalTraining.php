@@ -10,7 +10,7 @@ class AX_Rare_MechanicalTraining extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_AX_22_R',
+      'uid' => 'ALT_CORE_B_AX_22_R1',
       'asset' => 'ALT_CORE_B_AX_22_R',
 
       'faction' => FACTION_AX,

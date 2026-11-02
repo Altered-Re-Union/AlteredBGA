@@ -10,7 +10,7 @@ class YZ_Rare_ToothFairy extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_YZ_06_R',
+      'uid' => 'ALT_CORE_B_YZ_06_R1',
       'asset' => 'ALT_CORE_B_YZ_06_R',
 
       'faction' => FACTION_YZ,

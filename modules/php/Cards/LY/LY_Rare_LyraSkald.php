@@ -8,7 +8,7 @@ class LY_Rare_LyraSkald extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_LY_08_R',
+      'uid' => 'ALT_CORE_B_LY_08_R1',
       'asset' => 'ALT_CORE_B_LY_08_R',
 
       'faction' => FACTION_LY,

@@ -39,7 +39,7 @@ class DrawMana extends \ALT\Models\Action
   
   public function isDoable($player)
   {
-    return $this->getPlayer()->hasDeckCards();
+    return true;
   }
 
   public function getPlayer()
@@ -63,6 +63,11 @@ class DrawMana extends \ALT\Models\Action
     $sourceId = $this->ctx->getSourceId() ?? null;
     if (is_null($source) && !is_null($sourceId)) {
       $source = Cards::getSingle($sourceId);
+    }
+
+    if (!$player->hasDeckCards()) {
+      $this->resolveAction(null, true);
+      return;
     }
 
     $cards = Cards::pickForLocation($n, 'deck-' . $player->getId(), $this->getArg('location'));

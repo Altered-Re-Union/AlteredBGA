@@ -10,7 +10,7 @@ class AX_Rare_AdaLovelace extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_AX_13_R',
+      'uid' => 'ALT_CORE_B_AX_13_R1',
       'asset' => 'ALT_CORE_B_AX_13_R',
 
       'faction' => FACTION_AX,

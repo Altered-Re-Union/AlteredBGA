@@ -10,7 +10,7 @@ class OD_Rare_CelebrationDay extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_OR_27_R',
+      'uid' => 'ALT_CORE_B_OR_27_R1',
       'asset' => 'ALT_CORE_B_OR_27_R',
 
       'faction' => FACTION_OD,

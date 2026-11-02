@@ -4,7 +4,6 @@ const STARTER_BASIRA = [
   'BR_Rare_Akhlut' => 1,
   'BR_Common_Intimidation' => 1,
   'BR_Common_FlyingSquirrel' => 2,
-  'BR_Common_SpiritWielder' => 2,
   'BR_Rare_SuhaQorganOperative' => 2,
   'BR_Rare_ColorfulCuckoo' => 3,
   'BR_Rare_ParliamentofAshes' => 3,
@@ -19,5 +18,6 @@ const STARTER_BASIRA = [
   'BR_Common_DuelofGrit' => 1,
   'BR_Common_CatchoftheDay' => 1,
   'BR_Rare_MunaBotanist' => 2,
+  'BR_Common_GuidingOcelot' => 2
 ];
 ?>

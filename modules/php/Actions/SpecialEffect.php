@@ -82,6 +82,8 @@ class SpecialEffect extends \ALT\Models\Action
         return clienttranslate('Boost number of cards in reserve');
       case 'boostXLandmark':
         return clienttranslate('Boost number of landmarks');
+      case 'boostXFeat':
+        return clienttranslate('Boost number of feats');  
       case 'boostXReserveAll':
         return clienttranslate('Boost number of all cards in reserve');
       case 'boost3Stat0':
@@ -244,6 +246,8 @@ class SpecialEffect extends \ALT\Models\Action
         return clienttranslate('Sacrifice highest opponent character');
       case 'sacrificeHighestCharacterPermanent':
         return clienttranslate('Sacrifice highest opponent character or permanent');
+       case 'boostXAnimalsMax2':
+        return clienttranslate('1 Boost per other Animal (max 2)');
         // EOLE
       case 'nextCharacterAsleep':
         return clienttranslate('Next character gains <ASLEEP>');
@@ -395,7 +399,7 @@ class SpecialEffect extends \ALT\Models\Action
         $card->setExtraDatas($data);
         break;
       case 'armSmokeThemOut':
-        Conditions::armSmokeThemOut($card->getPId());
+        Conditions::armSmokeThemOut($card->getPId(), $card->getId());
         break;
       case 'disarmSmokeThemOut':
         Conditions::consumeSmokeThemOutCharge($card->getPId(), $card->getId());
@@ -594,12 +598,12 @@ class SpecialEffect extends \ALT\Models\Action
         }
         $this->pushParallelChilds($nodes);
         break;
-      case 'boostAllCharactersInExpedition':
+     case 'boostAllCharactersInExpedition':
         $player = Players::get($this->getArg('player'));
         $expedition = $this->getArg('expedition');
         $nodes = [];
         foreach ($player->getPlayedCards() as $cId => $pCard) {
-          if ($pCard->getLocation() == $expedition && in_array($pCard->getType(), [TOKEN, CHARACTER])) {
+          if (($pCard->getLocation() == $expedition || $pCard->isGigantic()) && in_array($pCard->getType(), [TOKEN, CHARACTER])) {
             $nodes[] = FT::GAIN($pCard, BOOST, 1);
           }
         }
@@ -610,7 +614,7 @@ class SpecialEffect extends \ALT\Models\Action
         $expedition = $this->getArg('expedition');
         $nodes = [];
         foreach ($player->getPlayedCards() as $cId => $pCard) {
-          if ($pCard->getLocation() == $expedition && in_array($pCard->getType(), [TOKEN, CHARACTER])) {
+          if (($pCard->getLocation() == $expedition || $pCard->isGigantic()) && in_array($pCard->getType(), [TOKEN, CHARACTER])) {
             $nodes[] = FT::GAIN($pCard, FLEETING, 1);
           }
         }
@@ -644,6 +648,15 @@ class SpecialEffect extends \ALT\Models\Action
           $this->insertAsChild(FT::GAIN($card, BOOST, $n));
         }
         break;
+      case 'boostXFeat':
+        $n = $card
+          ->getPlayer()
+          ->getFeats()
+          ->count();
+        if ($n > 0) {
+          $this->insertAsChild(FT::GAIN($card, BOOST, $n));
+        }
+        break;  
       case 'boostXFleetingChar';
         $n = $card
           ->getPlayer()
@@ -2074,10 +2087,18 @@ class SpecialEffect extends \ALT\Models\Action
       case 'doppelganger':
         // throw new \feException(print_r($this->getCtxArgs()));
         $extra = $card->getExtraDatas();
-        $extra['subtypes'] = $card->getSubtypes();
-        $extra['typeline'] = $card->getTypeline();
-        $card->setSubtypes(Cards::get($this->getCtxArgs()['cardId'])->getSubtypes());
-        $card->setTypeline(Cards::get($this->getCtxArgs()['cardId'])->getTypeline());
+       $targetCard = Cards::get($this->getCtxArgs()['cardId']);
+        if (!array_key_exists('subtypes', $extra)) {
+          $extra['subtypes'] = $card->getSubtypes();
+          $extra['typeline'] = $card->getTypeline();
+        }
+        // Add the target's subtypes to the existing ones
+        $card->setSubtypes(array_values(array_unique(array_merge($card->getSubtypes(), $targetCard->getSubtypes()))));
+        $targetTypeline = $targetCard->getTypeline();
+        $parts = explode(' - ', $targetTypeline, 2);
+        if (count($parts) == 2 && !in_array($parts[1], explode(', ', $card->getTypeline()))) {
+          $card->setTypeline($card->getTypeline() . ', ' . $parts[1]);
+        }
 
         $card->setExtraDatas($extra);
         Notifications::refreshCard($card);
@@ -2098,10 +2119,19 @@ class SpecialEffect extends \ALT\Models\Action
         }
         break;
       case 'resetCard':
+         $event = $this->getEventRecursive();
+        // Seasoned: keeps its gained subtypes when going to reserve
+        if (($event['to'] ?? null) == RESERVE) {
+          break;
+        }
         $extra = $card->getExtraDatas();
-        $card->setSubtypes($extra['subtypes']);
-        $card->setTypeline($extra['typeline']);
-        Notifications::refreshCard($card);
+        if (array_key_exists('subtypes', $extra)) {
+          $card->setSubtypes($extra['subtypes']);
+          $card->setTypeline($extra['typeline']);
+          unset($extra['subtypes'], $extra['typeline']);
+          $card->setExtraDatas($extra);
+          Notifications::refreshCard($card);
+        }
 
         break;
       case 'defect':
@@ -2561,7 +2591,17 @@ class SpecialEffect extends \ALT\Models\Action
         if (!empty($nodes)) {
           $this->insertAsChild(['type' => NODE_SEQ, 'childs' => $nodes['childs']]);
         }
-        break;     
+        break;   
+      // #238924: Uniques with effect Sap Duende on target
+      case 'swapBoostsWithSource':
+        $pickedId = $this->getCtxArg('cardId');
+        if ($pickedId === ME || $pickedId === EFFECT) {
+          $pickedId = null;
+        }
+        if (!is_null($pickedId)) {
+          $this->insertAsChild(FT::ACTION(BOOST_EXCHANGE, ['cardId' => $pickedId], ['sourceId' => $this->getSourceId()]));
+        }
+        break;  
       // #206754: insert at runtime with opponent pId so LeaveExpedition tagTree cannot
       // stamp the controller onto nested RESUPPLY (TARGET_PLAYER > SEQ_OPTIONAL breaks there).
       case 'targetOpponentOptionalExhaustedResupply':

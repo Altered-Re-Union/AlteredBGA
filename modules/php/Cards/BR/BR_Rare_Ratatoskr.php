@@ -10,7 +10,7 @@ class BR_Rare_Ratatoskr extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_BR_04_R',
+      'uid' => 'ALT_CORE_B_BR_04_R1',
       'asset' => 'ALT_CORE_B_BR_04_R',
 
       'faction' => FACTION_BR,

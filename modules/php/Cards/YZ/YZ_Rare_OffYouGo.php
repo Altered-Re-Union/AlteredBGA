@@ -10,7 +10,7 @@ class YZ_Rare_OffYouGo extends \ALT\Models\Card
   {
     parent::__construct($row);
     $this->properties = [
-      'uid' => 'ALT_CORE_B_YZ_21_R',
+      'uid' => 'ALT_CORE_B_YZ_21_R1',
       'asset' => 'ALT_CORE_B_YZ_21_R',
 
       'faction' => FACTION_YZ,

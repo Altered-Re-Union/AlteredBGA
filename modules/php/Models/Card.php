@@ -54,6 +54,7 @@ class Card extends \ALT\Helpers\DB_Model
     'supportIcon' => 'str',
     'artist' => 'str',
     'setIcon' => 'str',
+    'serial' => 'str',
     'thumbnail' => 'int', // Only used for Heros for UI
     'statData' => 'int',
     'extension' => 'str',
@@ -204,12 +205,15 @@ class Card extends \ALT\Helpers\DB_Model
 
      // Fugue
      'costReductionIfConstructionPlayed' => 'int',
+     'signatureToken' => 'str',
+     'increaseHandCost' => 'int', // Fane of Nausicaa
+     'dynamicIncreaseHandCost' => 'str',
      'sacrificeProtectAnchored' => 'bool', // Fane of Calypso
      'sacrificeProtectAsleep' => 'bool', // Fane of Calypso (Ordis)
      'universalToughScope' => 'str', // Restricts a universalCharacter Tough aura, e.g. Trireme Captain
-     'increaseHandCost' => 'int', // Fane of Nausicaa
-     'dynamicIncreaseHandCost' => 'str',
-  ];
+     'costReductionSacrificeCharacter' => 'int', // Maw's Molting (Yzmir)
+     'costReductionSpendBoost' => 'obj', // Maw's Molting (Muna)
+   ];
 
   /********* DB ACCESS *********/
 
@@ -407,6 +411,24 @@ class Card extends \ALT\Helpers\DB_Model
     $this->setExtraDatas($extra);
     // Same as applyTemplePlay: the subsequent discard/move notif carries the card.
   }
+  
+  public static function countExpeditionCharacterBoosts($player)
+  {
+    $total = 0;
+    foreach ($player->getPlayedCards() as $c) {
+      if (!in_array($c->getLocation(), STORMS)) {
+        continue;
+      }
+      if (
+        !in_array($c->getType(), [CHARACTER, TOKEN])
+        && count(array_intersect([CHARACTER, TOKEN], $c->getAdditionalType())) == 0
+      ) {
+        continue;
+      }
+      $total += $c->countToken(BOOST);
+    }
+    return $total;
+  }
 
   // $scout = can be played at scout cost
   // $temple = can be played at temple cost as a Landmark Construction
@@ -488,6 +510,21 @@ class Card extends \ALT\Helpers\DB_Model
         $cost -= $this->getCostReductionSacrificePermanent();
       }
     }
+    
+    if ($this->getCostReductionSacrificeCharacter() > 0) {
+      $characters = $this->getPlayer()->getPlayedCards()->filter(function ($c) {
+        return in_array($c->getType(), [CHARACTER, TOKEN])
+          || count(array_intersect([CHARACTER, TOKEN], $c->getAdditionalType())) > 0;
+      })->count();
+      if ($characters > 0) {
+        $cost -= $this->getCostReductionSacrificeCharacter();
+      }
+    }
+    
+    $spendBoostReduction = $this->getCostReductionSpendBoost();
+    if (!empty($spendBoostReduction) && self::countExpeditionCharacterBoosts($this->getPlayer()) >= ($spendBoostReduction['boostCost'] ?? 2)) {
+      $cost -= $spendBoostReduction['reduction'] ?? 1;
+    }
 
     if ($this->getCostReductionLimitation() > 0) {
       $cost -= $this->getCostReductionLimitation();
@@ -522,6 +559,22 @@ class Card extends \ALT\Helpers\DB_Model
     return $this->getLocation() == RESERVE
       && $this->isTapped()
       && !$player->canPlayTappedCards($this->getType(), null, $this->getAdditionalType());
+  }
+
+  /**
+   * True when this card's cost is reduced by playing it into an Expedition
+   * that's In Contact (dynamicCostReduction ...:hasOneContact). In that case
+   * the reduction depends on the selected location.
+   */
+  public function hasContactCostReduction()
+  {
+    $reductions = (array) $this->getDynamicCostReduction();
+    foreach ($reductions as $reduction) {
+      if (strpos($reduction, 'hasOneContact') !== false) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public function getPlayableLocation($player, $forcedLocation = null, $free = false)
@@ -612,7 +665,17 @@ class Card extends \ALT\Helpers\DB_Model
             return [$forcedLocation];
           }
 
-          return STORMS;
+          if ($free || !$this->hasContactCostReduction()) {
+            return STORMS;
+          }
+
+          $locations = [];
+          foreach (STORMS as $storm) {
+            if ($this->getCost(false, false, $storm) <= $player->getMana()) {
+              $locations[] = $storm;
+            }
+          }
+          return empty($locations) ? STORMS : $locations;
         }
       }
     }
@@ -812,7 +875,9 @@ class Card extends \ALT\Helpers\DB_Model
         'token' => $this->isToken(),
         'from' => LANDMARK,
         'to' => DISCARD_PILE,
-        'sacrifice' => $isSacrifice
+        'sacrifice' => $isSacrifice,
+        // Snapshot of the controller while the card is still in its zone, like Discard::stDiscard
+        'cardPId' => $this->getPId()
       ];
       if ($this->isListeningTo($event2)) {
         $afterCleanup[$this->getPId()][] = [
@@ -1181,18 +1246,7 @@ class Card extends \ALT\Helpers\DB_Model
       foreach ($biomes as $type => &$value) {
         $value += $boost;
       }
-
-      $dynamicIncrease = $this->getDynamicIncreaseBiomeHighestSelf();
-      $dynSplit = explode(':', $dynamicIncrease);
-
-      if (count($dynSplit) > 1) {
-        // we need to test if ok, add change dynamic tough to the value of 0
-        if (!is_null(Utils::checkAttributeCondition('cost', $dynamicIncrease, $this->getPlayer(), $this))) {
-          $dynamicIncreaseSelf = (int) $dynSplit[0];
-        } else {
-          $dynamicIncreaseSelf = 0;
-        }
-      }
+      $dynamicIncreaseSelf = $this->hasBiomesEqualToHighestSelf() ? 1 : 0;
     }
     if ($increaseBiomesToHighest == true || $dynamicIncreaseSelf == 1) {
       $max = 0;
@@ -1202,6 +1256,37 @@ class Card extends \ALT\Helpers\DB_Model
       $biomes = [OCEAN => $max, MOUNTAIN => $max, FOREST => $max];
     }
     return $biomes;
+  }
+
+  /**
+   * 240692 - Interaction between Big Bad Wolf and Lyra Aerialist
+   * <code>dynamicIncreaseBiomeHighestSelf</code> (Lyra Aerialist, Urbex Specialist, unique power 573) is a printed
+   * passive, so it only shapes the statistics while the Character is in an Expedition: a copy waiting in a Reserve
+   * keeps its printed statistics, e.g. when Sabotage compares them. Reserve-scoped grants coming from
+   * {@see effectInfinity} are the exception and stay active there.
+   */
+  public function hasBiomesEqualToHighestSelf(): bool
+  {
+    $dynamicIncrease = $this->getDynamicIncreaseBiomeHighestSelf();
+    if (!is_array($dynamicIncrease)) {
+      $dynamicIncrease = $dynamicIncrease === '' ? [] : [$dynamicIncrease];
+    }
+    if (count($dynamicIncrease) == 0) {
+      return false;
+    }
+
+    $printed = isset($this->properties['dynamicIncreaseBiomeHighestSelf']);
+    if ($printed && !in_array($this->getLocation(), STORMS)) {
+      return false;
+    }
+
+    foreach ($dynamicIncrease as $singleIncrease) {
+      if ((int) Utils::checkAttributeCondition('cost', $singleIncrease, $this->getPlayer(), $this) == 1) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -1689,6 +1774,9 @@ class Card extends \ALT\Helpers\DB_Model
     }
     $subType = '';
     $dynamicDefender = $this->getDynamicDefender();
+    // Dynamic attributes can be suffixed by a trigger condition ("marker:cond1|cond2"); the aura
+    // marker below must be detected on its base segment, not on the whole string.
+    $dynamicDefenderBase = is_string($dynamicDefender) ? explode(':', $dynamicDefender)[0] : '';
     switch ($dynamicDefender) {
       case '2OtherPlants':
         $subType = PLANT;
@@ -1717,7 +1805,10 @@ class Card extends \ALT\Helpers\DB_Model
       }
     }
 
-    if ($dynamicDefender != '' && $subType == '') {
+    // "otherExpeditionCharacter" is an aura marker (see the aura block below), possibly followed by a
+    // trigger condition: it grants Defender to Characters in the other Expedition, it does not make
+    // this card a Defender itself.
+    if ($dynamicDefender != '' && $subType == '' && $dynamicDefenderBase != 'otherExpeditionCharacter') {
       return !is_null(Utils::checkAttributeCondition('defender', $dynamicDefender, $this->getPlayer(), $this));
     }
 
@@ -1727,7 +1818,12 @@ class Card extends \ALT\Helpers\DB_Model
         if ($auraCard->getId() == $this->getId()) {
           continue;
         }
-        if ($auraCard->getDynamicDefender() != 'otherExpeditionCharacter') {
+        $auraDefender = $auraCard->getDynamicDefender();
+        if (!is_string($auraDefender) || explode(':', $auraDefender)[0] != 'otherExpeditionCharacter') {
+          continue;
+        }
+        // The marker can carry a trigger condition; the aura is only active when it holds.
+        if (is_null(Utils::checkAttributeCondition('defender', $auraDefender, $auraCard->getPlayer(), $auraCard))) {
           continue;
         }
         // Gigantic cards have no "other expedition" to grant.

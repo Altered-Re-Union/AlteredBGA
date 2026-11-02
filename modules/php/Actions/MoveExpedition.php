@@ -2,15 +2,11 @@
 
 namespace ALT\Actions;
 
-use ALT\Managers\Meeples;
 use ALT\Managers\Players;
 use ALT\Managers\Cards;
 use ALT\Core\Globals;
 use ALT\Core\Notifications;
-use ALT\Core\Stats;
-use ALT\Helpers\Utils;
 use ALT\Helpers\FT;
-use ALT\Core\Engine;
 
 class MoveExpedition extends \ALT\Models\Action
 {
@@ -34,6 +30,7 @@ class MoveExpedition extends \ALT\Models\Action
     'moveOtherExpedition' => false,
     'ascended' => false,
     'skipGigantic' => false,
+    'hasMovedFromAscension' => false,
   ];
 
   public function getSides()
@@ -134,7 +131,7 @@ class MoveExpedition extends \ALT\Models\Action
     $args = $this->argsMoveExpedition();
     $gigantic = false;
     if (!in_array($expe, $args['expeditions'])) {
-      throw new \Bga\GameFramework\VisibleSystemException('Invalid expedition all. Should not happen');
+      throw new \BgaVisibleSystemException('Invalid expedition all. Should not happen');
     }
 
     if (!is_null($this->getSource()) && $this->getSource()->isGigantic()) {
@@ -160,6 +157,7 @@ class MoveExpedition extends \ALT\Models\Action
     $player = Players::get($pId);
     $winningBiomes = $this->getArg('winningBiomes');
     $ascended = $player->isAscended($expedition);
+    $hasMovedFromAscension = $this->getArg('hasMovedFromAscension') === true;
 
     // Rune's testament / Pegasus / Eris (non-dusk forced moves from spells and effects)
     if ($this->getArg('force') === false) {
@@ -173,7 +171,17 @@ class MoveExpedition extends \ALT\Models\Action
           'forceExpedition' => [$pId, $expedition],
           'winningBiomes' => $winningBiomes,
           'ascended' => $ascended,
+          'hasMovedFromAscension' => $hasMovedFromAscension,
         ];
+
+        // Pegasus is cumulative: all copies apply to a single move instead of being alternatives
+        $pegasusCards = [];
+        foreach ($actionInsteadAdvance[$pId][$expedition] as $cId => $action) {
+          if ($action == 'PegasusCommon') {
+            $pegasusCards[] = $cId;
+          }
+        }
+
         if (!in_array('ErisCommon', $actionInsteadAdvance[$pId][$expedition]) && !in_array('ErisRare', $actionInsteadAdvance[$pId][$expedition]) && !in_array('PegasusCommon', $actionInsteadAdvance[$pId][$expedition])) {
           $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $n]), ['pId' => $pId]);
         }
@@ -212,10 +220,11 @@ class MoveExpedition extends \ALT\Models\Action
             } else {
               $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $n]), ['pId' => $pId]);
             }
-          } elseif ($action == 'PegasusCommon') {
-            $pegasusN = (empty($winningBiomes) && $ascended) ? $n + 1 : $n;
-            $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $pegasusN]), ['pId' => $pId, 'sourceId' => $cId]);
           }
+        }
+        if (!empty($pegasusCards)) {
+          $pegasusN = (empty($winningBiomes) && $ascended) ? $n + count($pegasusCards) : $n;
+          $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $pegasusN]), ['pId' => $pId, 'sourceId' => $pegasusCards[0]]);
         }
         if (!empty($nodes)) {
           $this->insertAsChild(
@@ -231,7 +240,7 @@ class MoveExpedition extends \ALT\Models\Action
     }
     $winningBiomes = $this->getArg('winningBiomes');
     if (($n > 0 && !Players::hasOpponentBlockMoveExpedition($player, $expedition)) || $n < 0) {
-      $moved = $player->advanceStorm($token, $winningBiomes, $n, false, true, $source);
+      $moved = $player->advanceStorm($token, $winningBiomes, $n, $hasMovedFromAscension, true, $source);
     } else {
       $moved = false;
     }
@@ -247,7 +256,13 @@ class MoveExpedition extends \ALT\Models\Action
         // (Rune's Testament, Eris, Pegasus, …) can offer a replacement.
         $otherExpedition = $expedition == STORM_LEFT ? STORM_RIGHT : STORM_LEFT;
         $otherN = $n * -1;
-        if ($otherN > 0 && !Players::hasOpponentBlockMoveExpedition($player, $otherExpedition)) {
+        // Forward move of the other expedition must respect blocking effects
+        // (Issitoq / opposite defender, Celebration Day, ...). Regular defenders are
+        // intentionally ignored: they only matter at dusk, not for moves during the day.
+        $globalBlocked = Globals::getBlockedExpeditions();
+        $otherBlocked = Players::hasOppositeDefender($otherExpedition)
+          || (isset($globalBlocked[$pId]) && in_array($otherExpedition, $globalBlocked[$pId]));
+        if ($otherN > 0 && !$otherBlocked && !Players::hasOpponentBlockMoveExpedition($player, $otherExpedition)) {
           $ctx = ['pId' => $pId];
           if (!is_null($source)) {
             $ctx['sourceId'] = $source->getId();
@@ -280,7 +295,14 @@ class MoveExpedition extends \ALT\Models\Action
           $expeditionMoves[$player->getId()][$expedition] = ($expeditionMoves[$player->getId()][$expedition] ?? 0) + $n;
           Globals::setExpeditionMoves($expeditionMoves);
 
-          $this->checkAfterListeners($player, ['moveExpedition' => $n, 'ascended' => $player->isAscended($expedition), 'expedition' => $expedition]);
+          // 'giganticPair' tells the listeners that both Expeditions are moved by this single
+          // action, so abilities triggering on "one or more Expeditions moving" only trigger once
+          $this->checkAfterListeners($player, [
+            'moveExpedition' => $n,
+            'ascended' => $player->isAscended($expedition),
+            'expedition' => $expedition,
+            'giganticPair' => true,
+          ]);
         }
       }
     }

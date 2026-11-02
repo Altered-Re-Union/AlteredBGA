@@ -57,7 +57,7 @@
 
   function renderDeckDifficultyStars(stars) {
     const filledCount = Math.max(0, Math.min(5, Number(stars) || 0));
-    return `<div class="deck-details-stars"><p>${_('Difficulty:')}</p> ${Array.from({ length: 5 }, (_unused, index) =>
+    return `<div class="deck-details-stars"><p>${_('Complexity:')}</p> ${Array.from({ length: 5 }, (_unused, index) =>
       `<span class="deck-star${index < filledCount ? ' filled' : ''}"></span>`
     ).join('')}</div>`;
   }
@@ -861,6 +861,10 @@
        return this._deckFormat === 'DEMO';
      },
 
+     isSealedDeckFormat() {
+       return this._deckFormat === 'SEALED';
+     },
+
      allowCustomDeckFormat() {
        return !this._beginner && !this.isDemoDeckFormat();
      },
@@ -926,28 +930,28 @@
       );
      },
 
-     showRandomDeckAssignedContent(args) {
-      const { factionDisplayNames } = this._getDeckFactionBannerConfig();
-      const randomFaction = args._private.randomDeck && args._private.randomDeck.faction;
-      const factionLabel = randomFaction ? factionDisplayNames[randomFaction] || randomFaction : null;
-      const message = factionLabel
-        ? dojo.string.substitute(_('You have been assigned a random ${faction} deck'), { faction: factionLabel })
-        : _('You have been assigned a random deck');
-
-      $('altered-overlay-content').innerHTML = `
-        <h2>${_('Random deck')}</h2>
-        <p>${message}</p>
-      `;
-      this.openOverlay();
-      this.addSecondaryActionButton('btnCancel', _('Cancel'), () =>
-        this.takeAction('actCancelPrecoDeckSelection', {}, false)
-      );
-     },
-
      showAccountNotConfiguredDeckPickerContent() {
        ['btnConfirm', 'btnConfirmFooter', 'btnCancel', 'btnCancelFooter', 'btnBackFromCustom', 'btnToggleOverlay'].forEach((id) => {
          if ($(id)) $(id).remove();
        });
+
+       if (this.isSealedDeckFormat()) {
+         // Sealed decks aren't built here: they come from the player's official sealed
+         // pool for the current altered-draft event, so an empty list here doesn't mean
+         // a misconfigured account — it means no deck has been built yet on that site.
+         $('altered-overlay-content').innerHTML = `
+           <h2>${_('No Sealed deck found')}</h2>
+           <div id='deck-wizard' class='deck-wizard-step-2 account-not-configured-screen'>
+             <div id='account-not-configured-desc'>
+              <p>⚠️ ${_('Your Sealed deck must be built on')} <a class="account-not-configured-link" href="https://altered-draft.altered.re" target="_blank" rel="noopener noreferrer">altered-draft.altered.re</a>. ${_('Once it is built there, come back here and try again.')}</p>
+             </div>
+           </div>
+         `;
+         this.openOverlay();
+         this.addToggleOverlayButton();
+         return;
+       }
+
        $('altered-overlay-content').innerHTML = `
          <h2>${_('There\'s a lot of things ongoing !')}</h2>
          <div id='deck-wizard' class='deck-wizard-step-2 account-not-configured-screen'>
@@ -976,12 +980,81 @@
     },
  
      /**
+      * clearClientState() synchronously re-enters onEnteringStateSelectPrecoDeck (still
+      * showing selection=null), which would otherwise schedule an actLoadAPIDecks retry
+      * via requestFetchDecksOrAccountConfigurationMessage() — wrong whenever the caller is
+      * about to show something else itself (an error/empty message, or a just-confirmed
+      * deck) right after.
+      */
+    _clearClientStateWithoutFetchRetry() {
+      this._suppressFetchDecksRetry = true;
+      this.clearClientState();
+      this._suppressFetchDecksRetry = false;
+    },
+
+    /**
       * Starts the deck list fetch from RE:Union. Account binding is validated by the fetch result
       * (see onEnteringStateFetchDecks): failure or empty deck list shows the account / linking message.
       */
     requestFetchDecksOrAccountConfigurationMessage() {
+      if (this._suppressFetchDecksRetry) return;
       this._customDeckSelectedFaction = null;
       this.clientState('fetchDecks', _('Connecting to RE:Union to fetch your decks'), {});
+    },
+
+    /**
+     * What "Cancel" should do once there's no cached deck list to go back to. Sealed and
+     * singleton formats always route straight into this fetch flow (there's nothing else
+     * to fall back to), so just restart it. Other formats only reach it via the optional
+     * "Custom" button on the preconstructed-deck wizard, so cancelling should return there
+     * instead of looping back into the same custom fetch.
+     */
+    _backOutOfFetchDecksFlow() {
+      if (this.isSingletonDeckFormat() || this.isSealedDeckFormat()) {
+        this.requestFetchDecksOrAccountConfigurationMessage();
+      } else {
+        this.onEnteringStateSelectPrecoDeck(this._lastSelectPrecoDeckArgs);
+      }
+    },
+
+    /**
+     * "Cancel" button used on the fetchDecks/chooseFetchedDeck screens: nothing has been
+     * selected/confirmed yet at that point, so no server call is needed — and no reliance
+     * on BGA's own stock Cancel/Undo button (addCancelStateBtn), whose clearClientState()-
+     * based restore doesn't play well with this custom multi-screen flow.
+     */
+    _addRestartFetchDecksButton(containerId) {
+      this.addSecondaryActionButton(
+        'btnCancelFetchDecks',
+        _('Cancel'),
+        () => {
+          this._awaitingAPIReturn = false;
+          this._backOutOfFetchDecksFlow();
+        },
+        containerId
+      );
+    },
+
+    /**
+     * "Cancel" button used on the deck-preview/invalid-deck screens: back to the cached
+     * list when there was more than one deck to choose from, otherwise see
+     * _backOutOfFetchDecksFlow() (no server call either way — nothing was confirmed).
+     */
+    _addBackToDeckListButton(listArgs, containerId) {
+      const hasMultipleDecks = listArgs && Array.isArray(listArgs.decks) && listArgs.decks.length > 1;
+      this.addSecondaryActionButton(
+        'btnBackToDeckList',
+        _('Cancel'),
+        () => {
+          this._awaitingAPIReturn = false;
+          if (hasMultipleDecks) {
+            this.onEnteringStateChooseFetchedDeck(listArgs);
+          } else {
+            this._backOutOfFetchDecksFlow();
+          }
+        },
+        containerId
+      );
     },
 
     _getAllApiFactions() {
@@ -1144,12 +1217,8 @@
          this.showAPIDeckDetails({ _private: { API: args._private.starterDeck } });
          return;
        }
- 
-      if (this.isSingletonDeckFormat()) {
-        const gsName = this.gamedatas.gamestate && this.gamedatas.gamestate.name;
-        if (gsName === 'fetchDecks' || gsName === 'chooseFetchedDeck') {
-          return;
-        }
+
+      if (this.isSingletonDeckFormat() || this.isSealedDeckFormat()) {
         if ($('overlay-deck-selection') || $('api-fetch-decks')) {
           return;
         }
@@ -1359,48 +1428,38 @@
        this.closeOverlay();
        $('altered-overlay-content').innerHTML = '';
      },
- 
+
      notif_updateInitialPrecoDeckSelection(n) {
        debug('Notif: update initial preco deck selection', n);
        this.clearPossible();
        this.updatePageTitle();
        this.onEnteringStateSelectPrecoDeck(n.args.args);
      },
- 
+
      ////////////////////////
      // FETCHING DECKS
      ////////////////////////
      onEnteringStateFetchDecks(args) {
        args = args || {};
        this._customDeckSelectedFaction = null;
-       this.addCancelStateBtn();
        this._awaitingAPIReturn = true;
- 
+       this._fetchDecksTakeActionRetries = 0;
+
        const requestPayload = Object.assign({}, args);
        delete requestPayload.accountConfigured;
- 
+
        const onFetchDecksFailedOrEmpty = () => {
          if (!this._awaitingAPIReturn) return;
          this._awaitingAPIReturn = false;
-         this.clearClientState();
+         this._clearClientStateWithoutFetchRetry();
          this.showAccountNotConfiguredDeckPickerContent();
        };
 
-       this.takeAction('actLoadAPIDecks', { request: JSON.stringify(requestPayload), lock: false }, false)
-         .then((response) => {
-           if (!this._awaitingAPIReturn) return;
-           const data = response && response.data;
-           const decks = data && data.decks;
-           if (!data || !Array.isArray(decks) || decks.length === 0) {
-             onFetchDecksFailedOrEmpty();
-             return;
-           }
-           this.clientState('chooseFetchedDeck', _('Choose one of your deck'), data);
-         })
-         .catch(() => {
-           onFetchDecksFailedOrEmpty();
-         });
- 
+       // Open the overlay/spinner right away, independently of whether takeAction()
+       // below succeeds immediately — this used to be built only after chaining
+       // .then()/.catch() onto takeAction(), so when that call threw synchronously
+       // (see startFetch below) the overlay never opened, leaving only BGA's own
+       // generic "Connecting..." state-description banner visible.
        $('altered-overlay-content').innerHTML = '';
        $('altered-overlay-content').insertAdjacentHTML(
          'beforeend',
@@ -1412,6 +1471,47 @@
          </div>`
        );
        this.openOverlay();
+       this._addRestartFetchDecksButton('api-fetch-decks');
+
+       const startFetch = () => {
+         if (!this._awaitingAPIReturn) return;
+
+         // takeAction() can still return undefined (instead of a promise) for a while
+         // after a clearClientState()/notification-driven transition. Retry with a short
+         // backoff instead of crashing on ".then is not a function".
+         const attempt = this._takeActionRetryingTransient(
+           'actLoadAPIDecks',
+           { request: JSON.stringify(requestPayload), lock: false },
+           () => this._awaitingAPIReturn
+         );
+         if (!attempt || typeof attempt.then !== 'function') {
+           this._fetchDecksTakeActionRetries += 1;
+           if (this._fetchDecksTakeActionRetries > 15) {
+             if ($('api-error')) {
+               $('api-error').innerHTML = _('Something went wrong, please try again.');
+             }
+             return;
+           }
+           setTimeout(startFetch, 150);
+           return;
+         }
+
+         attempt
+           .then((response) => {
+             if (!this._awaitingAPIReturn) return;
+             const data = response && response.data;
+             const decks = data && data.decks;
+             if (!data || !Array.isArray(decks) || decks.length === 0) {
+               onFetchDecksFailedOrEmpty();
+               return;
+             }
+             this.clientState('chooseFetchedDeck', _('Choose one of your deck'), data);
+           })
+           .catch(() => {
+             onFetchDecksFailedOrEmpty();
+           });
+       };
+       startFetch();
      },
  
     ////////////////////////
@@ -1428,24 +1528,45 @@
       if ($('overlay-deck-selection')) {
         $('overlay-deck-selection').classList.add('fetching');
       }
-      this.takeAction('actLoadAPIDecks', { request: strRequest, lock: false }, false).then((response) => {
-        if (!this._awaitingAPIReturn) return;
 
+      // A rejected takeAction() must still clear the in-flight flag: the guard at the top of
+      // this method blocks every later call while it is set, which would leave the overlay
+      // stuck on "fetching" forever with no way to retry.
+      const onReloadFailed = () => {
+        this._awaitingAPIReturn = false;
         if ($('overlay-deck-selection')) {
           $('overlay-deck-selection').classList.remove('fetching');
         }
-        let args = response.data;
-        args.update = true;
-        this.clientState('chooseFetchedDeck', _('Choose one of your deck'), args);
-      });
+        if ($('api-error')) {
+          $('api-error').innerHTML = _('Something went wrong, please try again.');
+        }
+      };
+
+      const attempt = this._takeActionRetryingTransient(
+        'actLoadAPIDecks',
+        { request: strRequest, lock: false },
+        () => this._awaitingAPIReturn
+      );
+      if (!attempt || typeof attempt.then !== 'function') {
+        onReloadFailed();
+        return;
+      }
+      attempt
+        .then((response) => {
+          if (!this._awaitingAPIReturn) return;
+
+          if ($('overlay-deck-selection')) {
+            $('overlay-deck-selection').classList.remove('fetching');
+          }
+          let args = response.data;
+          args.update = true;
+          this.clientState('chooseFetchedDeck', _('Choose one of your deck'), args);
+        })
+        .catch(onReloadFailed);
     },
 
     selectCustomDeckFaction(faction) {
       this._customDeckSelectedFaction = faction;
-      this._deckContentAPI = null;
-      if ($('btnConfirmDeck')) {
-        $('btnConfirmDeck').classList.add('disabled');
-      }
       this.reloadFetchedDecks({
         factions: this._apiFactionsFromBannerFaction(faction),
         page: 1,
@@ -1457,9 +1578,14 @@
     },
  
      onEnteringStateChooseFetchedDeck(args) {
-       this.addCancelStateBtn();
        this._awaitingAPIReturn = false;
-      this._apiRequest = args.request;
+      this._apiRequest = Object.assign({}, args.request);
+      // Server-generated attribution payload; regenerated on every call and rejected by the
+      // server's alphanumeric input guard, so it must not be echoed back to it.
+      delete this._apiRequest.eventFormat;
+      // Cached so the "Back" button from the deck preview can rebuild this list
+      // without another round trip to the deck-list API.
+      this._chooseFetchedDeckArgs = args;
 
       const bannerFactions = this._getCustomDeckBannerFactions();
       let selectedFaction =
@@ -1575,26 +1701,63 @@
        }
  
        this.onClick('api-error', () => ($('api-error').innerHTML = ''));
- 
-       // Confirm button
-       this._deckContentAPI = null;
-       this.addPrimaryActionButton(
-         'btnConfirmDeck',
-         _('Confirm'),
-         () => {
-           this.takeAction('actConfirmAPIDeck', { method: 'post', deckContent: JSON.stringify(this._deckContentAPI) }, false);
-         },
-         'overlay-deck-selection'
-       );
-       $('btnConfirmDeck').classList.add('disabled');
+
        this.openOverlay();
- 
+       this._addRestartFetchDecksButton('overlay-deck-selection');
+
        // Thumbnails
       const { factionDisplayNames } = this._getDeckFactionBannerConfig();
       const factionNames = Object.assign({ OR: _('Ordis') }, factionDisplayNames);
        let hand = _('hand');
 
-       let selected = null;
+       const selectFetchedDeck = (deck) => {
+         if (this._awaitingAPIReturn) return;
+
+         // Invalid decks are flagged by name (no legal content to fetch): skip the
+         // 2nd API call entirely and point the player to fix it on the website.
+         if (deck.deckName && deck.deckName.toLowerCase().indexOf('invalid') === 0) {
+           this.showInvalidFetchedDeckMessage(deck, args);
+           return;
+         }
+
+         $(`deck-${deck.apiId}`).classList.add('fetching');
+
+         this._awaitingAPIReturn = true;
+         $('api-error').innerHTML = '';
+
+         // Failure that handleAPIError() (see showMessage) didn't already deal with -- a
+         // deadlock/timeout still failing after the retries -- must free the picker too, or the
+         // `_awaitingAPIReturn` guard above would ignore every later click on a deck.
+         const onSelectFailed = () => {
+           if (!this._awaitingAPIReturn) return;
+           this._awaitingAPIReturn = false;
+           const tile = $(`deck-${deck.apiId}`);
+           if (tile) tile.classList.remove('fetching');
+           if ($('api-error')) {
+             $('api-error').innerHTML = _('Something went wrong, please try again.');
+           }
+         };
+
+         const attempt = this._takeActionRetryingTransient(
+           'actGetDeckInfos',
+           { deckNumber: JSON.stringify(deck.apiId), lock: false },
+           () => this._awaitingAPIReturn
+         );
+         if (!attempt || typeof attempt.then !== 'function') {
+           onSelectFailed();
+           return;
+         }
+         attempt
+           .then((response) => {
+             if (!this._awaitingAPIReturn) return;
+             this._awaitingAPIReturn = false;
+             let deckContent = response.data;
+             deckContent.apiId = deck.apiId;
+             this.showFetchedDeckPreview(deckContent, args);
+           })
+           .catch(onSelectFailed);
+       };
+
        $(`deck-list`).innerHTML = '';
        args.decks.forEach((deck) => {
          let factionName = factionNames[deck.faction];
@@ -1613,63 +1776,180 @@
              </div>
            </div>`
          );
- 
-         this.onClick(`deck-${deck.apiId}`, () => {
-           if (this._awaitingAPIReturn) return;
- 
-           if (selected) {
-             $(`deck-${selected}`).classList.remove('selected');
-           }
-           selected = deck.apiId;
-           $(`deck-${selected}`).classList.add('fetching');
-           $('btnConfirmDeck').classList.add('disabled');
- 
-           this._awaitingAPIReturn = true;
-           $('api-error').innerHTML = '';
-           this.takeAction('actGetDeckInfos', { deckNumber: JSON.stringify(deck.apiId), lock: false }, false).then((response) => {
-             let deckContent = response.data;
-             this._deckContentAPI = deckContent;
-             this._awaitingAPIReturn = false;
-             $(`deck-${selected}`).classList.remove('fetching');
-             $(`deck-${selected}`).classList.add('selected');
-             $('btnConfirmDeck').classList.remove('disabled');
-           });
-         });
+
+         this.onClick(`deck-${deck.apiId}`, () => selectFetchedDeck(deck));
        });
+
+       // Sealed format: the first API call never returns more than one deck, so
+       // select it right away instead of waiting for the player to click on it,
+       // chaining straight into the second API call (actGetDeckInfos).
+       if (this.isSealedDeckFormat() && args.decks.length === 1) {
+         selectFetchedDeck(args.decks[0]);
+       }
      },
  
-     showAPIDeckDetails(args) {
-       let deck = args._private.API;
+     /**
+      * Deck edit page for a given sealed deck on the Re:Union draft platform.
+      */
+     _getDeckEditLink(deckId) {
+       return `https://altered-draft.altered.re/edit/deck/${deckId}`;
+     },
+
+     /**
+      * Sealed deck notices shown below the deck details: a warning when the deck was
+      * auto-generated (name starts with "random"), and a reminder of where to edit it.
+      */
+     _getSealedDeckNoticesHtml(deck) {
+       if (!this.isSealedDeckFormat()) return '';
+
+       let html = '';
+       if (deck.deckName && deck.deckName.toLowerCase().indexOf('random') === 0) {
+         html += `<p class='api-deck-random-warning'>⚠️ ${_(
+           "You didn't build your deck before the matches started. A random deck was generated using your pool."
+         )}</p>`;
+       }
+
+       html += `<p class='api-deck-change-notice'>${_('You can change your deck between games via')} <a href="${this._getDeckEditLink(deck.apiId)}" target="_blank" rel="noopener noreferrer">altered-draft.altered.re</a>.</p>`;
+       return html;
+     },
+
+     /**
+      * Renders the hero + card list for a deck (already-confirmed API deck, or a
+      * not-yet-confirmed preview) into the overlay. Caller adds its own action buttons.
+      */
+     _renderDeckCardsOverlay(deck, noticesHtml) {
        $('altered-overlay-content').innerHTML = '';
        $('altered-overlay-content').insertAdjacentHTML(
          'beforeend',
          `
-         <h2>${_('Your deck:')} ${deck.deckName}</h2>
-         <div id='overlay-APIdeck-details'>
-           <div id="deck-hero"></div>
-           <div id="deck-cards"></div>
+         <div id='overlay-deck-preview'>
+           <h2>${_('Your deck:')} ${deck.deckName}</h2>
+           <div id='overlay-APIdeck-details'>
+             <div id="deck-hero"></div>
+             <div id="deck-cards"></div>
+           </div>
+           ${noticesHtml}
+           <div id='deck-preview-actions'></div>
          </div>
        `
        );
        this.openOverlay();
- 
+
        this.addCard({ id: '-hero', properties: deck.cards.hero.card.properties }, 'deck-hero');
        $(`card--hero`).insertAdjacentHTML('beforeend', `<div class='faction-banner' data-faction='${deck.faction}'></div>`);
- 
+       let heroCardEl = $(`card--hero`);
+       if (!heroCardEl.querySelector('.card-frame')) {
+         heroCardEl.querySelector('.altered-card-wrapper').insertAdjacentHTML(
+           'afterbegin',
+           `<div class='card-frame' data-fullart='1' data-faction='${deck.cards.hero.card.properties.faction}' data-type='hero'></div>`
+         );
+       }
+
        Object.entries(deck.cards).forEach(([i, card]) => {
          if (i == 'hero') return;
- 
-         let id = 'preview-' + i;
-         this.addCard({ id, properties: card.card.properties }, 'deck-cards');
-         $(`card-${id}`).querySelector('.card-frame').dataset.copies = card.n;
+         if (card.card.properties.token) return;
+
+          let id = 'preview-' + i;
+          let props = card.card.properties;
+          this.addCard({ id, properties: props }, 'deck-cards');
+          let cardEl = $(`card-${id}`);
+          let frame = cardEl.querySelector('.card-frame');
+          if (!frame && props.fullArt) {
+            cardEl.querySelector('.altered-card-wrapper').insertAdjacentHTML(
+              'afterbegin',
+              `<div class='card-frame' data-fullart='1' data-faction='${props.faction}' data-rarity='${props.rarity}'></div>`
+            );
+            frame = cardEl.querySelector('.card-frame');
+          }
+          if (frame) frame.dataset.copies = card.n;
        });
- 
-       this.addSecondaryActionButton('btnCancel', _('Cancel'), () => this.takeAction('actCancelPrecoDeckSelection', {}, false));
      },
- 
+
+     showAPIDeckDetails(args) {
+       let deck = args._private.API;
+       this._renderDeckCardsOverlay(deck, this._getSealedDeckNoticesHtml(deck));
+       // The resulting notification's onEnteringStateSelectPrecoDeck already knows how to
+       // route this (back to the fetch flow for sealed/singleton, back to the wizard
+       // otherwise) — triggering that ourselves here risked doing it with stale
+       // (pre-cancel) args if the notification hadn't landed yet.
+       this.addSecondaryActionButton(
+         'btnCancel',
+         _('Cancel'),
+         () => this.takeAction('actCancelPrecoDeckSelection', {}, false),
+         'deck-preview-actions'
+       );
+     },
+
+     /**
+      * Preview of a fetched deck (2nd API call result) before it is confirmed:
+      * shows the full card list and requires an explicit Confirm to actually lock
+      * it in via actConfirmAPIDeck. "Back" (when more than one deck was available)
+      * returns to the deck list without any server round trip.
+      */
+     showFetchedDeckPreview(deckContent, listArgs) {
+       this._renderDeckCardsOverlay(deckContent, this._getSealedDeckNoticesHtml(deckContent));
+
+       this.addPrimaryActionButton(
+         'btnConfirmFetchedDeck',
+         _('Confirm'),
+         () => {
+           // Pop the fetchDecks/chooseFetchedDeck client state here, from a fresh
+           // (non re-entrant) click-handler call stack — matches the safe pattern used
+           // in onEnteringStateChooseAssignmentLocation's Cancel button.
+           this._clearClientStateWithoutFetchRetry();
+           // A single retry: a deadlock rolled the transaction back, so replaying is safe, but
+           // this one writes the player's deck, so it is replayed less eagerly than the reads.
+           const confirmation = this._takeActionRetryingTransient(
+             'actConfirmAPIDeck',
+             { method: 'post', deckContent: JSON.stringify(deckContent) },
+             () => true,
+             1
+           );
+           // Nothing else to do on a final failure: the error was already shown to the player.
+           if (confirmation && typeof confirmation.catch === 'function') confirmation.catch(() => {});
+         },
+         'deck-preview-actions'
+       );
+
+       // Always offer a way out: back to the list when there was more than one deck to
+       // choose from, otherwise restart the fetch (no server call — nothing was confirmed).
+       this._addBackToDeckListButton(listArgs, 'deck-preview-actions');
+     },
+
+     /**
+      * Shown instead of fetching a deck's full content when its name flags it as
+      * invalid: points the player to fix it on the Re:Union draft platform.
+      */
+     showInvalidFetchedDeckMessage(deck, listArgs) {
+       $('altered-overlay-content').innerHTML = '';
+       $('altered-overlay-content').insertAdjacentHTML(
+         'beforeend',
+         `
+         <h2>${_('Invalid deck')}</h2>
+         <div id='invalid-fetched-deck'>
+           <p>⚠️ ${_('This deck is invalid.')} <a href="${this._getDeckEditLink(deck.apiId)}" target="_blank" rel="noopener noreferrer">${_('Fix it on altered-draft.altered.re')}</a>.</p>
+         </div>
+       `
+       );
+       this.openOverlay();
+       this._addBackToDeckListButton(listArgs, 'invalid-fetched-deck');
+     },
+
      //////////////////////////////
      // HANDLING API ERRORS
      showMessage() {
+       // A deck API failure that is about to be retried (see _takeActionRetryingTransient)
+       // must not flash an error nor tear the deck picker down: the retry usually succeeds.
+       if (
+         this._apiRetriesLeft > 0 &&
+         arguments[1] == 'error' &&
+         typeof arguments[0] == 'string' &&
+         this._isTransientApiError(arguments[0])
+       ) {
+         debug('Transient API error hidden, retry pending', arguments[0]);
+         return true;
+       }
+
        if (!this._awaitingAPIReturn || arguments[0].indexOf('API ERROR###') < 0) {
          return this.inherited(arguments);
        } else {
@@ -1686,7 +1966,7 @@
  
        // Initial deck list fetch: same UX as empty list (account / linking guidance)
        if (this.gamedatas.gamestate.name == 'fetchDecks') {
-         this.clearClientState();
+         this._clearClientStateWithoutFetchRetry();
          this.showAccountNotConfiguredDeckPickerContent();
          return;
        }
@@ -1695,7 +1975,82 @@
          $('api-error').innerHTML = _(l);
        }
      },
- 
+
+     /**
+      * Errors that will fail the same way however often they are replayed: the account is not
+      * paired, the deck is not legal, a card/unique is not implemented or suspended, the action
+      * is not possible. Matched on message text -- the only thing the client receives (the
+      * HTTP-level code is dropped by takeAction()).
+      */
+     _isTransientApiError(error) {
+       const text = typeof error == 'string' ? error : (error && error.message) || '';
+       const deterministic = [
+         'pair your account',
+         'Pairing with Equinox',
+         'not implemented',
+         'unimplemented power',
+         'MISSING UNIQUE',
+         'temporarily suspended',
+         'not possible',
+         _('This deck is not legal'),
+       ];
+       // Everything else is treated as transient: a MySQL deadlock / statement timeout from
+       // BGA's own table lock (rolled back, so replaying is safe), or the upstream deck API
+       // having a moment ("Unexpected error while getting the deck content").
+       return !deterministic.some((known) => text.indexOf(known) >= 0);
+     },
+
+     /**
+      * takeAction() for the deck API calls, replaying them when they fail for a transient
+      * reason (see _isTransientApiError) instead of making the player restart the deck
+      * selection. Retries `maxRetries` times, after a jittered pause so two players whose
+      * actions collided on the table lock don't collide again in step. Gives up (re-throwing
+      * the error) as soon as `stillWanted()` turns false -- e.g. the player cancelled -- or
+      * the error is not transient. Passes through whatever takeAction() returns when it
+      * didn't send anything (a non-promise), as the callers already handle that case.
+      */
+     _takeActionRetryingTransient(action, data, stillWanted = () => true, maxRetries = 2) {
+       const send = () => this.takeAction(action, Object.assign({}, data), false);
+       const first = send();
+       if (!first || typeof first.then !== 'function') return first;
+
+       // Retries not started yet; showMessage() hides a transient error while this is > 0.
+       this._apiRetriesLeft = maxRetries;
+       const finish = () => {
+         this._apiRetriesLeft = 0;
+       };
+
+       const watch = (attempt, retryNumber) =>
+         attempt.catch((error) => {
+           if (this._apiRetriesLeft <= 0 || !stillWanted() || !this._isTransientApiError(error)) {
+             finish();
+             throw error;
+           }
+           debug('Transient API error, retrying', action, retryNumber, error);
+           const pause = 300 * retryNumber + Math.random() * 500;
+           return new Promise((resolve) => setTimeout(resolve, pause)).then(() => {
+             const next = stillWanted() ? send() : null;
+             if (!next || typeof next.then !== 'function') {
+               finish();
+               throw error;
+             }
+             this._apiRetriesLeft--;
+             return watch(next, retryNumber + 1);
+           });
+         });
+
+       return watch(first, 1).then(
+         (result) => {
+           finish();
+           return result;
+         },
+         (error) => {
+           finish();
+           throw error;
+         }
+       );
+     },
+
      notif_vsScreen(n) {
        debug('Notif: VS screen', n);
        this.closeOverlayIfOpened();
