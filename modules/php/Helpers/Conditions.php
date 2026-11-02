@@ -349,21 +349,38 @@ abstract class Conditions
   {
     $stormMoves = Globals::getStormMoves();
     foreach (STORMS as $storm) {
-      if (
-        !isset($stormMoves[$card->getPId()]) ||
-        $card->getPId() != $event['pId'] ||
-        !isset($stormMoves[$card->getPId()][$storm])
-      ) {
+      if (($event['pId'] ?? null) != $card->getPId() || !isset($stormMoves[$card->getPId()][$storm])) {
         continue;
       }
 
       // $side = $storm == STORM_LEFT ? HERO : COMPANION;
       $move = $stormMoves[$card->getPId()][$storm];
-      if ($card->getPlayer()->isAscended($storm) && $move['moves'] >= 1) {
+      if (($move['ascended'] ?? false) == true && ($move['moves'] ?? 0) >= 1) {
         return true;
       }
     }
     return false;
+  }
+
+  public static function movesAscendedExpedition($card, $event)
+  {
+    if (
+      ($event['pId'] ?? null) != $card->getPId() ||
+      ($event['moveExpedition'] ?? 0) < 1 ||
+      ($event['ascended'] ?? false) != true
+    ) {
+      return false;
+    }
+
+    if (($event['giganticPair'] ?? false) === true) {
+      $first = $event['expedition'] == STORM_LEFT ? STORM_RIGHT : STORM_LEFT;
+      $firstMove = Globals::getStormMoves()[$card->getPId()][$first] ?? null;
+      if (($firstMove['moves'] ?? 0) >= 1 && ($firstMove['ascended'] ?? false) == true) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public static function zhenZephyr($card, $event)
