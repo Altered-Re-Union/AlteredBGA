@@ -596,9 +596,8 @@ class ChooseAssignment extends \ALT\Models\Action
       $deleted = $card->discard();
       Notifications::silentKill($deleted);
     }
-    // if played from reserve, it gains fleeting (except native Landmarks).
-    // Temple plays become Landmark after applyTemplePlay, so allow them explicitly.
-    elseif ($fromLocation == RESERVE && ($temple || !in_array(LANDMARK, $card->getSubtypes()))) {
+    // if played from reserve, it gains fleeting (except native Landmarks and temple plays).
+    elseif ($fromLocation == RESERVE && !$temple && !in_array(LANDMARK, $card->getSubtypes())) {
       Actions::get(GAIN)->gain($player, $card, FLEETING, 1, null, ['type' => FLEETING]);
     } elseif ($player->getHero()->isAllSpell1Fleeting() && $card->getType() == SPELL && $card->getCostHand() <= 1) {
       Actions::get(GAIN)->gain($player, $card, FLEETING, 1, null, ['type' => FLEETING]);

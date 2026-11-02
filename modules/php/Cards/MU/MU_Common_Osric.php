@@ -15,6 +15,8 @@ class MU_Common_Osric extends \ALT\Models\Card
       'name' => clienttranslate('Osric'),
       'typeline' => clienttranslate('Muna Hero'),
       'type' => HERO,
+      'thumbnail' => 5,
+      'statData' => 34,
       'artist' => 'Ba Vo',
       'extension' => 'NEJ',
       'effectDesc' => clienttranslate('At Noon — If you\'re first player, create my Signature token: Toot 1/1/1 in your Reserve. (It\'s a Plant <COMPANION> with Reserve Cost {1} and "{R} I gain Anchored.")'),
