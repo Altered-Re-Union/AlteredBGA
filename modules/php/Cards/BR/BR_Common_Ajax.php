@@ -38,8 +38,7 @@ class BR_Common_Ajax extends \ALT\Models\Card
               'types' => [CHARACTER],
               'fromLocation' => RESERVE,
               'excludeSelf' => true,
-              'mandatory' => true,
-            ])
+            ], ['optional' => true])
           ),
         ],
       ]
