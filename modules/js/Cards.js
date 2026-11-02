@@ -2661,6 +2661,9 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
           text: _('Temple'),
           reminder: _('You may play me for my Temple cost as a Landmark Permanent - Construction with: "At Noon — You may send me to Reserve."'),
         },
+        CONSTRUCTION: {
+          text: _('Construction'),
+        },
         COMPANION: {
           text: _('Companion'),
         },

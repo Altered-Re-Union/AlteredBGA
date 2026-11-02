@@ -18,7 +18,7 @@ class AX_Common_Oddball extends \ALT\Models\Card
       'artist' => 'Tristan Bideau',
       'extension' => 'NEJ',
       'subtypes' => [ROBOT, COMPANION],
-      'effectDesc' => clienttranslate('I cost {2} less if you played a <Construction> this Day. (I\'m created in Reserve. You can play me in an Expedition. Remove me from the game if I would go anywhere else.)'),
+      'effectDesc' => clienttranslate('I cost {2} less if you played a <CONSTRUCTION> this Day. (I\'m created in Reserve. You can play me in an Expedition. Remove me from the game if I would go anywhere else.)'),
       'forest' => 2,
       'mountain' => 2,
       'ocean' => 2,

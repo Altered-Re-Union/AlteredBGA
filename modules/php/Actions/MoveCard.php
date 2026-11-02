@@ -66,12 +66,14 @@ class MoveCard extends \ALT\Models\Action
       $player = $this->getArg('player') == ME ? Players::getActive() : Players::getNext(Players::getActive());
       $cards = $player->getPlayedCards(CHARACTER)->merge($player->getPlayedCards(TOKEN));
     } else {
-      $cards[] = $this->getCard();
+      $card = $this->getCard();
+      $cards = [$card->getId() => $card];
     }
     $source = $this->getSource();
 
     $map = [STORM_LEFT => STORM_RIGHT, STORM_RIGHT => STORM_LEFT];
     foreach ($cards as $cId => $card) {
+      $cId = $card->getId();
       $fromLocation = $card->getLocation();
 
       // Floral Tent
@@ -89,8 +91,8 @@ class MoveCard extends \ALT\Models\Action
         continue;
       }
 
-      // Fane of Calypso (Anchored)
-      if (
+       // Fane of Calypso (Anchored)
+       if (
         !$this->getArg('skipProtectAnchored') &&
         Globals::isDayPhase() &&
         in_array($fromLocation, STORMS) &&
@@ -165,7 +167,7 @@ class MoveCard extends \ALT\Models\Action
       $expeditionsBoosts = Globals::getNextCharacterInExpeditionBoost();
       if ($card->getType() == CHARACTER && isset($expeditionsBoosts[$card->getPId()][$map[$card->getLocation()]]) && !$card->isGigantic()) {
         $this->insertAsChild(['action' => BOOST, 'args' => ['cardId' => $card->getId(), 'type' => BOOST, 'n' => $expeditionsBoosts[$card->getPId()][$map[$card->getLocation()]]]]);
-        unset($expeditionsBoosts[$player->getId()][$map[$card->getLocation()]]);
+        unset($expeditionsBoosts[$card->getPId()][$map[$card->getLocation()]]);
         Globals::setNextCharacterInExpeditionBoost($expeditionsBoosts);
       }
 

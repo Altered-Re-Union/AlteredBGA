@@ -133,12 +133,31 @@ class Action
 
   public function getSourceId()
   {
-    return $this->ctx->getSourceId();
+    return $this->resolveSourceId();
+  }
+
+  public function resolveSourceId($ctx = null)
+  {
+    if (is_null($ctx)) {
+      $ctx = $this->ctx;
+    }
+    if (is_null($ctx)) {
+      return null;
+    }
+    $sourceId = $ctx->getSourceId();
+    if (!is_null($sourceId)) {
+      return $sourceId;
+    }
+    $parent = $ctx->getParent();
+    if (!is_null($parent)) {
+      return $this->resolveSourceId($parent);
+    }
+    return null;
   }
 
   public function getSource()
   {
-    $sourceId = $this->ctx->getSourceId();
+    $sourceId = $this->resolveSourceId();
     return is_null($sourceId) ? null : Cards::get($sourceId);
   }
 

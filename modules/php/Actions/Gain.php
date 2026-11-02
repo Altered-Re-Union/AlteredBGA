@@ -7,7 +7,6 @@ use ALT\Managers\Players;
 use ALT\Managers\Cards;
 use ALT\Core\Engine;
 use ALT\Core\Notifications;
-use ALT\Core\Stats;
 use ALT\Helpers\Utils;
 use ALT\Helpers\Conditions;
 
@@ -96,12 +95,12 @@ class Gain extends \ALT\Models\Action
         return false;
       }
       if (!is_null($event) && isset($event['action']) && $event['action'] == 'ChooseAssignment' && $event['sourceLocation'] == RESERVE) {
-        $card = Cards::get($this->ctx->getSourceId());
+        $card = Cards::get($this->resolveSourceId());
         if (in_array($card->getId(), $event['reserveToListen'] ?? []) && $card->getLocation() != RESERVE) {
           return false;
         }
       }
-      $card = Cards::get($this->ctx->getSourceId());
+      $card = Cards::get($this->resolveSourceId());
       list($gain, $n) = $this->getGain();
       if ($card->getType() == CHARACTER && $gain == FLEETING && $card->hasToken(FLEETING)) {
         return false;
@@ -163,7 +162,7 @@ class Gain extends \ALT\Models\Action
   {
     $cardId = $this->getCtxArg('cardId');
     if ($cardId == ME) {
-      $cardId = $this->ctx->getSourceId() ?? null;
+      $cardId = $this->resolveSourceId();
     } elseif ($cardId == EFFECT) {
       $event = $this->getEventRecursive();
       $cardId = null;
@@ -210,7 +209,7 @@ class Gain extends \ALT\Models\Action
       return $upTo;
     }
     if ($this->getCtxArg('cardId') != EFFECT && !is_null($this->getCtxArg('cardId')) && $this->getCard()->getLocation() == RESERVE) {
-      if ($this->getCtxArg('cardId') == ME && is_null($this->ctx->getSourceId())) {
+      if ($this->getCtxArg('cardId') == ME && is_null($this->resolveSourceId())) {
         return $upTo;
       }
       return $this->getCard()->getPlayer()->getReserveAdd() + $upTo;
@@ -357,7 +356,7 @@ class Gain extends \ALT\Models\Action
   {
     $player = $this->getPlayer();
     $source = $this->ctx->getSource() ?? null;
-    $sourceId = $this->ctx->getSourceId() ?? null;
+    $sourceId = $this->resolveSourceId();
     if (is_null($source) && !is_null($sourceId)) {
       $source = Cards::getSingle($sourceId);
     }

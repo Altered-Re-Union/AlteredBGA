@@ -25,14 +25,15 @@ class Exhaust extends \ALT\Models\Action
   public function getCard()
   {
     $cardId = $this->getCtxArg('cardId');
-    if ($cardId == ME) {
-      $cardId = $this->ctx->getSourceId() ?? null;
+    if ($cardId == ME || is_null($cardId)) {
+      $cardId = $this->resolveSourceId();
     } elseif ($cardId == EFFECT) {
-      $cardId = $this->getCtx()->toArray()['event']['cardId'] ?? null;
+      $event = $this->getEventRecursive();
+      $cardId = $event['cardId'] ?? null;
     }
 
     if (is_null($cardId)) {
-      throw new \Bga\GameFramework\VisibleSystemException('no card in args (Gain). Should not happen');
+      throw new \BgaVisibleSystemException('no card in args (Gain). Should not happen');
     }
     return Cards::getSingle($cardId);
   }

@@ -42,6 +42,8 @@ class ChooseAssignment extends \ALT\Models\Action
     'minBaseCost' => 0,
     'limited' => false,
     'forcedLocation' => null,
+    'fromLocation' => null, // Zone the card is played FROM (HAND / RESERVE); null allows both. Destination is forcedLocation
+    'excludeSelf' => false, // NEJ Ajax: "another" Character, while the source card sits in the same Reserve
     'mandatory' => false,
     'reserveFlipCost' => false,
     'subType' => 'disabled', // Either a string or an array, array uses OR logic
@@ -107,15 +109,25 @@ class ChooseAssignment extends \ALT\Models\Action
       }
       return is_array($subType) && count(array_intersect($subType, $card->getSubtypes())) > 0;
     };
+    
+    $fromLocation = $this->getArg('fromLocation');
+    $fromLocations = is_null($fromLocation) ? null : (is_array($fromLocation) ? $fromLocation : [$fromLocation]);
+    $excludedId = $this->getArg('excludeSelf') ? $this->getSourceId() : null;
+    $matchesOrigin = function ($card) use ($fromLocations, $excludedId) {
+      if (!is_null($fromLocations) && !in_array($card->getLocation(), $fromLocations)) {
+        return false;
+      }
+      return is_null($excludedId) || $card->getId() != $excludedId;
+    };
 
     // 1. Play cards
     if (in_array('play', $authorizedActions)) {
       $actions['play'] = $handCards
         ->merge($reserveCards)
-                ->filter(function ($card) use ($player, $authorizedTypes, $free, $freeCostLimits, $reserveFlipCost, $matchesSubType) {
+                ->filter(function ($card) use ($player, $authorizedTypes, $free, $freeCostLimits, $reserveFlipCost, $matchesSubType, $matchesOrigin) {
           $typeOk = in_array($card->getType(), $authorizedTypes)
             || count(array_intersect($authorizedTypes, $card->getAdditionalType())) > 0;
-          if (!$typeOk || !$matchesSubType($card)) {
+          if (!$typeOk || !$matchesSubType($card) || !$matchesOrigin($card)) {
             return false;
           }
           if (!$free) {
@@ -137,13 +149,14 @@ class ChooseAssignment extends \ALT\Models\Action
         });
       // Scout is only for hand cards
       $scouts = $handCards
-        ->filter(function ($card) use ($player, $authorizedTypes, $free, $freeCostLimits, $matchesSubType) {
+        ->filter(function ($card) use ($player, $authorizedTypes, $free, $freeCostLimits, $matchesSubType, $matchesOrigin) {
           $meetsFreeScoutCost = $free
             && !$card->isNameBlockedThisDay($player)
             && $this->cardMeetsExplicitFreeCostLimits($card, $freeCostLimits);
           return $card->getScout() > 0
             && in_array($card->getType(), $authorizedTypes)
             && $matchesSubType($card)
+            && $matchesOrigin($card)
             && ((!$free && $card->canBePlayed($player, true)) || $meetsFreeScoutCost);
         })
         ->map(function ($card) use ($player, $forcedLocation) {
@@ -155,13 +168,14 @@ class ChooseAssignment extends \ALT\Models\Action
 
       $templePlays = $handCards
         ->merge($reserveCards)
-        ->filter(function ($card) use ($player, $authorizedTypes, $free, $freeCostLimits, $matchesSubType) {
+        ->filter(function ($card) use ($player, $authorizedTypes, $free, $freeCostLimits, $matchesSubType, $matchesOrigin) {
           $meetsFreeTempleCost = $free
             && !$card->isNameBlockedThisDay($player)
             && $this->cardMeetsExplicitFreeCostLimits($card, $freeCostLimits);
           return $card->hasTemple()
             && in_array($card->getType(), $authorizedTypes)
             && $matchesSubType($card)
+            && $matchesOrigin($card)
             && !$card->isTapped()
             && ((!$free && $card->canBePlayed($player, false, false, true)) || $meetsFreeTempleCost);
         })
@@ -582,6 +596,13 @@ class ChooseAssignment extends \ALT\Models\Action
     $turnCards = Globals::getTurnCards();
     $turnCards[$player->getId()] = ($turnCards[$player->getId()] ?? 0) + 1;
     Globals::setTurnCards($turnCards);
+    $uid = $card->getUid();
+    if ($uid !== null && $uid !== '') {
+      $playedHistory = Globals::getPlayedCardsHistory() ?: [];
+      $pId = $player->getId();
+      $playedHistory[$pId][$uid] = ($playedHistory[$pId][$uid] ?? 0) + 1;
+      Globals::setPlayedCardsHistory($playedHistory);
+    }
 
     if ($reallyPlayed && in_array(CONSTRUCTION, $card->getSubtypes())) {
       $player->markConstructionPlayedThisDay();

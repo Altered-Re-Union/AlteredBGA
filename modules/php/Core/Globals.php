@@ -39,6 +39,7 @@ class Globals extends \ALT\Helpers\DB_Manager
     'phase' => 'int',
     'heroes' => 'obj',
     'playedCards' => 'int',
+    'playedCardsHistory' => 'obj', // pId => uid => times played this game
     'stormMoves' => 'obj',
     'expeditionMoves' => 'obj',
     'blockedExpeditions' => 'obj', // pId => StormLet/Right
