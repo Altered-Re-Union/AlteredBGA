@@ -294,7 +294,14 @@ class MoveExpedition extends \ALT\Models\Action
           $expeditionMoves[$player->getId()][$expedition] = ($expeditionMoves[$player->getId()][$expedition] ?? 0) + $n;
           Globals::setExpeditionMoves($expeditionMoves);
 
-          $this->checkAfterListeners($player, ['moveExpedition' => $n, 'ascended' => $player->isAscended($expedition), 'expedition' => $expedition]);
+          // 'giganticPair' tells the listeners that both Expeditions are moved by this single
+          // action, so abilities triggering on "one or more Expeditions moving" only trigger once
+          $this->checkAfterListeners($player, [
+            'moveExpedition' => $n,
+            'ascended' => $player->isAscended($expedition),
+            'expedition' => $expedition,
+            'giganticPair' => true,
+          ]);
         }
       }
     }

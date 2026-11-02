@@ -408,6 +408,7 @@ abstract class FlowConvertor
       810 => [
         'description' => clienttranslate('When one or more of your <ASCENDED_P> Expeditions moves forward —'),
         'trigger' => ['AfterDusk', 'MoveExpedition'],
+        'listeningConditions' => ['movesAscendedExpedition'],
         'condition' => ['movesAscendedAnyExpeditions'],
       ],
       937 => ['description' => clienttranslate('{R}'), 'trigger' => '', 'type' => 'effectReserve'],
