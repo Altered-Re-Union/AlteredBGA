@@ -59,7 +59,7 @@ trait SetupTrait
     }
 
     $demoDef = null;
-    foreach (DEMO_ROC_FLOCK_DECKS as $deck) {
+    foreach (DEMO_ROC_DECKS as $deck) {
       if ($deck['deckId'] === ($deckInfo['deckId'] ?? null)) {
         $demoDef = $deck;
         break;

@@ -101,11 +101,6 @@ const DEMO_ROC_DECKS = array(
     'contents' => DEMO_NEJ_EYOTA,
   ),
   array(
-    'faction' => FACTION_BR,
-    'deckId' => 'kojo.nej',
-    'contents' => DEMO_NEJ_KOJO,
-  ),
-  array(
     'faction' => FACTION_LY,
     'deckId' => 'zoe.nej',
     'contents' => DEMO_NEJ_ZOE,

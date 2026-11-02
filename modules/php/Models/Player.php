@@ -1392,26 +1392,40 @@ class Player extends \ALT\Helpers\DB_Model
   {
     return count(
       $this->getPlayedCards()->filter(function ($card) {
-        $dynamicGigantic = $card->getDynamicGigantic();
-        if (!is_array($dynamicGigantic) && $dynamicGigantic != '') {
-          $dynamicGigantic = [$dynamicGigantic];
-        } elseif ($dynamicGigantic == '') {
-          $dynamicGigantic = [];
-        }
-
-        foreach ($dynamicGigantic as $singleGigantic) {
-          $dynSplit = explode(':', $singleGigantic);
-          if (count($dynSplit) > 1) {
-            // we need to test if ok, add change dynamic tough to the value of 0
-            if (!is_null(Utils::checkAttributeCondition('gigantic', $singleGigantic, $this, $card))) {
-              return $dynSplit[0] == 'universalGiganticToken';
-            }
-          } else {
-            return $singleGigantic == 'universalGiganticToken';
-          }
-        }
+        return $this->playedCardGrantsUniversalGigantic($card, 'universalGiganticToken');
       })
     );
+  }
+
+  public function countUniversalCompanionGigantic()
+  {
+    return count(
+      $this->getPlayedCards()->filter(function ($card) {
+        return $this->playedCardGrantsUniversalGigantic($card, 'universalGiganticCompanion');
+      })
+    );
+  }
+
+  private function playedCardGrantsUniversalGigantic(Card $source, string $kind): bool
+  {
+    $dynamicGigantic = $source->getDynamicGigantic();
+    if (!is_array($dynamicGigantic) && $dynamicGigantic != '') {
+      $dynamicGigantic = [$dynamicGigantic];
+    } elseif ($dynamicGigantic == '') {
+      $dynamicGigantic = [];
+    }
+
+    foreach ($dynamicGigantic as $singleGigantic) {
+      $dynSplit = explode(':', $singleGigantic);
+      if (count($dynSplit) > 1) {
+        if (!is_null(Utils::checkAttributeCondition('gigantic', $singleGigantic, $this, $source))) {
+          return $dynSplit[0] == $kind;
+        }
+      } elseif ($singleGigantic == $kind) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public function isInContact($location = null)

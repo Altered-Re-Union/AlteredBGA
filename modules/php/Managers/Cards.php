@@ -717,7 +717,7 @@ class Cards extends \ALT\Helpers\CachedPieces
     $toCreate = [];
     $pId = $player->getId();
 
-    foreach (DEMO_ROC_FLOCK_DECKS as $deck) {
+    foreach (DEMO_ROC_DECKS as $deck) {
       $faction = $deck['faction'];
       $deckId = $deck['deckId'];
 

@@ -217,6 +217,7 @@ const MOUNTAIN = 'mountain';
 const FOREST = 'forest';
 const OCEAN = 'ocean';
 const EFFECT = 'EFFECT';
+const HERO_SIGNATURE = 'HERO_SIGNATURE';
 
 const HERO = 'hero';
 const CHARACTER = 'character';

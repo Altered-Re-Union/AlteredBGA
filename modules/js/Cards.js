@@ -1665,7 +1665,8 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
         return this.tplSpellCardTooltip(card);
       } else if (type == PERMANENT) {
         if (this.isPlayedAsTemple(card)) {
-          return this.tplCharacterCardTooltip(card, false, mini);
+          if (card.properties.token) return this.tplTokenCardTooltip(card);
+          return this.tplCharacterCardTooltip(card);
         }
         return this.tplPermanentCardTooltip(card);
       } else if (type == TOKEN) {
@@ -2662,6 +2663,9 @@ define(['dojo', 'dojo/_base/declare', g_gamethemeurl + 'modules/js/cardsData.js'
         },
         COMPANION: {
           text: _('Companion'),
+        },
+        BLAZING_BOODA: {
+          text: _('Blazing Booda 3/3/3'),
         },
       };
 
