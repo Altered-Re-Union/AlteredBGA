@@ -1,0 +1,6 @@
+out.log
+sweep.csv
+results/
+baseline/
+# Replays hold BGA player names and ids: kept local, see README
+replays/*.json

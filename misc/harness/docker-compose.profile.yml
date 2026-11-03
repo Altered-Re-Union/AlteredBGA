@@ -1,0 +1,6 @@
+services:
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile.profile
+    image: bga-harness-php-profile

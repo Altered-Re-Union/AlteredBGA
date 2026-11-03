@@ -30,7 +30,9 @@ class LeafNode extends AbstractNode
     if (!isset($this->infos['action'])) {
       return false;
     }
-    return Actions::get($this->infos['action'], $this)->isAutomatic($player) && Globals::getEngineChoices() <= 20;;
+    return $this->memoized('isAutomatic', $player, function () use ($player) {
+      return Actions::get($this->infos['action'], $this)->isAutomatic($player) && Globals::getEngineChoices() <= 20;
+    });
   }
 
   public function isIndependent($player = null)
@@ -38,10 +40,19 @@ class LeafNode extends AbstractNode
     if (!isset($this->infos['action'])) {
       return false;
     }
-    return Actions::get($this->infos['action'], $this)->isIndependent($player) && Globals::getEngineChoices() <= 20;;
+    return $this->memoized('isIndependent', $player, function () use ($player) {
+      return Actions::get($this->infos['action'], $this)->isIndependent($player) && Globals::getEngineChoices() <= 20;
+    });
   }
 
   public function isOptional($player)
+  {
+    return $this->memoized('isOptional', $player, function () use ($player) {
+      return $this->computeIsOptional($player);
+    });
+  }
+
+  private function computeIsOptional($player)
   {
     if ((isset($this->infos['mandatory']) && $this->infos['mandatory']) || Actions::get($this->infos['action'], $this)->isMandatory()) {
       return false;
@@ -71,6 +82,13 @@ class LeafNode extends AbstractNode
    * A Leaf is doable if the corresponding action is doable by the player
    */
   public function isDoable($player)
+  {
+    return $this->memoized('isDoable', $player, function () use ($player) {
+      return $this->computeIsDoable($player);
+    });
+  }
+
+  private function computeIsDoable($player)
   {
     // Useful for a SEQ node where the 2nd node might become doable thanks to the first one
     if (isset($this->infos['willBeDoable'])) {

@@ -1,0 +1,21 @@
+services:
+  db:
+    image: mariadb:10.6
+    environment:
+      MARIADB_ROOT_PASSWORD: root
+      MARIADB_DATABASE: altered
+    tmpfs: /var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect"]
+      interval: 2s
+      retries: 30
+  php:
+    build: .
+    depends_on:
+      db: { condition: service_healthy }
+    environment:
+      DB_HOST: db
+      GAME_DIR: /game
+    volumes:
+      - .:/harness
+      - ${GAME_DIR:-../..}:/game

@@ -61,14 +61,31 @@ abstract class DB_Model extends \APP_DbObject implements \JsonSerializable
   /*
    * Magic method that intercept not defined method and do the appropriate stuff
    */
+  /** @var array<string, ?array> magic method name => [prefix, attribute], parsed once per request */
+  protected static $parsedMethods = [];
+
+  /**
+   * Splits a magic accessor name (getFoo, setFoo, incFoo, isFoo) into [prefix, attribute].
+   * Accessors run millions of times per request when collections are filtered: the regex is
+   * only applied once per method name.
+   */
+  protected static function parseMethod($method)
+  {
+    if (!array_key_exists($method, self::$parsedMethods)) {
+      self::$parsedMethods[$method] = preg_match('/^([gs]et|inc|is)([A-Z])(.*)$/', $method, $match)
+        ? [$match[1], mb_strtolower($match[2]) . $match[3]]
+        : null;
+    }
+    return self::$parsedMethods[$method];
+  }
+
   public function __call($method, $args)
   {
-    if (preg_match('/^([gs]et|inc|is)([A-Z])(.*)$/', $method, $match)) {
-      // Sanity check : does the name correspond to a declared variable ?
-      $name = mb_strtolower($match[2]) . $match[3];
+    if ($parsed = self::parseMethod($method)) {
+      [$prefix, $name] = $parsed;
       if (!\array_key_exists($name, $this->attributes)) {
         // Static attribute getters
-        if (in_array($match[1], ['get', 'is'])) {
+        if (in_array($prefix, ['get', 'is'])) {
           foreach ($this->staticAttributes as $attr) {
             if (is_array($attr) && $name == $attr[0]) {
               return $this->$name ?? ($attr[1] == 'int' ? 0 : []);
@@ -80,7 +97,7 @@ abstract class DB_Model extends \APP_DbObject implements \JsonSerializable
         throw new \InvalidArgumentException("Attribute {$name} doesn't exist");
       }
 
-      if ($match[1] == 'get') {
+      if ($prefix == 'get') {
         if (count($args) > 0 && is_array($this->attributes[$name]) && $this->attributes[$name][1] == 'obj') {
           // Handle json field
           return $this->$name[$args[0]] ?? null;
@@ -88,10 +105,10 @@ abstract class DB_Model extends \APP_DbObject implements \JsonSerializable
           // Basic getters
           return $this->$name;
         }
-      } elseif ($match[1] == 'is') {
+      } elseif ($prefix == 'is') {
         // Boolean getter
         return (bool) ($this->$name != 0);
-      } elseif ($match[1] == 'set') {
+      } elseif ($prefix == 'set') {
         // Setters in DB and update cache
         $value = $args[0];
 
@@ -136,9 +153,9 @@ abstract class DB_Model extends \APP_DbObject implements \JsonSerializable
         // $this->DB()->update([$this->attributes[$name] => \addslashes($value)], $this->getPrimaryFieldValue());
         $this->DB()->update([$fieldName => $updateValue], $this->getPrimaryFieldValue());
         return $value;
-      } elseif ($match[1] == 'inc') {
-        $getter = 'get' . $match[2] . $match[3];
-        $setter = 'set' . $match[2] . $match[3];
+      } elseif ($prefix == 'inc') {
+        $getter = 'get' . ucfirst($name);
+        $setter = 'set' . ucfirst($name);
         return $this->$setter($this->$getter() + (empty($args) ? 1 : $args[0]));
       }
     } else {
