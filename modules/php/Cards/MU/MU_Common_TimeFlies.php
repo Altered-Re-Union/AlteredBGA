@@ -25,7 +25,7 @@ class MU_Common_TimeFlies extends \ALT\Models\Card
         FT::GAIN(ME, FLEETING),
         FT::ACTION(DRAW, ['players' => ME]),
         FT::ACTION(TARGET_PLAYER, [
-          'opponentsOnly' => false,
+          'opponentsOnly' => true,
           'effect' => FT::ACTION(SPECIAL_EFFECT, ['effect' => 'switchPlayer'])
         ])
       ),
