@@ -54,6 +54,7 @@ class Card extends \ALT\Helpers\DB_Model
     'supportIcon' => 'str',
     'artist' => 'str',
     'setIcon' => 'str',
+    'serial' => 'str',
     'thumbnail' => 'int', // Only used for Heros for UI
     'statData' => 'int',
     'extension' => 'str',
@@ -73,6 +74,7 @@ class Card extends \ALT\Helpers\DB_Model
     'costModifier' => 'obj', // ['hand'=> action check, 'reserve' => action check]
     'costHand' => 'int',
     'costReserve' => 'int',
+    'costTemple' => 'int',
     'costReductionDiscard' => 'int', // to manage possibilites to discard a card, to reduce cost to pay
     'dynamicCostReduction' => 'str',
 
@@ -200,7 +202,18 @@ class Card extends \ALT\Helpers\DB_Model
     'playCondition' => 'str', // Conditions required to play the card
     'cantGainBoost' => 'str', // Conditions required to not gain boosts
     'boostIfAscended' => 'bool', // Wigwagging Kiwi
-  ];
+
+     // Fugue
+     'costReductionIfConstructionPlayed' => 'int',
+     'signatureToken' => 'str',
+     'increaseHandCost' => 'int', // Fane of Nausicaa
+     'dynamicIncreaseHandCost' => 'str',
+     'sacrificeProtectAnchored' => 'bool', // Fane of Calypso
+     'sacrificeProtectAsleep' => 'bool', // Fane of Calypso (Ordis)
+     'universalToughScope' => 'str', // Restricts a universalCharacter Tough aura, e.g. Trireme Captain
+     'costReductionSacrificeCharacter' => 'int', // Maw's Molting (Yzmir)
+     'costReductionSpendBoost' => 'obj', // Maw's Molting (Muna)
+   ];
 
   /********* DB ACCESS *********/
 
@@ -314,18 +327,123 @@ class Card extends \ALT\Helpers\DB_Model
     return Players::get($this->pId);
   }
 
-  // $scout = can be played at scout cost
-  public function canBePlayed($player, $scout = false, $reserveFlipCost = false)
+  public function hasTemple()
   {
-    if ($this->isExhaustedReservePlayBlocked($player)) {
+    return $this->getCostTemple() > 0;
+  }
+
+  public function isPlayedAsTemple()
+  {
+    return ($this->getExtraDatas()['playedAsTemple'] ?? false) === true;
+  }
+
+  public function getTemplePlayableLocations($player)
+  {
+    if (!$this->hasTemple() || $this->isTapped()) {
+      return [];
+    }
+
+    if ($this->canBePlayed($player, false, false, true)) {
+      return [LANDMARK];
+    }
+
+    return [];
+  }
+
+  // Class-file properties are reloaded each request; only DYNAMIC_PROPERTIES persist from DB.
+  // Re-apply temple runtime state whenever a temple-played card is loaded.
+  public function restoreTemplePlayState($updateDB = true)
+  {
+    if (!$this->isPlayedAsTemple()) {
+      return;
+    }
+
+    $this->setProperty('type', PERMANENT, $updateDB);
+    $this->setProperty('subtypes', [CONSTRUCTION, LANDMARK], $updateDB);
+    // Keep the original typeline for display (e.g. "Character - Deity")
+    $originalTypeline = $this->getExtraDatas()['templeOriginal']['typeline'] ?? null;
+    if (!is_null($originalTypeline)) {
+      $this->setProperty('typeline', $originalTypeline, $updateDB);
+    }
+    $this->setProperty('effectPlayed', [], $updateDB);
+    $this->setProperty('effectHand', [], $updateDB);
+    $this->setProperty('effectReserve', [], $updateDB);
+  }
+
+  public function applyTemplePlay()
+  {
+    $extra = $this->getExtraDatas();
+    if (!$this->isPlayedAsTemple()) {
+      $extra['playedAsTemple'] = true;
+      $extra['templeOriginal'] = [
+        'type' => $this->getType(),
+        'subtypes' => $this->getSubtypes(),
+        'typeline' => $this->getTypeline(),
+        'effectPlayed' => $this->getEffectPlayed(),
+        'effectHand' => $this->getEffectHand(),
+        'effectReserve' => $this->getEffectReserve(),
+      ];
+      $this->setExtraDatas($extra);
+    }
+    $this->restoreTemplePlayState(true);
+    // Do not refreshCard here: remounting in-place before the play/move slide
+    // causes a visible flicker, and the following move notif already carries the card.
+  }
+
+  public function revertFromTemplePlay()
+  {
+    if (!$this->isPlayedAsTemple()) {
+      return;
+    }
+
+    $extra = $this->getExtraDatas();
+    $original = $extra['templeOriginal'] ?? null;
+    if (!is_null($original)) {
+      $this->setType($original['type']);
+      $this->setSubtypes($original['subtypes']);
+      $this->setTypeline($original['typeline']);
+      $this->setEffectPlayed($original['effectPlayed'] ?? []);
+      $this->setEffectHand($original['effectHand'] ?? []);
+      $this->setEffectReserve($original['effectReserve'] ?? []);
+    }
+
+    unset($extra['playedAsTemple'], $extra['templeOriginal']);
+    $this->setExtraDatas($extra);
+    // Same as applyTemplePlay: the subsequent discard/move notif carries the card.
+  }
+  
+  public static function countExpeditionCharacterBoosts($player)
+  {
+    $total = 0;
+    foreach ($player->getPlayedCards() as $c) {
+      if (!in_array($c->getLocation(), STORMS)) {
+        continue;
+      }
+      if (
+        !in_array($c->getType(), [CHARACTER, TOKEN])
+        && count(array_intersect([CHARACTER, TOKEN], $c->getAdditionalType())) == 0
+      ) {
+        continue;
+      }
+      $total += $c->countToken(BOOST);
+    }
+    return $total;
+  }
+
+  // $scout = can be played at scout cost
+  // $temple = can be played at temple cost as a Landmark Construction
+  public function canBePlayed($player, $scout = false, $reserveFlipCost = false, $temple = false)
+  {
+    if (!$temple && $this->isExhaustedReservePlayBlocked($player)) {
       return false;
     }
-    
-    $playCondition = $this->getPlayCondition();
-    if ($playCondition != null) {
-      if (!Conditions::check(['condition' => $playCondition], $this, null)) {
-        return false;
-      }
+
+    if ($temple && !$this->hasTemple()) {
+      return false;
+    }
+
+    if ($this->isNameBlockedThisDay($player)) {
+      return false;
     }
 
     $playCondition = $this->getPlayCondition();
@@ -335,7 +453,14 @@ class Card extends \ALT\Helpers\DB_Model
       }
     }
 
-    $cost = $this->getCost($scout, $reserveFlipCost);
+    $playCondition = $this->getPlayCondition();
+    if ($playCondition != null) {
+      if (!Conditions::check(['condition' => $playCondition], $this, null)) {
+        return false;
+      }
+    }
+
+    $cost = $this->getCost($scout, $reserveFlipCost, $temple);
     $costReductionIfEmpty = $this->getCostReductionIfEmpty();
     $mana = $player->getMana();
     $totalMana = $player->getTotalMana();
@@ -348,6 +473,11 @@ class Card extends \ALT\Helpers\DB_Model
       ) {
         $cost -= $costReductionIfEmpty;
       }
+    }
+
+    $costReductionIfConstructionPlayed = $this->getCostReductionIfConstructionPlayed();
+    if ($costReductionIfConstructionPlayed > 0 && $player->hasPlayedConstructionThisDay()) {
+      $cost -= $costReductionIfConstructionPlayed;
     }
 
     if ($this->getCostReductionDiscard() > 0) {
@@ -380,6 +510,21 @@ class Card extends \ALT\Helpers\DB_Model
         $cost -= $this->getCostReductionSacrificePermanent();
       }
     }
+    
+    if ($this->getCostReductionSacrificeCharacter() > 0) {
+      $characters = $this->getPlayer()->getPlayedCards()->filter(function ($c) {
+        return in_array($c->getType(), [CHARACTER, TOKEN])
+          || count(array_intersect([CHARACTER, TOKEN], $c->getAdditionalType())) > 0;
+      })->count();
+      if ($characters > 0) {
+        $cost -= $this->getCostReductionSacrificeCharacter();
+      }
+    }
+    
+    $spendBoostReduction = $this->getCostReductionSpendBoost();
+    if (!empty($spendBoostReduction) && self::countExpeditionCharacterBoosts($this->getPlayer()) >= ($spendBoostReduction['boostCost'] ?? 2)) {
+      $cost -= $spendBoostReduction['reduction'] ?? 1;
+    }
 
     if ($this->getCostReductionLimitation() > 0) {
       $cost -= $this->getCostReductionLimitation();
@@ -395,6 +540,14 @@ class Card extends \ALT\Helpers\DB_Model
       }
     }
     return $cost <= $mana && $this->getMinManaOrbs() <= $totalMana;
+  }
+
+  /**
+   * Ship Security Officer (and similar): opponents can't play cards with that name this Day.
+   */
+  public function isNameBlockedThisDay($player)
+  {
+    return Players::isCardNameBlockedThisDay($player->getId(), $this->getName());
   }
 
   /**
@@ -606,6 +759,9 @@ class Card extends \ALT\Helpers\DB_Model
   {
     $isSeasoned = $this->isSeasoned();
     $this->checkLeaveListener($location, $afterNight, false, $gigantic);
+    if ($this->isPlayedAsTemple()) {
+      $this->revertFromTemplePlay();
+    }
     $this->setLocation($location);
     $extra = $this->getExtraDatas();
     if (isset($extra['pId'])) {
@@ -719,7 +875,9 @@ class Card extends \ALT\Helpers\DB_Model
         'token' => $this->isToken(),
         'from' => LANDMARK,
         'to' => DISCARD_PILE,
-        'sacrifice' => $isSacrifice
+        'sacrifice' => $isSacrifice,
+        // Snapshot of the controller while the card is still in its zone, like Discard::stDiscard
+        'cardPId' => $this->getPId()
       ];
       if ($this->isListeningTo($event2)) {
         $afterCleanup[$this->getPId()][] = [
@@ -974,7 +1132,7 @@ class Card extends \ALT\Helpers\DB_Model
     return [$power['payment'] ?? [], $power['output']];
   }
 
-  public function getCost($scout = false, $reserveFlipCost = false, $location = null)
+  public function getCost($scout = false, $reserveFlipCost = false, $temple = false)
   {
     if (($this->getType() == SPELL || in_array(SPELL, $this->getAdditionalType())) && Globals::isNextSpellIsFree()) {
       return 0;
@@ -1044,6 +1202,7 @@ class Card extends \ALT\Helpers\DB_Model
     }
 
     $increaseReserveCost = Players::getIncreaseReserveCost($this->getType());
+    $increaseHandCost = Players::getIncreaseHandCost($this->getType(), $this->getPId());
     $reduceReserveCost = Players::getReduceReserveCost($this->getType(), $this->getSubtypes(), $this->getPId(), $this->id);
     if ($reduceReserveCost > 0 && $this->getLocation() == RESERVE) {
       $minimumCost = max(1, $minimumCost);
@@ -1053,6 +1212,10 @@ class Card extends \ALT\Helpers\DB_Model
     $reduceCostTypeData = $this->getPlayer()->getReduceCostType($this);
     $minimumCost = max($minimumCost, $reduceCostTypeData['minimum'] ?? 0);
     $dynamicReduc = (int) $dynamicReduc + $reduceCostTypeData['reduction'];
+
+    if ($temple && $this->hasTemple()) {
+      return max($minimumCost, $this->getCostTemple() - $typeReduction - (int) $dynamicReduc);
+    }
     
     switch ($this->getLocation()) {
       case HAND:
@@ -1061,8 +1224,7 @@ class Card extends \ALT\Helpers\DB_Model
         } else {
           $initialCost = $this->getCostHand();
         }
-        return max($minimumCost, $initialCost - $typeReduction  - (int) $dynamicReduc);
-        break;
+        return max($minimumCost, $initialCost - $typeReduction  - (int) $dynamicReduc + $increaseHandCost);
       case RESERVE:
         if ($reserveFlipCost) {
           return min(
@@ -1071,7 +1233,6 @@ class Card extends \ALT\Helpers\DB_Model
           );
         }
         return max($minimumCost, $this->getCostReserve() - $typeReduction - (int) $dynamicReduc + $increaseReserveCost - $reduceReserveCost);
-        break;
     }
   }
 
@@ -1268,6 +1429,13 @@ class Card extends \ALT\Helpers\DB_Model
       if ($anchoredAsleep > 0 && ($this->hasToken(ANCHORED) || $this->hasToken(ASLEEP))) {
         $tough += 1;
       }
+      
+      if ($this->hasToken(ANCHORED)) {
+        $tough += $this->getPlayer()->countUniversalToughAnchored();
+      }
+      if ($this->hasToken(FLEETING)) {
+        $tough += $this->getPlayer()->countUniversalToughFleeting();
+      }
     }
 
     if (in_array($this->getType(), [PERMANENT])) {
@@ -1362,6 +1530,14 @@ class Card extends \ALT\Helpers\DB_Model
     }
 
     if ($this->isToken() && $this->getPlayer()->countUniversalTokenGigantic() > 0) {
+      return true;
+    }
+
+    if (
+      in_array(COMPANION, $this->getSubtypes())
+      && in_array($this->getLocation(), STORMS)
+      && $this->getPlayer()->countUniversalCompanionGigantic() > 0
+    ) {
       return true;
     }
 
@@ -1468,6 +1644,22 @@ class Card extends \ALT\Helpers\DB_Model
         return 0;
       } elseif (!is_null($result)) {
         return $result;
+      }
+    }
+    return 0;
+  }
+
+  public function getIncreaseHandCost($type = null)
+  {
+    if (($this->properties['increaseHandCost'] ?? 0) > 0) {
+      return $this->properties['increaseHandCost'];
+    }
+
+    $dynamicIncrease = $this->getDynamicIncreaseHandCost();
+    if ($dynamicIncrease != '') {
+      $result = Utils::checkAttributeCondition('cost', $dynamicIncrease, $this->getPlayer(), $this);
+      if (!is_null($result)) {
+        return (int) $result;
       }
     }
     return 0;
@@ -1582,6 +1774,9 @@ class Card extends \ALT\Helpers\DB_Model
     }
     $subType = '';
     $dynamicDefender = $this->getDynamicDefender();
+    // Dynamic attributes can be suffixed by a trigger condition ("marker:cond1|cond2"); the aura
+    // marker below must be detected on its base segment, not on the whole string.
+    $dynamicDefenderBase = is_string($dynamicDefender) ? explode(':', $dynamicDefender)[0] : '';
     switch ($dynamicDefender) {
       case '2OtherPlants':
         $subType = PLANT;
@@ -1610,7 +1805,10 @@ class Card extends \ALT\Helpers\DB_Model
       }
     }
 
-    if ($dynamicDefender != '' && $subType == '') {
+    // "otherExpeditionCharacter" is an aura marker (see the aura block below), possibly followed by a
+    // trigger condition: it grants Defender to Characters in the other Expedition, it does not make
+    // this card a Defender itself.
+    if ($dynamicDefender != '' && $subType == '' && $dynamicDefenderBase != 'otherExpeditionCharacter') {
       return !is_null(Utils::checkAttributeCondition('defender', $dynamicDefender, $this->getPlayer(), $this));
     }
 
@@ -1620,7 +1818,12 @@ class Card extends \ALT\Helpers\DB_Model
         if ($auraCard->getId() == $this->getId()) {
           continue;
         }
-        if ($auraCard->getDynamicDefender() != 'otherExpeditionCharacter') {
+        $auraDefender = $auraCard->getDynamicDefender();
+        if (!is_string($auraDefender) || explode(':', $auraDefender)[0] != 'otherExpeditionCharacter') {
+          continue;
+        }
+        // The marker can carry a trigger condition; the aura is only active when it holds.
+        if (is_null(Utils::checkAttributeCondition('defender', $auraDefender, $auraCard->getPlayer(), $auraCard))) {
           continue;
         }
         // Gigantic cards have no "other expedition" to grant.

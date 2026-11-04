@@ -29,7 +29,7 @@ class AX_Rare_GrumpyImp extends \ALT\Models\Card
       'changedStats' => ['costHand', 'costReserve', 'forest', 'mountain', 'ocean'],
       'effectPassive' => [
         'Discard' => [
-          'conditions' => ['hasSameOwner', 'isDiscarded:hand:reserve', 'hasNoBoost'],
+          'conditions' => ['isInStorms', 'hasSameOwner', 'isDiscarded:hand:reserve', 'hasNoBoost'],
           'output' => FT::GAIN(ME, BOOST)
         ],
       ],

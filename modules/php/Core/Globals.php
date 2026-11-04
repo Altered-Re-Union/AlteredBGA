@@ -23,6 +23,7 @@ class Globals extends \ALT\Helpers\DB_Manager
     'playerDecks' => 'obj',
     'deckOptions' => 'str',
     'deckContent' => 'obj',
+    'tokenStyles' => 'obj', // pId => tokenType => ['asset', 'mainAsset', 'fullArt']
     'undo' => 'bool',
     'statMapping' => 'obj',
     'deckFormat' => 'str',
@@ -38,7 +39,7 @@ class Globals extends \ALT\Helpers\DB_Manager
     'phase' => 'int',
     'heroes' => 'obj',
     'playedCards' => 'int',
-    'playedCardsHistory' => 'obj', // pId => uid => count, cards played during the game
+    'playedCardsHistory' => 'obj', // pId => uid => times played this game
     'stormMoves' => 'obj',
     'expeditionMoves' => 'obj',
     'blockedExpeditions' => 'obj', // pId => StormLet/Right
@@ -79,6 +80,9 @@ class Globals extends \ALT\Helpers\DB_Manager
     'turnCards' => 'obj',
     'nextCharacterInExpeditionBoost' => 'obj',
     'nextCharacterBaseCost3Anchored' => 'bool',
+
+    // Fugue
+    'constructionPlayedThisDay' => 'obj', // pId => bool
     
     // Eole
     'nextCharacterAsleep' => 'obj',
@@ -94,6 +98,10 @@ class Globals extends \ALT\Helpers\DB_Manager
     'testingOption' => 'bool',
     'beginner' => 'int',
     'firstPass' => 'int',
+
+    // Fugue
+    'blockedCardNamesThisDay' => 'obj', // pId => card name[]
+    'dieRolledThisDay' => 'obj', // pId => bool
   ];
 
   protected static $table = 'global_variables';

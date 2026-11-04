@@ -721,11 +721,14 @@ trait DebugTrait
 
   // change this function content if you need a specific setup requiring more than 1 card to test a scenario, 
   // like adding specific cards on the board or in hand
-  // function debug_setup()
-  // {
-  //   $this->addCard('LY_Rare_TheEmbassy', 'landmark');
-  //   $this->addCard('LY_Common_RomanticEncounter', 'hand');
-  // }
+  function debug_setup()
+  {
+    // Cards that invoke the above tokens when played from hand.
+    $this->addCard('YZ_Common_MothDecoy', 'hand'); // -> ManaMoth
+    $this->addCard('MU_Common_CountingSheep', 'hand'); // -> Woollyback x2
+    $this->addCard('AX_Common_BugOutBag', 'hand'); // -> Brassbug
+    $this->addCard('OD_Rare_SunisaOrdisBodyguard', 'hand'); // -> OrdisRecruit
+  }
   
   // Function used to forcibly clean up an entire location (deck, hand, reserve or both).
   // Sends all cards in given location to discard pile, and refreshes UI. Useful for testing specific scenarios.

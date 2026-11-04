@@ -213,7 +213,7 @@
                 position: relative;
                 box-sizing: border-box;
                 background-image: url("img/deck-thumbnails.jpg");
-                background-size: 500% 600%;
+                background-size: 600% 600%;
                 margin: auto;
                 border: 2px solid #ffe300;
                 color: white;
@@ -249,18 +249,22 @@
                 }
 
                 &[data-thumbnail="1"] {
-                    background-position-x: 25%;
+                    background-position-x: 20%;
                 }
 
                 &[data-thumbnail="2"] {
-                    background-position-x: 50%;
+                    background-position-x: 40%;
                 }
 
                 &[data-thumbnail="3"] {
-                    background-position-x: 75%;
+                    background-position-x: 60%;
                 }
 
                 &[data-thumbnail="4"] {
+                    background-position-x: 80%;
+                }
+
+                &[data-thumbnail="5"] {
                     background-position-x: 100%;
                 }
 
@@ -678,7 +682,7 @@
                     border-radius: 10px;
                     box-shadow: 1px 1px 5px black;
                     background-image: url("img/deck-thumbnails.jpg");
-                    background-size: 500% 600%;
+                    background-size: 600% 600%;
                     color: white;
                     padding: 10px;
                     position: relative;
@@ -754,18 +758,22 @@
                     }
 
                     &[data-thumbnail="1"] {
-                        background-position-x: 25%;
+                        background-position-x: 20%;
                     }
 
                     &[data-thumbnail="2"] {
-                        background-position-x: 50%;
+                        background-position-x: 40%;
                     }
 
                     &[data-thumbnail="3"] {
-                        background-position-x: 75%;
+                        background-position-x: 60%;
                     }
 
                     &[data-thumbnail="4"] {
+                        background-position-x: 80%;
+                    }
+
+                    &[data-thumbnail="5"] {
                         background-position-x: 100%;
                     }
 
@@ -1254,6 +1262,31 @@
             .altered-card.selectable:hover,
             .altered-card.mini-card.selectable:hover {
                 transform: none;
+            }
+        }
+
+        // Deck preview and invalid-deck screens, built by altered.js
+        // (_addBackToDeckListButton and around it). These rules used to live
+        // only in the compiled altered.css with no source here, so every
+        // recompile silently dropped them and the screens rendered unstyled --
+        // which is exactly what happened during the alteredbrancha merge.
+        #overlay-deck-preview,
+        #invalid-fetched-deck {
+            display: flex;
+            flex-flow: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        #deck-preview-actions {
+            display: flex;
+            flex-flow: row;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+
+            .action-button {
+                margin: 0;
             }
         }
 

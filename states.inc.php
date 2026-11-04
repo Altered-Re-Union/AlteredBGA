@@ -298,6 +298,8 @@ $machinestates = [
     'descriptionmyturn' => clienttranslate('${you} must discard ${n} card(s) from ${source} to ${destination}'),
     'descriptionCanPass' => clienttranslate('${actplayer} may discard ${n} card(s) from ${source} to ${destination}'),
     'descriptionmyturnCanPass' => clienttranslate('${you} may discard ${n} card(s) from ${source} to ${destination}'),
+    'descriptiondownTo' => clienttranslate('${actplayer} must discard down to ${downTo} card(s) in ${source}'),
+    'descriptionmyturndownTo' => clienttranslate('${you} must discard down to ${downTo} card(s) in ${source}'),
     'descriptionnightCleanUp' => clienttranslate(
       '${actplayer} must discard ${n} reserve card(s) and ${nLandmarks} landmark card(s)'
     ),
@@ -528,7 +530,11 @@ $machinestates = [
   ST_MARK_REGION => [
     'name' => 'markRegion',
     'description' => clienttranslate('${actplayer} may mark a visible region'),
+    'descriptioncreate' => clienttranslate('${actplayer} may place a ${regionType} terrain marker on a visible region'),
+    'descriptioncreatechoice' => clienttranslate('${actplayer} may place a terrain marker on a visible region'),
     'descriptionmyturn' => clienttranslate('${you} may mark a visible region'),
+    'descriptionmyturncreate' => clienttranslate('${you} may place a ${regionType} terrain marker on a visible region'),
+    'descriptionmyturncreatechoice' => clienttranslate('${you} may place a terrain marker on a visible region'),
     'args' => 'argsAtomicAction',
     'action' => 'stAtomicAction',
     'type' => 'activeplayer',

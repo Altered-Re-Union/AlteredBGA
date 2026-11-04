@@ -71,10 +71,38 @@ abstract class Conditions
   {
     return ($event['from'] ?? null) == HAND;
   }
+  
+  public static function isToStorm($card, $event)
+  {
+    return in_array($event['to'] ?? null, STORMS);
+  }
 
   public static function isToReserve($card, $event)
   {
     return ($event['to'] ?? null) == RESERVE;
+  }
+
+  public static function hasHeroSignatureToken($card, $event)
+  {
+    return !is_null($card->getPlayer()->getHeroSignatureTokenType());
+  }
+
+  public static function isHeroSignatureToken($card, $event)
+  {
+    $tokenType = $card->getPlayer()->getHeroSignatureTokenType();
+    return !is_null($tokenType) && ($event['invoked'] ?? null) == $tokenType;
+  }
+
+  public static function isAddedToMyExpedition($card, $event)
+  {
+    if (!isset($event['cardId'])) {
+      return false;
+    }
+    $locationPId = $event['locationPId'] ?? -1;
+    if ($card->getPId() != $locationPId) {
+      return false;
+    }
+    return Cards::get($event['cardId'])->getPId() == $locationPId;
   }
 
   public static function isToDiscard($card, $event)
@@ -105,9 +133,19 @@ abstract class Conditions
     return in_array($card->getLocation(), STORMS);
   }
 
+  public static function isInLandmarks($card, $event)
+  {
+    return $card->getLocation() == LANDMARK;
+  }
+
   public static function isSource($card, $event)
   {
     return $card->getId() == ($event['sourceId'] ?? -1);
+  }
+
+  public static function isNotSource($card, $event)
+  {
+    return $card->getId() != ($event['sourceId'] ?? -1);
   }
 
   public static function isSourceOrAugment($card, $event)
@@ -137,12 +175,25 @@ abstract class Conditions
       return true;
     }
 
-    // Controller is snapshotted at leave time (before borrow/steal ownership is restored in
-    // discardTo). Needed for The Mess when a borrowed Character leaves your Expedition
-    // (e.g. Romantic Encounter). Do not apply on sabotage — that would false-trigger
-    // "your Reserve" effects like The Refinery when you sabotage an opponent's card.
-    return Cards::get($cardId)->getPId() == $card->getPId()
-      || (!($event['sabotage'] ?? false) && $card->getPId() == ($event['controller'] ?? -1));
+    // Card::discardTo() restores player_id to the owner before reactions resolve, so
+    // getPId() is the event card's owner here. Never widen this to "same controller as the
+    // event snapshot": that made both The Mess landmarks fire for a Character stolen with
+    // Romantic Encounter. Zone-based triggers must use hasSameEventController instead.
+    return Cards::get($cardId)->getPId() == $card->getPId();
+  }
+
+  /**
+   * True when the passive card's controller is the player the event card belonged to in its
+   * zone, regardless of ownership.
+   *
+   * Card::checkLeaveListener() snapshots `controller` (and `owner`) before Card::discardTo()
+   * restores player_id, so this is the only reliable way to tell "left MY Expedition" from
+   * "left THEIR Expedition" once the reaction resolves. Used by The Mess ("When a Character
+   * leaves your Expeditions"), whose trigger is about the zone, not the card's owner.
+   */
+  public static function hasSameEventController($card, $event)
+  {
+    return ($event['controller'] ?? $event['pId'] ?? -1) == $card->getPId();
   }
 
   /** True when the passive card's owner voluntarily discards one of their own cards. */
@@ -198,11 +249,28 @@ abstract class Conditions
   {
     return ($event['pId'] ?? null) == $card->getPId();
   }
+
+  public static function isTemple($card, $event)
+  {
+    return $card->isPlayedAsTemple();
+  }
+
+  public static function isNotTemple($card, $event)
+  {
+    return !$card->isPlayedAsTemple();
+  }
   
   /** True when this card is the one that entered play (playCard + cardId on the event). Used for InvokeToken with onPlay effects. */
   public static function isSelfPlayCardEvent($card, $event)
   {
     return ($event['playCard'] ?? false) && (int) ($event['cardId'] ?? -1) === (int) $card->getId();
+  }
+
+  /** False when an opponent blocking power (eg. The Council) faces this card, preventing its on-play effect. */
+  public static function isNotBlockedByOpponentPower($card, $event)
+  {
+    $location = $event['to'] ?? $card->getLocation();
+    return !Players::hasOpponentBlockingPower($card->getPlayer(), $location, $card->isGigantic());
   }
 
   public static function isNotMe($card, $event)
@@ -237,6 +305,11 @@ abstract class Conditions
   public static function isAfternoon($card, $event)
   {
     return Globals::isDayPhase();
+  }
+
+  public static function isNoon($card, $event)
+  {
+    return Globals::getPhase() == 1;
   }
 
   public static function isNotFirstTurn($card, $event)
@@ -329,21 +402,38 @@ abstract class Conditions
   {
     $stormMoves = Globals::getStormMoves();
     foreach (STORMS as $storm) {
-      if (
-        !isset($stormMoves[$card->getPId()]) ||
-        $card->getPId() != $event['pId'] ||
-        !isset($stormMoves[$card->getPId()][$storm])
-      ) {
+      if (($event['pId'] ?? null) != $card->getPId() || !isset($stormMoves[$card->getPId()][$storm])) {
         continue;
       }
 
       // $side = $storm == STORM_LEFT ? HERO : COMPANION;
       $move = $stormMoves[$card->getPId()][$storm];
-      if ($card->getPlayer()->isAscended($storm) && $move['moves'] >= 1) {
+      if (($move['ascended'] ?? false) == true && ($move['moves'] ?? 0) >= 1) {
         return true;
       }
     }
     return false;
+  }
+
+  public static function movesAscendedExpedition($card, $event)
+  {
+    if (
+      ($event['pId'] ?? null) != $card->getPId() ||
+      ($event['moveExpedition'] ?? 0) < 1 ||
+      ($event['ascended'] ?? false) != true
+    ) {
+      return false;
+    }
+
+    if (($event['giganticPair'] ?? false) === true) {
+      $first = $event['expedition'] == STORM_LEFT ? STORM_RIGHT : STORM_LEFT;
+      $firstMove = Globals::getStormMoves()[$card->getPId()][$first] ?? null;
+      if (($firstMove['moves'] ?? 0) >= 1 && ($firstMove['ascended'] ?? false) == true) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   public static function zhenZephyr($card, $event)
@@ -761,6 +851,30 @@ abstract class Conditions
     $c = Cards::get($cardId);
     return Meeples::countMeeples('card-' . $c->getId(), FEAT_COMPLETED) >= 1;
   }
+  
+  public static function hasControlCharacterWithMinBaseCost($card, $event, $minBaseCost, $n = 1, $op = 'GTE')
+  {
+    $minBaseCost = (int) $minBaseCost;
+    $n = (int) $n;
+    $cards = $card->getPlayer()->getPlayedCards()->filter(function ($c) use ($minBaseCost) {
+      if ($c->getType() != CHARACTER && !in_array(CHARACTER, $c->getAdditionalType())) {
+        return false;
+      }
+      $baseCost = $c->hasToken(FLEETING) ? $c->getCostReserve() : $c->getCostHand();
+      return $baseCost >= $minBaseCost;
+    });
+    $m = $cards->count();
+    if ($op == 'GTE') {
+      return $m >= $n;
+    }
+    if ($op == 'LTE') {
+      return $m <= $n;
+    }
+    if ($op == 'EQ') {
+      return $m == $n;
+    }
+    throw new \BgaVisibleSystemException('Unknown op for hasControlCharacterWithMinBaseCost: ' . $op);
+  }
 
   /**
    * Counts Feat permanents you control in play (same zones / filters as hasControl for subtype feat).
@@ -941,6 +1055,25 @@ abstract class Conditions
     return !$otherCards->empty();
   }
 
+  public static function hasCompanionsInExpeditions($card, $event)
+  {
+    $pId = (int) $card->getPId();
+    $inExpeditions = Cards::getPlayedCards($pId, [CHARACTER, TOKEN])->filter(function ($c) use ($pId) {
+      if ((int) $c->getPId() !== $pId) {
+        return false;
+      }
+      return $c->isGigantic() || in_array($c->getLocation(), STORMS, true);
+    });
+
+    foreach ($inExpeditions as $c) {
+      if (in_array(COMPANION, $c->getSubtypes(), true)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public static function checkReserveCards($card, $event, $n, $op = 'GTE')
   {
     $count = $card
@@ -1092,6 +1225,68 @@ abstract class Conditions
     return self::hasControl($card, $event, $type, $n, $excludeMyself, $state, $op, true);
   }
 
+  public static function hasControlInReserveOrExpeditions($card, $event, $type, $n, $excludeMyself = 'false', $state = 'all', $op = 'GTE')
+  {
+    $types = [CHARACTER, TOKEN];
+    $subTypes = null;
+    if ($type == TOKEN) {
+      $types = [CHARACTER, PERMANENT];
+    }
+    if ($type == PERMANENT) {
+      $types = [PERMANENT];
+    }
+    if (in_array($type, SUBTYPES)) {
+      $types = [CHARACTER, TOKEN, PERMANENT, SPELL];
+    }
+    if (strpos($type, '|') !== false) {
+      $maybeSubtypes = explode('|', $type);
+      $allSubtypes = count(array_intersect($maybeSubtypes, SUBTYPES)) == count($maybeSubtypes);
+      if ($allSubtypes) {
+        $subTypes = $maybeSubtypes;
+        $types = [CHARACTER, TOKEN, PERMANENT, SPELL];
+      }
+    }
+
+    $player = $card->getPlayer();
+    $cards = $player->getReserveCards()
+      ->merge($player->getPlayedCards())
+      ->filter(function ($c) use ($types) {
+        return in_array($c->getType(), $types) || count(array_intersect($types, $c->getAdditionalType())) > 0;
+      });
+
+    if ($type == TOKEN) {
+      $cards = $cards->filter(fn($c) => $c->isToken());
+    }
+
+    if (in_array($type, SUBTYPES)) {
+      $cards = $cards->filter(fn($c) => in_array($type, $c->getSubtypes()));
+    }
+    if (!is_null($subTypes)) {
+      $cards = $cards->filter(fn($c) => count(array_intersect($subTypes, $c->getSubtypes())) > 0);
+    }
+
+    if ($excludeMyself === 'true') {
+      $cards = $cards->filter(fn($c) => $c->getId() != $card->getId());
+    }
+
+    if ($state != 'all') {
+      if ($state == 'boosted') {
+        $cards = $cards->filter(fn($c) => $c->hasToken(BOOST));
+      } elseif ($state == 'fleeting') {
+        $cards = $cards->filter(fn($c) => $c->hasToken(FLEETING));
+      } elseif ($state == 'exhausted') {
+        $cards = $cards->filter(fn($c) => $c->isTapped());
+      }
+    }
+    $m = $cards->count();
+    if ($op == 'GTE') {
+      return $m >= $n;
+    }
+    if ($op == 'LTE') {
+      return $m <= $n;
+    }
+  }
+
   public static function hasControlExhaustedPermanentOrReserve($card, $event)
   {
     return self::hasControl($card, $event, PERMANENT, 1, false, 'exhausted') || self::hasReserve($card, $event, null, null, null, 'GTE', 'exhausted');
@@ -1142,16 +1337,20 @@ abstract class Conditions
     return $cards->count() == 0;
   }
 
-  public static function costCheck($card, $event, $cost, $op = 'GTE')
+  public static function costCheck($card, $event, $cost, $op = 'GTE', $type = 'hand')
   {
+    if (!isset($event['cardId'])) {
+      return false;
+    }
+
     $discardedCard = Cards::get($event['cardId']);
-    $costHand = $discardedCard->getCostHand();
+    $compare = $type == 'reserve' ? $discardedCard->getCostReserve() : $discardedCard->getCostHand();
 
     if ($op == 'GTE') {
-      return $cost <= $costHand;
+      return $cost <= $compare;
     }
     if ($op == 'LTE') {
-      return $cost >= $costHand;
+      return $cost >= $compare;
     }
   }
 
@@ -2081,6 +2280,12 @@ abstract class Conditions
   {
     return self::isNotMe($card, $event) && ($event['location'] ?? null) != MANA;
   }
+  
+  // Trireme Trickster (Yzmir)
+  public static function isMyDraw($card, $event)
+  {
+    return self::isMe($card, $event) && ($event['location'] ?? null) != MANA;
+  }
 
   public static function realResupply($card, $event)
   {
@@ -2118,6 +2323,11 @@ abstract class Conditions
   public static function isReserveEmpty($card, $event)
   {
     return $card->getPlayer()->getReserveCards()->count() == 0;
+  }
+
+  public static function isReserveNotEmpty($card, $event)
+  {
+    return $card->getPlayer()->getReserveCards()->count() > 0;
   }
 
   public static function hasXExhaustedReserve($card, $event, $n, $op = 'GTE', $player = null)
@@ -2505,7 +2715,7 @@ abstract class Conditions
     return $targetForest <= $sourceForest;
   }
 
-  public static function countMonoVisibleRegions($card, $event, $n = 1, $op = 'GTE')
+  public static function getCountMonoVisibleRegions()
   {
     $visibleRegions = Players::getRegionsInfo();
     $count = 0;
@@ -2514,6 +2724,12 @@ abstract class Conditions
         $count++;
       }
     }
+    return $count;
+  }
+
+  public static function countMonoVisibleRegions($card, $event, $n = 1, $op = 'GTE')
+  {
+    $count = self::getCountMonoVisibleRegions();
     if ($op == 'GTE' && $count >= $n) {
       return true;
     } elseif ($op == 'LTE' && $count <= $n) {
@@ -2571,6 +2787,15 @@ abstract class Conditions
     return count(array_intersect($card->getSubtypes(), $subTypes)) > 0;
   }
 
+  public static function isTargetSubtype($card, $event, $subType)
+  {
+    $cardId = $event['cardId'] ?? null;
+    if ($cardId === null) {
+      return false;
+    }
+    return self::isSubtype(Cards::get($cardId), $event, $subType);
+  }
+
   /**********************************
    **********************************
    ************* HELPERS ************
@@ -2615,6 +2840,15 @@ abstract class Conditions
   }
 
   /******************ROLLS*******************/
+
+  public static function hasNotRolledDieThisDay($card, $event)
+  {
+    if (!empty($event['firstRollThisDay'])) {
+      return true;
+    }
+    $pId = $event['pId'] ?? $card->getPId();
+    return !Players::get($pId)->hasRolledDieThisDay();
+  }
 
   public static function hasRolled($card, $event, $result = 1, $op = 'GTE')
   {
@@ -2714,7 +2948,6 @@ abstract class Conditions
     $gainCard = Cards::get($event['gain']['cardId']);
     return !$card->isTapped() &&
       $event['gain']['type'] == BOOST &&
-      in_array($gainCard->getLocation(), STORMS) &&
       $gainCard->getType() == CHARACTER &&
       $gainCard->isToken() == false &&
       $gainCard->getPId() == $card->getPId();

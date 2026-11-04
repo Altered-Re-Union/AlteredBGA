@@ -361,6 +361,34 @@ class AbstractNode
     return $this->infos;
   }
 
+  /**
+   * Whether a not-yet-resolved reaction of $cardId about $gainCardId is already queued in the tree
+   * for the given gain group (see FT::SEQ_DISTRIBUTE_GAINS), to avoid queueing the same trigger
+   * several times when an effect gains counters on several cards at once. Triggers once per
+   * (listener, gaining card) pair, so a listener can still react once for each card that gains.
+   */
+  public function hasPendingGroupedReaction($cardId, $gainCardId, $group)
+  {
+    foreach ($this->childs as $child) {
+      $args = $child->getArgs() ?? [];
+      if (
+        !$child->isResolved() &&
+        $child->getAction() == ACTIVATE_CARD &&
+        ($args['cardId'] ?? null) == $cardId &&
+        ($args['event']['cardId'] ?? $args['event']['gain']['cardId'] ?? null) == $gainCardId &&
+        ($args['event']['gainGroup'] ?? null) == $group
+      ) {
+        return true;
+      }
+
+      if ($child->hasPendingGroupedReaction($cardId, $gainCardId, $group)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   /********************
    *** Node choices ***
    ********************/
@@ -415,6 +443,18 @@ class AbstractNode
 
       $isDoable = $child->isDoable($playerTest);
       if ((!$child->isResolved() || ($this instanceof \ALT\Core\Engine\OrNode && isset($this->getArgs()['canReuse']))) && ($displayAllChoices || $isDoable)) {
+        // ActivateCard already embeds "(Card Name)" in its description. Other leaves
+        // (e.g. Athena temple Noon discard under PARALLEL) only have sourceId — resolve
+        // the name so the client can append it the same way.
+        $source = $child->getSource();
+        if (
+          is_null($source) &&
+          ($child->getAction() ?? null) !== ACTIVATE_CARD &&
+          !is_null($child->getSourceId())
+        ) {
+          $sourceCard = Cards::get($child->getSourceId(), false);
+          $source = is_null($sourceCard) ? null : $sourceCard->getName();
+        }
         $choice = [
           'id' => $id,
           'description' => $this->getType() == NODE_SEQ ? $this->getDescription() : $child->getDescription(),
@@ -423,7 +463,7 @@ class AbstractNode
           'automaticAction' => $child->isAutomatic($playerTest),
           'independentAction' => $child->isIndependent($playerTest),
           'irreversibleAction' => $child->isIrreversible($playerTest),
-          'source' => $child->getSource(),
+          'source' => $source,
           'sourceId' => $child->getSourceId(),
           'player' => $child->getPId() ?? $playerTest->getId(),
           'forceManualChoice' => $this->isManualChoice()

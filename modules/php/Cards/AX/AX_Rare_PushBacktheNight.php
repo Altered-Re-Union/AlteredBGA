@@ -32,7 +32,6 @@ class AX_Rare_PushBacktheNight extends \ALT\Models\Card
           [
             'targetType' => [CHARACTER, SPELL, PERMANENT],
             'targetPlayer' => ME,
-            'upTo' => true,
             'targetLocation' => [HAND],
             'effect' => FT::DISCARD_TO_RESERVE(),
           ],

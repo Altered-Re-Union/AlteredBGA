@@ -13,6 +13,20 @@ abstract class FT
     ];
   }
 
+  /**
+   * Sequence whose gains are all part of a single distribution ("Distribute 4 boosts..."):
+   * abilities listening on a gain ("gains 1 or more boosts") only trigger once for the whole
+   * sequence, whatever the number of gains it contains.
+   */
+  public static function SEQ_DISTRIBUTE_GAINS(...$childs)
+  {
+    return [
+      'type' => NODE_SEQ,
+      'groupGains' => true,
+      'childs' => $childs,
+    ];
+  }
+
   public static function SEQ_OPTIONAL(...$childs)
   {
     return [

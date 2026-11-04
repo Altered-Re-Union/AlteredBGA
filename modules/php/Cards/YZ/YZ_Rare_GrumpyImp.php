@@ -29,7 +29,7 @@ class YZ_Rare_GrumpyImp extends \ALT\Models\Card
       'changedStats' => ['costHand', 'costReserve', 'forest', 'mountain', 'ocean'],
       'effectPassive' => [
         'Discard' => [
-          'conditions' => ['hasSameOwner', 'isDiscarded:hand:discard', 'hasNoBoost'],
+          'conditions' => ['isInStorms', 'hasSameOwner', 'isDiscarded:hand:discard', 'hasNoBoost'],
           'output' => FT::GAIN(ME, BOOST)
         ],
       ],

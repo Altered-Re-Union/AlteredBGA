@@ -16,7 +16,7 @@ class YZ_Common_SamSpook extends \ALT\Models\Card
 			'name' => clienttranslate('Sam & Spook'),
 			'type' => HERO,
 			'thumbnail' => 4,
-			'statData' => 17,
+			'statData' => 30,
 			'typeline' => clienttranslate('Yzmir Hero'),
 			'effectDesc' => clienttranslate(
 				'{T} : Draw a card, then discard a card from your hand. You can only activate this if you are first player. As soon as six cards or more are in your discard pile, I permanently gain: \"When you discard a card from your hand — Return it to your Reserve.\".'
@@ -29,6 +29,7 @@ class YZ_Common_SamSpook extends \ALT\Models\Card
 
 			'effectTap' => FT::ACTION(CHECK_CONDITION, [
 				'condition' => 'isFirstPlayer',
+				'ignoreDeck' => true,
 				'effect' => FT::SEQ(
 					FT::ACTION(DRAW, ['players' => ME, 'n' => 1]),
 					FT::ACTION(DISCARD, ['source' => HAND]),

@@ -9,7 +9,7 @@ class OD_Common_OrdisRecruit extends \ALT\Models\Card
     parent::__construct($row);
     $this->properties = [
       'uid' => 'ALT_CORE_B_OR_32_C',
-      'asset' => 'ALT_BISE_B_OR_31_C',
+      'asset' => 'ALT_CORE_B_OR_31_C',
 
       'faction' => FACTION_OD,
       'rarity' => RARITY_COMMON,

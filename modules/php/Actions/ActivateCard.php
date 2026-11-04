@@ -67,6 +67,13 @@ class ActivateCard extends \ALT\Models\Action
       $tagPId = $event['controller'] ?? $event['pId'];
     } elseif (isset($event['owner'])) {
       $tagPId = $event['owner'] ?? $event['pId'];
+    } elseif (isset($event['cardPId']) && ($event['cardId'] ?? null) === $this->getCtxArg('cardId')) {
+      // The reacting card is the one the event is about, and the event snapshotted the
+      // controller it had while it was still in its zone. Card::discardTo() restores player_id
+      // to the owner as soon as the card leaves, so Cards::get()->getPId() would wrongly give the
+      // owner back (e.g. Aerolith taken with Milady de Winter: its controller must Resupply,
+      // not the player it was stolen from).
+      $tagPId = $event['cardPId'];
     } else {
       $tagPId = Cards::get($this->getCtxArg('cardId'))->getPId();
     }

@@ -36,7 +36,7 @@ class LY_Common_StigmaofHavoc extends \ALT\Models\Card
       ),
       'effectSupport' =>  [
         'action' => INVOKE_TOKEN,
-        'args' => ['tokenType' => 'NE_Common_Aerolith', 'targetLocation' => [LANDMARK]],
+        'args' => ['tokenType' => 'NE_Common_Aerolith', 'targetLocation' => [LANDMARK], 'allPlayers' => true],
       ],
     ];
   }
