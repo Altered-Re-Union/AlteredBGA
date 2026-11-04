@@ -133,12 +133,31 @@ class Action
 
   public function getSourceId()
   {
-    return $this->ctx->getSourceId();
+    return $this->resolveSourceId();
+  }
+
+  public function resolveSourceId($ctx = null)
+  {
+    if (is_null($ctx)) {
+      $ctx = $this->ctx;
+    }
+    if (is_null($ctx)) {
+      return null;
+    }
+    $sourceId = $ctx->getSourceId();
+    if (!is_null($sourceId)) {
+      return $sourceId;
+    }
+    $parent = $ctx->getParent();
+    if (!is_null($parent)) {
+      return $this->resolveSourceId($parent);
+    }
+    return null;
   }
 
   public function getSource()
   {
-    $sourceId = $this->ctx->getSourceId();
+    $sourceId = $this->resolveSourceId();
     return is_null($sourceId) ? null : Cards::get($sourceId);
   }
 
@@ -252,6 +271,8 @@ class Action
       return;
     }
 
+    $reaction = $this->filterGroupedReactions($reaction, $event);
+
     // Split reactions flagged as immediate (resolved inline within the current action's
     // branch) from the default deferred ones (resolved on the after-finishing node once
     // the whole current phase/action has finished).
@@ -270,6 +291,28 @@ class Action
       $this->pushParallelChilds($immediate);
     }
     $this->pushAfterFinishingChilds($deferred);
+  }
+
+  /**
+   * When an effect distributes several gains at once (eg. "Distribute 4 boosts...", see
+   * FT::SEQ_DISTRIBUTE_GAINS), all its gains belong to the same gain event: only the first
+   * reaction of a given (listener, gaining card) pair is kept, so "gains 1 or more boosts"
+   * abilities trigger once per gaining card for the whole distribution instead of once per gain.
+   */
+  protected function filterGroupedReactions($reaction, $event)
+  {
+    if (empty($reaction) || is_null($event['gainGroup'] ?? null)) {
+      return $reaction;
+    }
+
+    $group = $event['gainGroup'];
+    $gainCardId = $event['cardId'] ?? $event['gain']['cardId'] ?? null;
+
+    return array_values(
+      array_filter($reaction, function ($child) use ($group, $gainCardId) {
+        return !Engine::hasPendingGroupedReaction($child['args']['cardId'] ?? null, $gainCardId, $group);
+      })
+    );
   }
 
   protected function logReactions($method, $player, $args = [], $overrideMethod = null)
@@ -498,7 +541,8 @@ class Action
     if (!empty($args['excludePreviousTarget'])) {
       return true;
     }
-    if (($args['maxHandCost'] ?? null) === 'discard2') {
+    $maxHandCost = $args['maxHandCost'] ?? null;
+    if (is_string($maxHandCost) && strpos($maxHandCost, 'discard') === 0) {
       return true;
     }
     $compare = $args['compareTargetBiome'] ?? null;

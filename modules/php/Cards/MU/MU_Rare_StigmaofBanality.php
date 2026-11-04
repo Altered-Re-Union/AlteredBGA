@@ -29,7 +29,7 @@ class MU_Rare_StigmaofBanality extends \ALT\Models\Card
       'effectHand' => FT::ACTION(TARGET, [
         'targetType' => [CHARACTER],
         'maxBaseCost' => 1,
-        'effect' => FT::SEQ(
+        'effect' => FT::SEQ_OPTIONAL_MANUAL(
             FT::ACTION(DISCARD, []),
             FT::ACTION(INVOKE_TOKEN, [
                 'pId' => 'source',

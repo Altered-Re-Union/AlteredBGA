@@ -37,7 +37,7 @@ class MU_Rare_StigmaofHavoc extends \ALT\Models\Card
       'effectPlayed' => FT::ACTION(RESUPPLY, []),
       'effectSupport' =>  [
         'action' => INVOKE_TOKEN,
-        'args' => ['tokenType' => 'NE_Common_Aerolith', 'targetLocation' => [LANDMARK]],
+        'args' => ['tokenType' => 'NE_Common_Aerolith', 'targetLocation' => [LANDMARK], 'allPlayers' => true],
       ],
     ];
   }

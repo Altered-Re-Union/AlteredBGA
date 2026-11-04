@@ -57,7 +57,7 @@
 
   function renderDeckDifficultyStars(stars) {
     const filledCount = Math.max(0, Math.min(5, Number(stars) || 0));
-    return `<div class="deck-details-stars"><p>${_('Difficulty:')}</p> ${Array.from({ length: 5 }, (_unused, index) =>
+    return `<div class="deck-details-stars"><p>${_('Complexity:')}</p> ${Array.from({ length: 5 }, (_unused, index) =>
       `<span class="deck-star${index < filledCount ? ' filled' : ''}"></span>`
     ).join('')}</div>`;
   }
@@ -1479,10 +1479,10 @@
          // takeAction() can still return undefined (instead of a promise) for a while
          // after a clearClientState()/notification-driven transition. Retry with a short
          // backoff instead of crashing on ".then is not a function".
-         const attempt = this.takeAction(
+         const attempt = this._takeActionRetryingTransient(
            'actLoadAPIDecks',
            { request: JSON.stringify(requestPayload), lock: false },
-           false
+           () => this._awaitingAPIReturn
          );
          if (!attempt || typeof attempt.then !== 'function') {
            this._fetchDecksTakeActionRetries += 1;
@@ -1528,16 +1528,41 @@
       if ($('overlay-deck-selection')) {
         $('overlay-deck-selection').classList.add('fetching');
       }
-      this.takeAction('actLoadAPIDecks', { request: strRequest, lock: false }, false).then((response) => {
-        if (!this._awaitingAPIReturn) return;
 
+      // A rejected takeAction() must still clear the in-flight flag: the guard at the top of
+      // this method blocks every later call while it is set, which would leave the overlay
+      // stuck on "fetching" forever with no way to retry.
+      const onReloadFailed = () => {
+        this._awaitingAPIReturn = false;
         if ($('overlay-deck-selection')) {
           $('overlay-deck-selection').classList.remove('fetching');
         }
-        let args = response.data;
-        args.update = true;
-        this.clientState('chooseFetchedDeck', _('Choose one of your deck'), args);
-      });
+        if ($('api-error')) {
+          $('api-error').innerHTML = _('Something went wrong, please try again.');
+        }
+      };
+
+      const attempt = this._takeActionRetryingTransient(
+        'actLoadAPIDecks',
+        { request: strRequest, lock: false },
+        () => this._awaitingAPIReturn
+      );
+      if (!attempt || typeof attempt.then !== 'function') {
+        onReloadFailed();
+        return;
+      }
+      attempt
+        .then((response) => {
+          if (!this._awaitingAPIReturn) return;
+
+          if ($('overlay-deck-selection')) {
+            $('overlay-deck-selection').classList.remove('fetching');
+          }
+          let args = response.data;
+          args.update = true;
+          this.clientState('chooseFetchedDeck', _('Choose one of your deck'), args);
+        })
+        .catch(onReloadFailed);
     },
 
     selectCustomDeckFaction(faction) {
@@ -1554,7 +1579,10 @@
  
      onEnteringStateChooseFetchedDeck(args) {
        this._awaitingAPIReturn = false;
-      this._apiRequest = args.request;
+      this._apiRequest = Object.assign({}, args.request);
+      // Server-generated attribution payload; regenerated on every call and rejected by the
+      // server's alphanumeric input guard, so it must not be echoed back to it.
+      delete this._apiRequest.eventFormat;
       // Cached so the "Back" button from the deck preview can rebuild this list
       // without another round trip to the deck-list API.
       this._chooseFetchedDeckArgs = args;
@@ -1696,12 +1724,38 @@
 
          this._awaitingAPIReturn = true;
          $('api-error').innerHTML = '';
-         this.takeAction('actGetDeckInfos', { deckNumber: JSON.stringify(deck.apiId), lock: false }, false).then((response) => {
+
+         // Failure that handleAPIError() (see showMessage) didn't already deal with -- a
+         // deadlock/timeout still failing after the retries -- must free the picker too, or the
+         // `_awaitingAPIReturn` guard above would ignore every later click on a deck.
+         const onSelectFailed = () => {
+           if (!this._awaitingAPIReturn) return;
            this._awaitingAPIReturn = false;
-           let deckContent = response.data;
-           deckContent.apiId = deck.apiId;
-           this.showFetchedDeckPreview(deckContent, args);
-         });
+           const tile = $(`deck-${deck.apiId}`);
+           if (tile) tile.classList.remove('fetching');
+           if ($('api-error')) {
+             $('api-error').innerHTML = _('Something went wrong, please try again.');
+           }
+         };
+
+         const attempt = this._takeActionRetryingTransient(
+           'actGetDeckInfos',
+           { deckNumber: JSON.stringify(deck.apiId), lock: false },
+           () => this._awaitingAPIReturn
+         );
+         if (!attempt || typeof attempt.then !== 'function') {
+           onSelectFailed();
+           return;
+         }
+         attempt
+           .then((response) => {
+             if (!this._awaitingAPIReturn) return;
+             this._awaitingAPIReturn = false;
+             let deckContent = response.data;
+             deckContent.apiId = deck.apiId;
+             this.showFetchedDeckPreview(deckContent, args);
+           })
+           .catch(onSelectFailed);
        };
 
        $(`deck-list`).innerHTML = '';
@@ -1783,13 +1837,31 @@
 
        this.addCard({ id: '-hero', properties: deck.cards.hero.card.properties }, 'deck-hero');
        $(`card--hero`).insertAdjacentHTML('beforeend', `<div class='faction-banner' data-faction='${deck.faction}'></div>`);
+       let heroCardEl = $(`card--hero`);
+       if (!heroCardEl.querySelector('.card-frame')) {
+         heroCardEl.querySelector('.altered-card-wrapper').insertAdjacentHTML(
+           'afterbegin',
+           `<div class='card-frame' data-fullart='1' data-faction='${deck.cards.hero.card.properties.faction}' data-type='hero'></div>`
+         );
+       }
 
        Object.entries(deck.cards).forEach(([i, card]) => {
          if (i == 'hero') return;
+         if (card.card.properties.token) return;
 
-         let id = 'preview-' + i;
-         this.addCard({ id, properties: card.card.properties }, 'deck-cards');
-         $(`card-${id}`).querySelector('.card-frame').dataset.copies = card.n;
+          let id = 'preview-' + i;
+          let props = card.card.properties;
+          this.addCard({ id, properties: props }, 'deck-cards');
+          let cardEl = $(`card-${id}`);
+          let frame = cardEl.querySelector('.card-frame');
+          if (!frame && props.fullArt) {
+            cardEl.querySelector('.altered-card-wrapper').insertAdjacentHTML(
+              'afterbegin',
+              `<div class='card-frame' data-fullart='1' data-faction='${props.faction}' data-rarity='${props.rarity}'></div>`
+            );
+            frame = cardEl.querySelector('.card-frame');
+          }
+          if (frame) frame.dataset.copies = card.n;
        });
      },
 
@@ -1825,7 +1897,16 @@
            // (non re-entrant) click-handler call stack — matches the safe pattern used
            // in onEnteringStateChooseAssignmentLocation's Cancel button.
            this._clearClientStateWithoutFetchRetry();
-           this.takeAction('actConfirmAPIDeck', { method: 'post', deckContent: JSON.stringify(deckContent) }, false);
+           // A single retry: a deadlock rolled the transaction back, so replaying is safe, but
+           // this one writes the player's deck, so it is replayed less eagerly than the reads.
+           const confirmation = this._takeActionRetryingTransient(
+             'actConfirmAPIDeck',
+             { method: 'post', deckContent: JSON.stringify(deckContent) },
+             () => true,
+             1
+           );
+           // Nothing else to do on a final failure: the error was already shown to the player.
+           if (confirmation && typeof confirmation.catch === 'function') confirmation.catch(() => {});
          },
          'deck-preview-actions'
        );
@@ -1857,6 +1938,18 @@
      //////////////////////////////
      // HANDLING API ERRORS
      showMessage() {
+       // A deck API failure that is about to be retried (see _takeActionRetryingTransient)
+       // must not flash an error nor tear the deck picker down: the retry usually succeeds.
+       if (
+         this._apiRetriesLeft > 0 &&
+         arguments[1] == 'error' &&
+         typeof arguments[0] == 'string' &&
+         this._isTransientApiError(arguments[0])
+       ) {
+         debug('Transient API error hidden, retry pending', arguments[0]);
+         return true;
+       }
+
        if (!this._awaitingAPIReturn || arguments[0].indexOf('API ERROR###') < 0) {
          return this.inherited(arguments);
        } else {
@@ -1882,7 +1975,82 @@
          $('api-error').innerHTML = _(l);
        }
      },
- 
+
+     /**
+      * Errors that will fail the same way however often they are replayed: the account is not
+      * paired, the deck is not legal, a card/unique is not implemented or suspended, the action
+      * is not possible. Matched on message text -- the only thing the client receives (the
+      * HTTP-level code is dropped by takeAction()).
+      */
+     _isTransientApiError(error) {
+       const text = typeof error == 'string' ? error : (error && error.message) || '';
+       const deterministic = [
+         'pair your account',
+         'Pairing with Equinox',
+         'not implemented',
+         'unimplemented power',
+         'MISSING UNIQUE',
+         'temporarily suspended',
+         'not possible',
+         _('This deck is not legal'),
+       ];
+       // Everything else is treated as transient: a MySQL deadlock / statement timeout from
+       // BGA's own table lock (rolled back, so replaying is safe), or the upstream deck API
+       // having a moment ("Unexpected error while getting the deck content").
+       return !deterministic.some((known) => text.indexOf(known) >= 0);
+     },
+
+     /**
+      * takeAction() for the deck API calls, replaying them when they fail for a transient
+      * reason (see _isTransientApiError) instead of making the player restart the deck
+      * selection. Retries `maxRetries` times, after a jittered pause so two players whose
+      * actions collided on the table lock don't collide again in step. Gives up (re-throwing
+      * the error) as soon as `stillWanted()` turns false -- e.g. the player cancelled -- or
+      * the error is not transient. Passes through whatever takeAction() returns when it
+      * didn't send anything (a non-promise), as the callers already handle that case.
+      */
+     _takeActionRetryingTransient(action, data, stillWanted = () => true, maxRetries = 2) {
+       const send = () => this.takeAction(action, Object.assign({}, data), false);
+       const first = send();
+       if (!first || typeof first.then !== 'function') return first;
+
+       // Retries not started yet; showMessage() hides a transient error while this is > 0.
+       this._apiRetriesLeft = maxRetries;
+       const finish = () => {
+         this._apiRetriesLeft = 0;
+       };
+
+       const watch = (attempt, retryNumber) =>
+         attempt.catch((error) => {
+           if (this._apiRetriesLeft <= 0 || !stillWanted() || !this._isTransientApiError(error)) {
+             finish();
+             throw error;
+           }
+           debug('Transient API error, retrying', action, retryNumber, error);
+           const pause = 300 * retryNumber + Math.random() * 500;
+           return new Promise((resolve) => setTimeout(resolve, pause)).then(() => {
+             const next = stillWanted() ? send() : null;
+             if (!next || typeof next.then !== 'function') {
+               finish();
+               throw error;
+             }
+             this._apiRetriesLeft--;
+             return watch(next, retryNumber + 1);
+           });
+         });
+
+       return watch(first, 1).then(
+         (result) => {
+           finish();
+           return result;
+         },
+         (error) => {
+           finish();
+           throw error;
+         }
+       );
+     },
+
      notif_vsScreen(n) {
        debug('Notif: VS screen', n);
        this.closeOverlayIfOpened();
@@ -2182,26 +2350,30 @@
        this.draggableCallback = callback;
        this.draggableCards = [];
        this.draggables = {};
-       let allLocations = [];
+       let dropzones = [];
        Object.entries(cards).forEach(([cardId, locations]) => {
-         // No available zones
-         if (locations.length == 0) return;
+        // No available zones
+        if (locations.length == 0) return;
  
-         let zones = {};
-         locations.forEach((location) => {
-           if (!allLocations.includes(location)) {
-             allLocations.push(location);
-           }
- 
-           zones[location] = $(`board-${location}-${this.player_id}`);
-         });
-         this.draggableCards[cardId] = zones;
-         if (!this.draggables[cardId]) this.initDraggableCard(cardId);
-       });
+        let zones = {};
+        locations.forEach((location) => {
+          zones[location] = {
+            el: $(`board-${location}-${this.player_id}`),
+            playLocation: location,
+          };
+        });
+        Object.values(zones).forEach((zone) => {
+          if (!dropzones.some((z) => z.el == zone.el)) {
+            dropzones.push(zone);
+          }
+        });
+        this.draggableCards[cardId] = zones;
+        if (!this.draggables[cardId]) this.initDraggableCard(cardId);
+      });
  
        // Attach event to dropzones
-       allLocations.forEach((location) => {
-         let dropzone = $(`board-${location}-${this.player_id}`);
+      dropzones.forEach((zone) => {
+        let dropzone = zone.el;
  
          // ENTER/OVER
          this.connect(dropzone, 'dragenter', (event) => {
@@ -2229,7 +2401,7 @@
          this.connect(dropzone, 'drop', (event) => {
            if (!dropzone.classList.contains('droppable')) return;
  
-           this.onDropCard(location, event);
+           this.onDropCard(dropzone, event);
          });
        });
      },
@@ -2259,8 +2431,8 @@
        event.dataTransfer.effectAllowed = 'move';
        event.dataTransfer.dropEffect = 'move';
  
-       Object.entries(this.draggableCards[cardId]).forEach(([zoneId, o]) => {
-         o.classList.add('droppable');
+       Object.values(this.draggableCards[cardId]).forEach((zone) => {
+        zone.el.classList.add('droppable');
        });
      },
  
@@ -2273,19 +2445,29 @@
        const selectedItem = event.target;
        selectedItem.classList.remove('drag-active');
  
-       Object.entries(this.draggableCards[cardId]).forEach(([zoneId, o]) => {
-         o.classList.remove('droppable');
-       });
+      Object.values(this.draggableCards[cardId]).forEach((zone) => {
+        zone.el.classList.remove('droppable');
+        zone.el.classList.remove('dragged-over');
+      });
      },
  
-     onDropCard(location, event) {
-       event.preventDefault();
-       event.stopPropagation();
- 
-       const cardId = event.dataTransfer.getData('text/plain');
-       debug('DragDrop', location, cardId);
-       this.draggableCallback(cardId, location);
-     },
+    onDropCard(dropZone, event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const cardId = event.dataTransfer.getData('text/plain');
+      let playLocation = null;
+      Object.values(this.draggableCards[cardId] || {}).forEach((zone) => {
+        if (zone.el == dropZone) {
+          playLocation = zone.playLocation;
+        }
+      });
+      if (playLocation == null) return;
+
+      dropZone.classList.remove('dragged-over');
+      debug('DragDrop', playLocation, cardId);
+      this.draggableCallback(cardId, playLocation);
+    },
  
      ///////////////////////////////////////
      //     _        _   _
@@ -2294,6 +2476,28 @@
      //  / ___ \ (__| |_| | (_) | | | \__ \
      // /_/   \_\___|\__|_|\___/|_| |_|___/
      ///////////////////////////////////////
+    isTempleLandmarkPlay(cardId) {
+      const card = this.getCardInfos(parseInt(cardId));
+      return (
+        card?.properties?.costTemple > 0 &&
+        !(card.properties?.subtypes || []).includes('landmark')
+      );
+    },
+
+    getPlayLocationLabel(cardId, location, defaultLabel) {
+      if (location == 'landmark' && this.isTempleLandmarkPlay(cardId)) {
+        return _('Temple (Landmark)');
+      }
+      return defaultLabel;
+    },
+
+    clearLandmarkTempleHighlight() {
+      const landmark = $(`board-landmark-${this.player_id}`);
+      if (landmark) {
+        landmark.classList.remove('selectable', 'droppable', 'dragged-over');
+      }
+    },
+
      unselectIfNeeded() {
        let oCard = $(`hand-${this.player_id}`).querySelector('.selected');
        if (!oCard) {
@@ -2302,6 +2506,7 @@
        if (!oCard) {
          oCard = $(`board-limbo-${this.player_id}`).querySelector('.selected');
        }
+      this.clearLandmarkTempleHighlight();
        if (!oCard) return;
  
        oCard.style.transform = oCard.backup.transform;
@@ -2465,11 +2670,14 @@
          limbo: _('Spell'),
          stormLeft_scout: _('Scout Hero side'),
          stormRight_scout: _('Scout Companion side'),
+         landmark_temple: _('Temple (Landmark)'),
        };
  
        if (args.play[cardId] != undefined) {
          args.play[cardId].forEach((location, i) => {
-           this.addPrimaryActionButton('btnLocation' + i, names[location], onChooseLocation(location));
+          const label = this.getPlayLocationLabel(cardId, location, names[location] ?? location);
+          this.addPrimaryActionButton('btnLocation' + i, label, onChooseLocation(location));
+           this.onClick(`board-${location}-${this.player_id}`, onChooseLocation(location));
            this.onClick(`board-${location}-${this.player_id}`, onChooseLocation(location));
  
            if (location == 'limbo') {
@@ -2845,17 +3053,33 @@
      },
  
      onEnteringStateMarkRegion(args) {
-       let targetRegion = (id) => {
-         return () =>
-           this.clientState('markRegionExpedition', _('Select region to add the marker'), {
-             marker: args.markers[id],
-             regions: args.regions,
-           });
+       let goToRegion = (clientArgs) => {
+         this.clientState('markRegionExpedition', _('Select region to add the marker'), Object.assign({ regions: args.regions }, clientArgs));
        };
- 
-       Object.keys(args.markers).forEach((id) => {
+
+       if (args.create && args.regionTypes && args.regionTypes.length > 1) {
+         args.regionTypes.forEach((type) => {
+           this.addPrimaryActionButton('btnMarkType' + type, this.formatSvgIcon(type), () =>
+             goToRegion({ markerType: type, create: true })
+           );
+         });
+         return;
+       }
+
+       if (args.create && args.regionType) {
+         goToRegion({ markerType: args.regionType, create: true });
+         return;
+       }
+
+       let markerIds = Object.keys(args.markers || {});
+       if (markerIds.length === 1) {
+         goToRegion({ marker: args.markers[markerIds[0]] });
+         return;
+       }
+
+       markerIds.forEach((id) => {
          mark = args.markers[id];
-         this.addPrimaryActionButton('btnMark' + mark.id, this.formatSvgIcon(mark.type), targetRegion(id));
+         this.addPrimaryActionButton('btnMark' + mark.id, this.formatSvgIcon(mark.type), () => goToRegion({ marker: mark }));
        });
      },
  
@@ -2867,7 +3091,10 @@
        Object.keys(args.regions).forEach((id) => {
          storm = $(`storm-${id}`);
          storm.classList.add('selectable');
-         this.onClick(storm, () => this.takeAtomicAction('actMarkRegion', [args.marker.id, id]));
+         this.onClick(storm, () => {
+           let markerArg = args.create && args.markerType ? args.markerType : args.marker.id;
+           this.takeAtomicAction('actMarkRegion', [markerArg, id]);
+         });
        });
  
        this.addSecondaryActionButton(

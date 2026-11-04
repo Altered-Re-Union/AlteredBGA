@@ -59,9 +59,9 @@
         "description": "4-100 cards, all cards available, no faction or rarity restrictions."
       },
       "5": {
-        "name": "Roots of Corruption Demo Decks",
+        "name": "Demo Decks",
         "tmdisplay": "Demo",
-        "description": "Play with demo decks from the set Roots of Corruption."
+        "description": "Play with demo decks from the latest set."
       },
       "7": {
         "name": "Sealed",

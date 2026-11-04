@@ -280,7 +280,7 @@
             top: 0;
             bottom: 0;
             border-radius: 15px;
-            background-size: 600% 800%;
+            background-size: 600% 900%;
 
             @each $faction in $factions {
                 &[data-faction="#{$faction}"] {
@@ -289,11 +289,21 @@
             }
 
             &[data-type="hero"] {
-                background-position: 0% 28.57%;
+                background-position: 0% 25%;
             }
 
             &[data-type="token"] {
-                background-position: 20% 28.57%;
+                background-position: 20% 25%;
+
+                &[data-has-cost="1"] {
+                    &[data-size="1"] {
+                        background-position: 40% 0%;
+                    }
+
+                    &[data-size="2"] {
+                        background-position: 60% 0%;
+                    }
+                }
             }
 
             &[data-type="character"] {
@@ -327,17 +337,17 @@
 
                     // Small frame, no SUPPORT
                     &[data-support="0"][data-size="1"] {
-                        background-position: 80% 28.57%;
+                        background-position: 80% 25%;
                     }
 
                     // Bigger frame, no SUPPORT
                     &[data-support="0"][data-size="2"] {
-                        background-position: 100% 28.57%;
+                        background-position: 100% 25%;
                     }
 
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 40% 28.57%;
+                        background-position: 40% 25%;
                     }
 
                     // Bigger frame, with SUPPORT
@@ -351,22 +361,22 @@
 
                     // Small frame, no SUPPORT
                     &[data-support="0"][data-size="1"] {
-                        background-position: 80% 57.14%;
+                        background-position: 80% 50%;
                     }
 
                     // Bigger frame, no SUPPORT
                     &[data-support="0"][data-size="2"] {
-                        background-position: 100% 57.14%;
+                        background-position: 100% 50%;
                     }
 
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 40% 57.14%;
+                        background-position: 40% 50%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 60% 57.14%;
+                        background-position: 60% 50%;
                     }
                 }
 
@@ -375,22 +385,22 @@
 
                     // Small frame, no SUPPORT
                     &[data-support="0"][data-size="1"] {
-                        background-position: 80% 85.71%;
+                        background-position: 80% 75%;
                     }
 
                     // Bigger frame, no SUPPORT
                     &[data-support="0"][data-size="2"] {
-                        background-position: 100% 85.71%;
+                        background-position: 100% 75%;
                     }
 
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 40% 85.71%;
+                        background-position: 40% 75%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 60% 85.71%;
+                        background-position: 60% 75%;
                     }
                 }
             }
@@ -402,22 +412,22 @@
 
                     // Small frame, no SUPPORT
                     &[data-support="0"][data-size="1"] {
-                        background-position: 80% 14.28%;
+                        background-position: 80% 12.5%;
                     }
 
                     // Bigger frame, no SUPPORT
                     &[data-support="0"][data-size="2"] {
-                        background-position: 100% 14.28%;
+                        background-position: 100% 12.5%;
                     }
 
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 40% 14.28%;
+                        background-position: 40% 12.5%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 60% 14.28%;
+                        background-position: 60% 12.5%;
                     }
                 }
 
@@ -426,22 +436,22 @@
 
                     // Small frame, no SUPPORT
                     &[data-support="0"][data-size="1"] {
-                        background-position: 0% 57.14%;
+                        background-position: 0% 50%;
                     }
 
                     // Bigger frame, no SUPPORT
                     &[data-support="0"][data-size="2"] {
-                        background-position: 20% 57.14%;
+                        background-position: 20% 50%;
                     }
 
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 80% 42.85%;
+                        background-position: 80% 37.5%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 100% 42.85%;
+                        background-position: 100% 37.5%;
                     }
                 }
             }
@@ -453,12 +463,12 @@
 
                     // Small frame, no SUPPORT
                     &[data-support="0"][data-size="1"] {
-                        background-position: 0% 14.28%;
+                        background-position: 0% 12.5%;
                     }
 
                     // Bigger frame, no SUPPORT
                     &[data-support="0"][data-size="2"] {
-                        background-position: 20% 14.28%;
+                        background-position: 20% 12.5%;
                     }
 
                     // Small frame, with SUPPORT
@@ -477,35 +487,33 @@
 
                     // Small frame, no SUPPORT
                     &[data-support="0"][data-size="1"] {
-                        background-position: 40% 42.85%;
+                        background-position: 40% 37.5%;
                     }
 
                     // Bigger frame, no SUPPORT
                     &[data-support="0"][data-size="2"] {
-                        background-position: 60% 42.85%;
+                        background-position: 60% 37.5%;
                     }
 
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 0% 42.85%;
+                        background-position: 0% 37.5%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 20% 42.85%;
+                        background-position: 20% 37.5%;
                     }
                 }
                 
-                // EXALTED
+                // EXALTED — last row, columns 1–2
                 &[data-rarity="3"] {
-                    // Small frame, with SUPPORT
-                    &[data-support="1"][data-size="1"] {
-                        background-position: 80% 100%;
+                    &[data-size="1"] {
+                        background-position: 0% 100%;
                     }
 
-                    // Bigger frame, with SUPPORT
-                    &[data-support="1"][data-size="2"] {
-                        background-position: 100% 100%;
+                    &[data-size="2"] {
+                        background-position: 20% 100%;
                     }
                 }
 
@@ -515,11 +523,11 @@
                     &[data-rarity="0"] {
 
                         &[data-support="1"][data-size="1"] {
-                            background-position: 0% 100%;
+                            background-position: 0% 87.5%;
                         }
 
                         &[data-support="1"][data-size="2"] {
-                            background-position: 20% 100%;
+                            background-position: 20% 87.5%;
                         }
                     }
 
@@ -527,11 +535,11 @@
                     &[data-rarity="1"] {
 
                         &[data-support="1"][data-size="1"] {
-                            background-position: 40% 100%;
+                            background-position: 40% 87.5%;
                         }
 
                         &[data-support="1"][data-size="2"] {
-                            background-position: 60% 100%;
+                            background-position: 60% 87.5%;
                         }
                     }
 
@@ -539,11 +547,11 @@
                     &[data-rarity="3"] {
 
                         &[data-support="1"][data-size="1"] {
-                            background-position: 80% 100%;
+                            background-position: 0% 100%;
                         }
 
                         &[data-support="1"][data-size="2"] {
-                            background-position: 100% 100%;
+                            background-position: 20% 100%;
                         }
                     }
                 }
@@ -556,22 +564,22 @@
 
                     // Small frame, no SUPPORT
                     &[data-support="0"][data-size="1"] {
-                        background-position: 40% 71.4286%;
+                        background-position: 40% 62.5%;
                     }
 
                     // Bigger frame, no SUPPORT
                     &[data-support="0"][data-size="2"] {
-                        background-position: 60% 71.4286%;
+                        background-position: 60% 62.5%;
                     }
 
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 0% 71.4286%;
+                        background-position: 0% 62.5%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 20% 71.4286%;
+                        background-position: 20% 62.5%;
                     }
                 }
 
@@ -580,22 +588,22 @@
 
                     // Small frame, no SUPPORT
                     &[data-support="0"][data-size="1"] {
-                        background-position: 0% 85.71%;
+                        background-position: 0% 75%;
                     }
 
                     // Bigger frame, no SUPPORT
                     &[data-support="0"][data-size="2"] {
-                        background-position: 20% 85.71%;
+                        background-position: 20% 75%;
                     }
 
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 80% 71.4286%;
+                        background-position: 80% 62.5%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 100% 71.4286%;
+                        background-position: 100% 62.5%;
                     }
                 }
             }
@@ -606,12 +614,12 @@
                 &[data-rarity="0"] {
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 0% 100%;
+                        background-position: 0% 87.5%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 20% 100%;
+                        background-position: 20% 87.5%;
                     }
                 }
 
@@ -619,12 +627,12 @@
                 &[data-rarity="1"] {
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 40% 100%;
+                        background-position: 40% 87.5%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 60% 100%;
+                        background-position: 60% 87.5%;
                     }
                 }
                 
@@ -632,12 +640,12 @@
                 &[data-rarity="3"] {
                     // Small frame, with SUPPORT
                     &[data-support="1"][data-size="1"] {
-                        background-position: 80% 100%;
+                        background-position: 80% 87.5%;
                     }
 
                     // Bigger frame, with SUPPORT
                     &[data-support="1"][data-size="2"] {
-                        background-position: 100% 100%;
+                        background-position: 100% 87.5%;
                     }
                 }
             }
@@ -721,15 +729,33 @@
                     top: 205px;
                 }
             }
-            
-            &[data-rarity="3"][data-size="2"]~ {
+
+            // Exalted permanent frames (last sprite row): larger rules box than standard permanents
+            &[data-rarity="3"][data-size="1"]~ {
+                .card-name {
+                    top: 250px;
+                }
+
                 .card-typeline {
-                    top: 208px !important;
+                    top: 272px;
+                }
+
+                .card-subpermanent {
+                    top: 315px;
                 }
             }
-            &[data-rarity="3"][data-size="1"]~ {
+
+            &[data-rarity="3"][data-size="2"]~ {
+                .card-name {
+                    top: 219px;
+                }
+
                 .card-typeline {
-                    top: 240px !important;
+                    top: 242px;
+                }
+
+                .card-subpermanent {
+                    top: 245px;
                 }
             }
         }
@@ -796,6 +822,18 @@
             left: 25px;
             font-size: 27px;
             text-shadow: 0px 0px 5px black;
+
+            &.card-no-cost {
+                font-size: 0;
+                color: transparent;
+                width: 42px;
+                height: 42px;
+                top: 14px;
+                left: 16px;
+                background: url("img/icons/nocost.png") no-repeat center;
+                background-size: contain;
+                text-shadow: none;
+            }
         }
 
         .card-reserve-cost {
@@ -1053,7 +1091,7 @@
             }
         }
 
-        .card-frame[data-type="token"]~.card-text {
+        .card-frame[data-type="token"]:not([data-has-cost="1"])[data-size="1"]~.card-text {
             top: 365px;
             height: 54px;
 
@@ -1062,22 +1100,44 @@
             }
         }
 
+        .card-frame[data-type="token"][data-has-cost="1"][data-size="1"]~.card-text {
+            top: 317px;
+            height: 102px;
+
+            .card-qrcode-container {
+                shape-outside: polygon(0px 36px, 0px 102px, 70px 102px, 70px 36px);
+            }
+        }
+
+        .card-frame[data-type="token"][data-size="2"]~.card-text,
+        .card-frame[data-type="token"][data-has-cost="1"][data-size="2"]~.card-text {
+            top: 280px;
+            height: 139px;
+
+            .card-qrcode-container {
+                shape-outside: polygon(0px 70px, 0px 142px, 70px 142px, 70px 70px);
+            }
+        }
+
         .card-frame[data-rarity="3"]~.card-text {
             color: white;
-
             // .card-qrcode-container {
             //     shape-outside: polygon(0px 70px, 0px 126px, 70px 126px, 70px 70px);
             // }
-            .svgicon-mana-1 .path2:before {
-                color: black;
-            }
-
-            .svgicon-mana-3 .path2:before {
-                color: black;
-            }
-
-            .svgicon-mana-7 .path2:before {
-                color: black;
+            .svgicon-mana-0,
+            .svgicon-mana-1,
+            .svgicon-mana-2,
+            .svgicon-mana-3,
+            .svgicon-mana-4,
+            .svgicon-mana-5,
+            .svgicon-mana-6,
+            .svgicon-mana-7,
+            .svgicon-mana-8,
+            .svgicon-mana-9,
+            .svgicon-mana-X {
+                .path2:before {
+                    color: black;
+                }
             }
         }
 
@@ -1147,6 +1207,50 @@
             .card-qrcode-container {
                 margin-right: -5px;
                 shape-outside: polygon(8px 77px, 8px 142px, 70px 142px, 70px 77px);
+            }
+        }
+
+        // Exalted permanent rules box matches the taller grey area on the new frames,
+        // so short effects (e.g. Fane of Helios) stay on size=1 instead of upsizing.
+        // QR: keep the float/shape-outside box intact for text wrap; nudge only the
+        // visible QR with position:relative so it sits in the frame cutout.
+        .card-frame[data-type="permanent"][data-rarity="3"][data-size="1"]~.card-text {
+            left: 25px;
+            right: 25px;
+            top: 346px;
+            height: 89px;
+
+            .card-qrcode-container {
+                margin-right: -5px;
+                shape-outside: polygon(0px 15px, 0px 89px, 70px 89px, 70px 15px);
+
+                .card-qrcode {
+                    position: relative;
+                    left: 4px;
+                    bottom: 11px;
+                    margin-right: 0;
+                    margin-bottom: 0;
+                }
+            }
+        }
+
+        .card-frame[data-type="permanent"][data-rarity="3"][data-size="2"]~.card-text {
+            left: 25px;
+            right: 25px;
+            top: 315px;
+            height: 119px;
+
+            .card-qrcode-container {
+                margin-right: -5px;
+                shape-outside: polygon(0px 40px, 0px 119px, 70px 119px, 70px 40px);
+
+                .card-qrcode {
+                    position: relative;
+                    left: 4px;
+                    bottom: 11px;
+                    margin-right: 0;
+                    margin-bottom: 0;
+                }
             }
         }
 
@@ -1227,6 +1331,12 @@
 
                 &[data-asset="roc"] {
                     background-image: url("img/icons/roc.png");
+                    width: 17px;
+                    height: 10px;
+                }
+
+                &[data-asset="nej"] {
+                    background-image: url("img/icons/nej.png");
                     width: 17px;
                     height: 10px;
                 }
@@ -1396,6 +1506,18 @@ $miniCardScale: 0.33;
             z-index: 3;
             top: 11px;
             left: 12px;
+        }
+
+        .card-hand-cost.card-no-cost {
+            font-size: 0;
+            color: transparent;
+            width: 24px;
+            height: 24px;
+            top: -4px;
+            left: -8px;
+            background: url("img/icons/nocost.png") no-repeat center;
+            background-size: contain;
+            text-shadow: none;
         }
 
         .card-costs-bg {
@@ -1687,6 +1809,7 @@ $miniCardScale: 0.33;
         background-position: center right 2px;
         background-size: auto 86%;
 
+        color: black;
         font-family: "Haptic Pro";
         line-height: 26px;
         font-size: 19px;

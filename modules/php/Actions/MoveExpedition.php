@@ -29,6 +29,7 @@ class MoveExpedition extends \ALT\Models\Action
     'winningBiomes' => [],
     'moveOtherExpedition' => false,
     'ascended' => false,
+    'skipGigantic' => false,
     'hasMovedFromAscension' => false,
   ];
 
@@ -255,7 +256,13 @@ class MoveExpedition extends \ALT\Models\Action
         // (Rune's Testament, Eris, Pegasus, …) can offer a replacement.
         $otherExpedition = $expedition == STORM_LEFT ? STORM_RIGHT : STORM_LEFT;
         $otherN = $n * -1;
-        if ($otherN > 0 && !Players::hasOpponentBlockMoveExpedition($player, $otherExpedition)) {
+        // Forward move of the other expedition must respect blocking effects
+        // (Issitoq / opposite defender, Celebration Day, ...). Regular defenders are
+        // intentionally ignored: they only matter at dusk, not for moves during the day.
+        $globalBlocked = Globals::getBlockedExpeditions();
+        $otherBlocked = Players::hasOppositeDefender($otherExpedition)
+          || (isset($globalBlocked[$pId]) && in_array($otherExpedition, $globalBlocked[$pId]));
+        if ($otherN > 0 && !$otherBlocked && !Players::hasOpponentBlockMoveExpedition($player, $otherExpedition)) {
           $ctx = ['pId' => $pId];
           if (!is_null($source)) {
             $ctx['sourceId'] = $source->getId();
@@ -276,7 +283,7 @@ class MoveExpedition extends \ALT\Models\Action
         }
     }
 
-    if ($gigantic) {
+    if ($gigantic && !$this->getArg('skipGigantic')) {
       // we must move the other expedition
       $expedition = $expedition == STORM_LEFT ? STORM_RIGHT : STORM_LEFT;
 
@@ -288,7 +295,14 @@ class MoveExpedition extends \ALT\Models\Action
           $expeditionMoves[$player->getId()][$expedition] = ($expeditionMoves[$player->getId()][$expedition] ?? 0) + $n;
           Globals::setExpeditionMoves($expeditionMoves);
 
-          $this->checkAfterListeners($player, ['moveExpedition' => $n, 'ascended' => $player->isAscended($expedition), 'expedition' => $expedition]);
+          // 'giganticPair' tells the listeners that both Expeditions are moved by this single
+          // action, so abilities triggering on "one or more Expeditions moving" only trigger once
+          $this->checkAfterListeners($player, [
+            'moveExpedition' => $n,
+            'ascended' => $player->isAscended($expedition),
+            'expedition' => $expedition,
+            'giganticPair' => true,
+          ]);
         }
       }
     }

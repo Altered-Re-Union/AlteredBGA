@@ -85,6 +85,9 @@ trait SetupTrait
       }
       $deckContent[] = ['card' => ['properties' => $card->getProperties()], 'n' => $n];
     }
+    foreach ($demoDef['uniques'] ?? [] as $unique) {
+      $deckContent[] = ['card' => ['properties' => Cards::generateUnique($unique)], 'n' => 1];
+    }
 
     return [
       'deckName' => $hero->getName(),
@@ -306,7 +309,12 @@ trait SetupTrait
       $tournamentInfo = $this->bga->tournament->getInfo();
     }
     $ratingMode = $this->tableOptions->get(201);
-    $request['eventFormat'] = base64_encode(json_encode([
+    // eventFormat goes in a separate array on purpose: it must never be echoed back in
+    // $content['request'], because the client replays that request verbatim on pagination
+    // and faction changes, and its base64 alphabet (+ / =) is rejected by the
+    // validateJSonAlphaNum() guard in altered.action.php. Keep it server-side only.
+    $apiRequest = $request;
+    $apiRequest['eventFormat'] = base64_encode(json_encode([
       'v' => 1,
       'env' => $this->getGameName(),
       'mode' => $ratingMode,
@@ -314,13 +322,15 @@ trait SetupTrait
         'format' => Globals::getDeckFormat(),
         'tableId' => $tableId,
         'tournamentName' => $tournamentInfo['name'] ?? null,
+        'tournamentParentId' => $tournamentInfo['tournament_parent_id'] ?? null,
+        'tournamentGroup' => $tournamentInfo['tournament_group'] ?? null,
       ],
     ]));
 
     // STANDARD, NO_UNIQUE, SINGLETON
-    // throw new \feException(print_r($request));
+    // throw new \feException(print_r($apiRequest));
     // Fetch them from MS
-    $response = self::getGenericGameInfos('get_player_decks', $request);
+    $response = self::getGenericGameInfos('get_player_decks', $apiRequest);
     if ($response['success'] != 1) {
       throw new \Bga\GameFramework\VisibleSystemException("API ERROR###" . $response['message'] . "###");
     }
@@ -375,21 +385,29 @@ trait SetupTrait
     /////////////////////////////////////////
     // Changing all alt-art into basic art
     /////////////////////////////////////////
-    $deck[HERO] = $this->transformingAltArtToBasicArt($deck[HERO]);
-    $cards = $deck['cards'];
-    $sanitizeAltArtCards = [];
-    foreach ($cards as $ref => $quantity) {
-      $sanitizeAltArtCards[$this->transformingAltArtToBasicArt($ref)] = $quantity;
-      unset($cards[$ref]);
-    }
-    $deck['cards'] = $sanitizeAltArtCards;
+    // $deck[HERO] = $this->transformingAltArtToBasicArt($deck[HERO]);
+    // $cards = $deck['cards'];
+    // $sanitizeAltArtCards = [];
+    // foreach ($cards as $ref => $quantity) {
+    //   $sanitizeAltArtCards[$this->transformingAltArtToBasicArt($ref)] = $quantity;
+    //   unset($cards[$ref]);
+    // }
+    // $deck['cards'] = $sanitizeAltArtCards;
     /////////////////////////////////////////
     // Changing all alt-art into basic art
     /////////////////////////////////////////
 
     $deckContent[HERO] = ['card' => Cards::getCardClass($deck[HERO]), 'n' => 1];
+    $tokenStyles = Globals::getTokenStyles();
     foreach ($deck['cards'] as $cardRef => $card) {
-      if (isset($card['content'])) {
+      // Token-art entries are synthesized by the API from an existing card
+      // entry, so they may carry a Unique's `content` while being keyed by the
+      // token reference. Uniques are keyed by refs no card class can resolve
+      // (e.g. ALT_CORE_B_AX_08_U_29), so route on the key, never on `content`.
+      if (preg_match('/_U_\d+$/', $cardRef)) {
+        if (!isset($card['content'])) {
+          throw new \Bga\GameFramework\VisibleSystemException('MISSING UNIQUE CONTENT###' . $cardRef);
+        }
         //it's a unique!
         if (is_null(Cards::generateUnique($card['content']))) {
           throw new \BgaUserException(
@@ -405,11 +423,27 @@ trait SetupTrait
         }
 
         $deckContent[] = ['card' => ['properties' => Cards::generateUnique($card['content'])], 'n' => 1];
-      } else {
-        $cProp = Cards::getCardClass($cardRef)->getProperties();
-        $deckContent[] = ['card' => ['properties' => $cProp], 'n' => $card['quantity']];
+        continue;
       }
+
+      $cardObj = Cards::getCardClass($cardRef);
+      if ($cardObj->isToken()) {
+        // Tokens are not part of the deck: they are references to know which
+        // art variant of each token the player chose on the deck builder.
+        // Keep the styling so tokens invoked in game can render with it.
+        $style = ['asset' => $cardObj->getAsset()];
+        if ($cardObj->getMainAsset() != '') {
+          $style['mainAsset'] = $cardObj->getMainAsset();
+        }
+        if ($cardObj->getFullArt() === true) {
+          $style['fullArt'] = true;
+        }
+        $tokenStyles[Players::getCurrentId()][(new \ReflectionClass($cardObj))->getShortName()] = $style;
+        continue;
+      }
+      $deckContent[] = ['card' => ['properties' => $cardObj->getProperties()], 'n' => $card['quantity']];
     }
+    Globals::setTokenStyles($tokenStyles);
     $deck['cards'] = $deckContent;
     $gContent = Globals::getDeckContent();
     $gContent[Players::getCurrentId()] = $deck;
@@ -469,6 +503,18 @@ trait SetupTrait
         $deckNumber = $selection[$pId];
         // faction setup
         $faction = Globals::getPlayerDecks()[$pId][$deckNumber]['faction'];
+
+        // Demo / starter decks are not stored in Globals::deckContent (only API and random
+        // decks are), so keep their list here (before the hero leaves the deck location)
+        // for the end-of-game report.
+        $preview = Globals::getDeckFormat() == 'DEMO'
+          ? $this->getDemoDeckPreview($pId, $deckNumber)
+          : $this->getStarterDeckPreview($pId, $deckNumber);
+        if ($preview !== null) {
+          $gContent = Globals::getDeckContent();
+          $gContent[$pId] = $preview;
+          Globals::setDeckContent($gContent);
+        }
       }
       $faction = substr($faction, 0, 2);
       $player->setFaction($faction);
@@ -583,9 +629,9 @@ trait SetupTrait
       }
     } else {
       // Normal handling, just replacing the Alt or Promo tag by the Basic tag
-      if (in_array($cardExploded[2], ['A', 'P'])) {
-        $cardExploded[2] = 'B';
-      }
+      // if (in_array($cardExploded[2], ['A', 'P'])) {
+      //   $cardExploded[2] = 'B';
+      // }
 
       // Replacing PromoSet by corresponding Basic set (when corresponding to only one set)
       $promoSetsToReplace = [

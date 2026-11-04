@@ -79,7 +79,8 @@ class PlayCard extends \ALT\Models\Action
     $card = $this->getCard();
     return !$card->isExhaustedReservePlayBlocked($player)
       && !empty($card->getPlayableLocation($player, null, $this->getArg('free')))
-      && $card->getMinManaOrbs() <= $player->getTotalMana();
+      && $card->getMinManaOrbs() <= $player->getTotalMana()
+      && !$card->isNameBlockedThisDay($player);
   }
 
   public function argsPlayCard()
@@ -92,6 +93,9 @@ class PlayCard extends \ALT\Models\Action
     }
 
     $locations[$cId] = $card->getPlayableLocation($player, null, $this->getArg('free'));
+    if ($card->hasTemple() && $card->canBePlayed($player, false, false, true)) {
+      $locations[$cId] = array_values(array_unique(array_merge($locations[$cId], $card->getTemplePlayableLocations($player))));
+    }
     // $type = $card->getType();
     // $subTypes = $card->getSubtypes();
     // if ($type == PERMANENT && !in_array(LANDMARK, $subTypes)) {
@@ -131,6 +135,11 @@ class PlayCard extends \ALT\Models\Action
       throw new \BgaVisibleSystemException('Invalid location to play a card. Should not happen');
     }
     $card = Cards::get($cardId);
+    $player = Players::getActive();
+    $temple = false;
+    if ($location == LANDMARK && $card->hasTemple() && !in_array(LANDMARK, $card->getPlayableLocation($player))) {
+      $temple = true;
+    }
     if ($this->getArg('stealOwnership') && $card->getPId() != Players::getActiveId()) {
       $extraDatas = $card->getExtraDatas();
       if (!isset($extraDatas['pId'])) {
@@ -150,7 +159,8 @@ class PlayCard extends \ALT\Models\Action
       $this->getArg('reallyPlayed'),
       false,
       $this->getArg('stealOwnership'),
-      $this->getArg('countsAsTurnPlay')
+      $this->getArg('countsAsTurnPlay'),
+      $temple
     );
   }
 }

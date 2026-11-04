@@ -5,8 +5,8 @@ namespace ALT\Actions;
 use ALT\Managers\Meeples;
 use ALT\Managers\Players;
 use ALT\Managers\Cards;
+use ALT\Core\Engine;
 use ALT\Core\Notifications;
-use ALT\Core\Stats;
 use ALT\Helpers\Utils;
 use ALT\Helpers\Conditions;
 
@@ -95,12 +95,12 @@ class Gain extends \ALT\Models\Action
         return false;
       }
       if (!is_null($event) && isset($event['action']) && $event['action'] == 'ChooseAssignment' && $event['sourceLocation'] == RESERVE) {
-        $card = Cards::get($this->ctx->getSourceId());
+        $card = Cards::get($this->resolveSourceId());
         if (in_array($card->getId(), $event['reserveToListen'] ?? []) && $card->getLocation() != RESERVE) {
           return false;
         }
       }
-      $card = Cards::get($this->ctx->getSourceId());
+      $card = Cards::get($this->resolveSourceId());
       list($gain, $n) = $this->getGain();
       if ($card->getType() == CHARACTER && $gain == FLEETING && $card->hasToken(FLEETING)) {
         return false;
@@ -162,7 +162,7 @@ class Gain extends \ALT\Models\Action
   {
     $cardId = $this->getCtxArg('cardId');
     if ($cardId == ME) {
-      $cardId = $this->ctx->getSourceId() ?? null;
+      $cardId = $this->resolveSourceId();
     } elseif ($cardId == EFFECT) {
       $event = $this->getEventRecursive();
       $cardId = null;
@@ -209,13 +209,37 @@ class Gain extends \ALT\Models\Action
       return $upTo;
     }
     if ($this->getCtxArg('cardId') != EFFECT && !is_null($this->getCtxArg('cardId')) && $this->getCard()->getLocation() == RESERVE) {
-      if ($this->getCtxArg('cardId') == ME && is_null($this->ctx->getSourceId())) {
+      if ($this->getCtxArg('cardId') == ME && is_null($this->resolveSourceId())) {
         return $upTo;
       }
       return $this->getCard()->getPlayer()->getReserveAdd() + $upTo;
     } else {
       return $upTo;
     }
+  }
+
+  /**
+   * Identifier of the distribution this gain belongs to, null if the gain stands alone.
+   *
+   * Effects distributing several counters at once (eg. "Distribute 4 boosts...", see
+   * FT::SEQ_DISTRIBUTE_GAINS) are a single gain event: abilities listening on a gain
+   * ("gains 1 or more boosts") must only trigger once for the whole distribution.
+   */
+  protected function getGainGroup()
+  {
+    $node = $this->ctx;
+    while (is_object($node)) {
+      if ($node->getInfos()['groupGains'] ?? false) {
+        if (is_null($node->getInfos()['gainGroupId'] ?? null)) {
+          $node->setInfo('gainGroupId', 'gains-' . substr(md5(uniqid('', true)), 0, 12));
+          Engine::save();
+        }
+        return $node->getInfos()['gainGroupId'];
+      }
+      $node = $node->getParent();
+    }
+
+    return null;
   }
 
   public function gain($player, $card, $resource, $amount = 1, $source = null, $args = [])
@@ -269,7 +293,12 @@ class Gain extends \ALT\Models\Action
     $tokens = Meeples::createOnCard($resource, $card->getId(), $player->getId(), $amount);
     Notifications::gainMeeple($resource, $card, $tokens, $source, false);
 
-    $this->checkAfterListeners($player, ['gain' => $args, 'cardId' => $card->getId(), 'location' => $card->getLocation(), 'initialBoost' => $initialBoost, 'cardType' => $card->getType(), 'additionalType' => $card->getAdditionalType(), 'sourceId' =>  $sourceId, 'token' => $card->isToken(),]);
+    $listeners = ['gain' => $args, 'cardId' => $card->getId(), 'location' => $card->getLocation(), 'initialBoost' => $initialBoost, 'cardType' => $card->getType(), 'additionalType' => $card->getAdditionalType(), 'sourceId' =>  $sourceId, 'token' => $card->isToken(),];
+    $gainGroup = $this->getGainGroup();
+    if (!is_null($gainGroup)) {
+      $listeners['gainGroup'] = $gainGroup;
+    }
+    $this->checkAfterListeners($player, $listeners);
   }
 
   protected function isCantGainBoostRuleActive($sourceCard, $rule)
@@ -327,7 +356,7 @@ class Gain extends \ALT\Models\Action
   {
     $player = $this->getPlayer();
     $source = $this->ctx->getSource() ?? null;
-    $sourceId = $this->ctx->getSourceId() ?? null;
+    $sourceId = $this->resolveSourceId();
     if (is_null($source) && !is_null($sourceId)) {
       $source = Cards::getSingle($sourceId);
     }

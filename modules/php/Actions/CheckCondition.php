@@ -21,7 +21,7 @@ class CheckCondition extends \ALT\Models\Action
     return ST_CHECK_CONDITION;
   }
 
-  protected $args = ['condition' => null, 'effect' => null, 'oppositeEffect' => null, 'previousEvent' => false];
+  protected $args = ['condition' => null, 'effect' => null, 'oppositeEffect' => null, 'previousEvent' => false, 'ignoreDeck' => false];
 
   private function isFlowEffect($effect): bool
   {
@@ -93,7 +93,10 @@ class CheckCondition extends \ALT\Models\Action
       return false;
     }
 
-    if (in_array($effect['action'] ?? null, [DRAW, RESUPPLY, DRAW_MANA], true)) {
+    // DRAW / RESUPPLY no-op on an empty deck. Must not fail CHECK_CONDITION, or unique
+    // "otherwise" (e.g. 659 Aerolith) would fire when the *condition* (664) is actually met.
+    // DRAW_MANA stays gated: it cannot resolve without a deck.
+    if (($effect['action'] ?? null) === DRAW_MANA) {
       return true;
     }
 
@@ -157,7 +160,7 @@ class CheckCondition extends \ALT\Models\Action
     }
 
     $effect = $this->getArg('effect');
-    if ($this->effectRequiresDeck($effect) && !$this->getDeckPlayer($player)->hasDeckCards()) {
+    if (!$this->getArg('ignoreDeck') && $this->effectRequiresDeck($effect) && !$this->getDeckPlayer($player)->hasDeckCards()) {
       return false;
     }
 
