@@ -393,7 +393,7 @@
        this._undoPossible = gamedatas.undo;
        this._beginner = gamedatas.beginner;
        this._deckFormat = gamedatas.deckFormat || 'STANDARD';
-       this._demoDeck = this._deckFormat === 'DEMO';
+       this._demoDeck = this._deckFormat === 'DEMO' || this._deckFormat === 'PRECON';
  
        this.inherited(arguments);
        this._tryCacheAccountConfiguredFromGamestateArgs();
@@ -858,7 +858,7 @@
      },
 
      isDemoDeckFormat() {
-       return this._deckFormat === 'DEMO';
+       return this._deckFormat === 'DEMO' || this._deckFormat === 'PRECON';
      },
 
      isSealedDeckFormat() {

@@ -43,6 +43,7 @@ require_once (dirname(__FILE__)) . '/DemoDecks/kauri.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/zhen.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/sam.roc.php';
 require_once (dirname(__FILE__)) . '/DemoDecks/tournament.roc.php';
+require_once (dirname(__FILE__)) . '/DemoDecks/precon.php';
 
 const DEMO_ROC_DECKS = array(
   array(
@@ -85,6 +86,16 @@ const DEMO_ROC_FLOCK_DECKS = array(
     'contents' => DEMO_ROC_TOURNAMENT,
     'uniques' => DEMO_ROC_TOURNAMENT_UNIQUES,
   ),
+);
+
+// Decks of the 'Preconstructed' format (deck format 'PRECON'): one fixed deck per faction.
+const PRECON_DECKS = array(
+  array('faction' => FACTION_OD, 'deckId' => 'precon.or', 'contents' => PRECON_OR, 'uniques' => PRECON_OR_UNIQUES),
+  array('faction' => FACTION_MU, 'deckId' => 'precon.mu', 'contents' => PRECON_MU, 'uniques' => PRECON_MU_UNIQUES),
+  array('faction' => FACTION_LY, 'deckId' => 'precon.ly', 'contents' => PRECON_LY, 'uniques' => PRECON_LY_UNIQUES),
+  array('faction' => FACTION_BR, 'deckId' => 'precon.br', 'contents' => PRECON_BR, 'uniques' => PRECON_BR_UNIQUES),
+  array('faction' => FACTION_AX, 'deckId' => 'precon.ax', 'contents' => PRECON_AX, 'uniques' => PRECON_AX_UNIQUES),
+  array('faction' => FACTION_YZ, 'deckId' => 'precon.yz', 'contents' => PRECON_YZ, 'uniques' => PRECON_YZ_UNIQUES),
 );
 
 const STARTER_DECKS = array(

@@ -706,7 +706,7 @@ class Cards extends \ALT\Helpers\CachedPieces
     return $deckList;
   }
 
-  public static function setupDemoDeck($player, $deckNumber, $deckList)
+  public static function setupDemoDeck($player, $deckNumber, $deckList, $fixedDecks = null)
   {
     // Load list of cards
     require_once dirname(__FILE__) . '/../Cards/cards.inc.php';
@@ -714,7 +714,7 @@ class Cards extends \ALT\Helpers\CachedPieces
     $toCreate = [];
     $pId = $player->getId();
 
-    foreach (DEMO_ROC_FLOCK_DECKS as $deck) {
+    foreach (($fixedDecks ?? DEMO_ROC_FLOCK_DECKS) as $deck) {
       $faction = $deck['faction'];
       $deckId = $deck['deckId'];
 

@@ -72,6 +72,11 @@
         "name": "Sealed",
         "tmdisplay": "Sealed",
         "description": "⚠️ Deck built from your official sealed pool. Decks for this format must be built on altered-draft.altered.re — it cannot be created or edited here."
+      },
+      "8": {
+        "name": "Preconstructed",
+        "tmdisplay": "Preconstructed",
+        "description": "Choose among 6 fixed preconstructed decks, one per faction."
       }
     }
   }

@@ -59,7 +59,8 @@ trait SetupTrait
     }
 
     $demoDef = null;
-    foreach (DEMO_ROC_FLOCK_DECKS as $deck) {
+    $fixedDecks = Globals::getDeckFormat() == 'PRECON' ? PRECON_DECKS : DEMO_ROC_FLOCK_DECKS;
+    foreach ($fixedDecks as $deck) {
       if ($deck['deckId'] === ($deckInfo['deckId'] ?? null)) {
         $demoDef = $deck;
         break;
@@ -183,7 +184,7 @@ trait SetupTrait
   
   function argsPrecoDeckSelection()
   {
-    $isDemoDeckFormat = Globals::getDeckFormat() == 'DEMO';
+    $isDemoDeckFormat = in_array(Globals::getDeckFormat(), ['DEMO', 'PRECON']);
     $args = [
       '_private' => [],
       'demoDeck' => $isDemoDeckFormat,
@@ -507,7 +508,7 @@ trait SetupTrait
         // Demo / starter decks are not stored in Globals::deckContent (only API and random
         // decks are), so keep their list here (before the hero leaves the deck location)
         // for the end-of-game report.
-        $preview = Globals::getDeckFormat() == 'DEMO'
+        $preview = in_array(Globals::getDeckFormat(), ['DEMO', 'PRECON'])
           ? $this->getDemoDeckPreview($pId, $deckNumber)
           : $this->getStarterDeckPreview($pId, $deckNumber);
         if ($preview !== null) {

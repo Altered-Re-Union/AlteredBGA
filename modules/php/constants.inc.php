@@ -35,6 +35,7 @@ const OPTION_DF_NOUNIQUE = 4;
 const OPTION_DF_DEMO = 5;
 const OPTION_DF_TEST = 6;
 const OPTION_DF_SEALED = 7;
+const OPTION_DF_PRECON = 8;
 // const OPTION_SAME_MAP_RANDOM = 0;
 
 /*

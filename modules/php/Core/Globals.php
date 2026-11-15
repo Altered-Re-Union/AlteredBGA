@@ -265,6 +265,9 @@ class Globals extends \ALT\Helpers\DB_Manager
         break;
       case OPTION_DF_SEALED:
         self::setDeckFormat('SEALED');
+        break;
+      case OPTION_DF_PRECON:
+        self::setDeckFormat('PRECON');
     }
     self::setDeckOptions(OPTION_DECKS_STARTER);
     self::setBeginner($options[OPTION_BEGINNER] ?? 1);
