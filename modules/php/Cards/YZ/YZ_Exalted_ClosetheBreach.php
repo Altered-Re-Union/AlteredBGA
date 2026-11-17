@@ -37,11 +37,10 @@ class YZ_Exalted_ClosetheBreach extends \ALT\Models\Card
           FT::ACTION(TARGET, [
             'targetType' => [CHARACTER],
             'targetPlayer' => ME,
-            'effect' => FT::SEQ(
-              FT::GAIN(EFFECT, BOOST),
-              FT::ACTION(AFTER_YOU, []),
-            ),
-          ])
+            'effect' => FT::GAIN(EFFECT, BOOST),
+          ]),
+          // Keep AFTER_YOU outside TARGET: it still resolves when there is no character to boost.
+          FT::ACTION(AFTER_YOU, []),
         ),
       ]),
       'effectPassive' => [
