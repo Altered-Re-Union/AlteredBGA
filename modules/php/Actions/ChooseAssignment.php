@@ -298,6 +298,9 @@ class ChooseAssignment extends \ALT\Models\Action
     if (($locExploded[1] ?? '') == 'scout') {
       $scout = true;
     }
+    if (($locExploded[1] ?? '') == 'temple') {
+      $temple = true;
+    }
     if (!$temple && ($locExploded[0] ?? $location) == LANDMARK) {
       $card = Cards::get($cardId);
       if ($card->hasTemple() && !in_array(LANDMARK, $card->getPlayableLocation(

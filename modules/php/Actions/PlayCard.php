@@ -136,10 +136,8 @@ class PlayCard extends \ALT\Models\Action
     }
     $card = Cards::get($cardId);
     $player = Players::getActive();
-    $temple = false;
-    if ($location == LANDMARK && $card->hasTemple() && !in_array(LANDMARK, $card->getPlayableLocation($player))) {
-      $temple = true;
-    }
+    $temple = ($location == LANDMARK . '_temple')
+      || ($location == LANDMARK && $card->hasTemple() && !in_array(LANDMARK, $card->getPlayableLocation($player)));
     if ($this->getArg('stealOwnership') && $card->getPId() != Players::getActiveId()) {
       $extraDatas = $card->getExtraDatas();
       if (!isset($extraDatas['pId'])) {
