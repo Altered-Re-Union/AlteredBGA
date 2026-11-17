@@ -37,7 +37,7 @@ class OD_Rare_Kikimora extends \ALT\Models\Card
       ],
       'effectPassive' => [
         'ChooseAssignment' => [
-          'conditions' => ['notTapped', 'isCardPlayed:permanent', 'hasNoBoost'],
+          'conditions' => ['notTapped', 'isCardPlayed:permanent', 'hasNoBoost', 'isInStorms'],
           'output' => FT::GAIN(ME, BOOST)
         ],
       ],
