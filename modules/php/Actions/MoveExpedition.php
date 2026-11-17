@@ -161,6 +161,15 @@ class MoveExpedition extends \ALT\Models\Action
     // Rune's testament / Pegasus / Eris (non-dusk forced moves from spells and effects)
     if ($this->getArg('force') === false) {
       $actionInsteadAdvance = Players::getActionInsteadOfAdvance();
+      // Pegasus (939) only replaces ascension-driven dusk moves. Ignore it for card-driven
+      // moves (e.g. Cable Car Station) so those moves are not turned into a double move.
+      if (!($hasMovedFromAscension && $ascended)) {
+        foreach ($actionInsteadAdvance[$pId][$expedition] ?? [] as $cId => $action) {
+          if ($action == 'PegasusCommon') {
+            unset($actionInsteadAdvance[$pId][$expedition][$cId]);
+          }
+        }
+      }
       if ($n > 0 && !empty($actionInsteadAdvance[$pId][$expedition] ?? [])) {
         $nodes = [];
         $forcedMoveArgs = [
@@ -222,7 +231,8 @@ class MoveExpedition extends \ALT\Models\Action
           }
         }
         if (!empty($pegasusCards)) {
-          $pegasusN = (empty($winningBiomes) && $ascended) ? $n + count($pegasusCards) : $n;
+          // Pegasus (939) only applies to ascension-driven dusk moves, not to card-driven moves.
+          $pegasusN = ($hasMovedFromAscension && $ascended) ? $n + count($pegasusCards) : $n;
           $nodes[] = FT::ACTION(MOVE_EXPEDITION, array_merge($forcedMoveArgs, ['n' => $pegasusN]), ['pId' => $pId, 'sourceId' => $pegasusCards[0]]);
         }
         if (!empty($nodes)) {
