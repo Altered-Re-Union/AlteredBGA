@@ -112,6 +112,7 @@ class Draw extends \ALT\Models\Action
     'location' => HAND,
     'tapped' => false,
     'ownerId' => null,
+    'skipListeners' => false,
   ];
 
   public function stDraw()
@@ -144,7 +145,9 @@ class Draw extends \ALT\Models\Action
       } else {
         $cards = $player->draw($n, null, null, $source);
       }
-      if ($cards->count() > 0 && $this->getArg('location') != MANA) {
+      // Morning draws set skipListeners: they are already reported by the Morning listeners.
+      // Without this, reshuffling mid-draw would fire "opponent draws" reactions twice.
+      if (!$this->getArg('skipListeners') && $cards->count() > 0 && $this->getArg('location') != MANA) {
         $this->checkAfterListeners($player, ['draw' => $n, 'location' => $this->getArg('location')]);
       }
     }
