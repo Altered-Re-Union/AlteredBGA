@@ -29,10 +29,10 @@ class LY_Common_LakshmisOwl extends \ALT\Models\Card
             'costHand' => 1,
             'costReserve' => 1,
             'effectPassive' => [
-                'RollDie' => FT::SEQ_OPTIONAL([
+                'RollDie' => [
                     'conditions' => ['isMe', 'hasBoost:0:LTE', 'isInStorms'],
-                    'output' => FT::SEQ(FT::GAIN(ME, BOOST), FT::GAIN(ME, FLEETING))
-                ]),
+                    'output' => FT::SEQ_OPTIONAL(FT::GAIN(ME, BOOST), FT::GAIN(ME, FLEETING)),
+                ],
             ]
         ];
     }
