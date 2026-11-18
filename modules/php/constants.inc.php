@@ -410,8 +410,6 @@ const OWNER = 'owner';
 /*********************
  ******* MISC ********
  *********************/
-const API_URL = 'https://api.equinox-ccg.io';
-
 const DYNAMIC_PROPERTIES = ['tapped', 'extraDatas', 'setIcon', 'flavorText', 'asset', 'revealed', 'subtypes', 'typeline', 'fullArt', 'mainAsset'];
 
 const MANUAL_ALT_ART = [
