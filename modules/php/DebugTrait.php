@@ -132,9 +132,6 @@ trait DebugTrait
     //   'mode' => 'cards',
     //   'cardsid' => ["ALT_COREKS_B_LY_04_U_4874", "ALT_COREKS_B_MU_12_U_1367"]
     // ]);
-    // $BGAToken = $this->equinoxAPIConnect(['mode' => 'BGALogin']);
-    // var_dump($BGAToken);
-    // ['token'];
     // throw new \feException(Cards::get(11)->countToken(FLEETING));
     // Stats::incDays(2);
     // Stats::setWinner(Players::getActive(), true);
@@ -638,87 +635,6 @@ trait DebugTrait
     $this->zombieTurn([], 2305527);
   }
 
-
-
-  ///////////////////////////////////////////
-  //// API : ONLY FOR UNIQUES ON STUDIO
-  ///////////////////////////////////////////
-
-  function equinoxAPIConnect($params)
-  {
-    $mode = $params['mode'];
-    $user = $params['user'] ?? '';
-    $secret = $params['secret'] ?? '';
-    $token = $params['token'] ?? '';
-    $deckNumber = $params['deckNumber'] ?? '';
-    $cardId = $params['cardId'] ?? '';
-    //$curl = curl_VTOinit();
-    // $baseUrl = 'https://api.equinox-ccg.io';
-    $baseUrl = 'https://api.altered.gg';
-    $setup = [
-      CURLOPT_URL => $baseUrl . '/login',
-      CURLOPT_RETURNTRANSFER => true,
-      CURLOPT_ENCODING => '',
-      CURLOPT_MAXREDIRS => 10,
-      CURLOPT_TIMEOUT => 0,
-      CURLOPT_FOLLOWLOCATION => true,
-      CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-    ];
-
-    switch ($mode) {
-      case 'login':
-        $setup[CURLOPT_URL] = $baseUrl . '/login';
-        $setup[CURLOPT_POSTFIELDS] =
-          '{
-              "email": "' .
-          $user .
-          '",
-              "password": "' .
-          $secret .
-          '"
-          }';
-        $setup[CURLOPT_HTTPHEADER] = ['Content-Type: application/json'];
-        $setup[CURLOPT_CUSTOMREQUEST] = 'POST';
-        break;
-      case 'BGALogin':
-        $setup[CURLOPT_URL] = $baseUrl . '/login';
-        $setup[CURLOPT_POSTFIELDS] =
-          '{
-          "email": "' .
-          'bga@equinox.fr' .
-          '",
-          "password": "' . 'Q39jXhb7E6HnZEbc' .
-          '"
-      }';
-        $setup[CURLOPT_HTTPHEADER] = ['Content-Type: application/json'];
-        $setup[CURLOPT_CUSTOMREQUEST] = 'POST';
-        break;
-      case 'deckList':
-        // token of the player
-        $setup[CURLOPT_URL] = $baseUrl . '/deck_user_lists/?isLegal=true';
-        $setup[CURLOPT_HTTPHEADER] = ['token: ' . $token, 'Authorization: Bearer ' . $token];
-        $setup[CURLOPT_CUSTOMREQUEST] = 'GET';
-        // throw new \feException(print_r($setup));
-        break;
-      case 'deck':
-        // token of the player
-        $setup[CURLOPT_URL] = $baseUrl . $deckNumber;
-        $setup[CURLOPT_HTTPHEADER] = ['token: ' . $token, 'Authorization: Bearer ' . $token];
-        $setup[CURLOPT_CUSTOMREQUEST] = 'GET';
-        break;
-      case 'card':
-        // BGA token
-        $setup[CURLOPT_URL] = $baseUrl . '/cards/' . $cardId;
-        $setup[CURLOPT_HTTPHEADER] = ['token: ' . $token, 'Authorization: Bearer ' . $token];
-        $setup[CURLOPT_CUSTOMREQUEST] = 'GET';
-        break;
-    }
-    curl_setopt_array($curl, $setup);
-    $response = json_decode(curl_exec($curl), true);
-    curl_close($curl);
-    return $response;
-  }
-
   // change this function content if you need a specific setup requiring more than 1 card to test a scenario, 
   // like adding specific cards on the board or in hand
   function debug_setup()
@@ -821,78 +737,30 @@ trait DebugTrait
     Engine::proceed();
   }
 
-  function debug_loadUnique(string $v, string $location = HAND)
-  {
-    $this->loadUnique($v, $location);
-  }
+  // function debug_loadUnique(string $v, string $location = HAND)
+  // {
+  //   $this->loadUnique($v, $location);
+  // }
 
-  function loadUnique($v = null, $location = HAND)
-  {
-    // $token = $this->equinoxAPIConnect(['mode' => 'BGALogin'])['token'];
-    // $unique = $this->equinoxAPIConnect(['mode' => 'card', 'token' => $token, 'cardId' => $v]);
+  // function loadUnique($v = null, $location = HAND)
+  // {
+  //   $uniqueReduced = self::getGenericGameInfos('get_unique_card_definition', ['card_id' => $v]);
 
-    // // throw new \feException(print_r($unique));
+  //   // throw new \feException(print_r($uniqueReduced));
+  //   $properties = Cards::generateUnique($uniqueReduced['content']);
+  //   // throw new \feException(print_r($properties));
 
-    // $uniqueReduced = [];
-    // $uniqueReduced['reference'] = $unique['reference'];
-    // $uniqueReduced['faction'] = $unique['mainFaction']['reference'];
-    // $uniqueReduced['name'] = $unique['name'];
-    // $uniqueReduced['cardType'] = $unique['cardType']['reference'];
-    // $subtypes = [];
-    // $typeline = ['Character'];
-    // foreach ($unique['cardSubTypes'] ?? [] as $v => $sub) {
-    //   // ?? [] is temp!
-    //   $subtypes[] = $sub['reference'];
-    //   $typeline[] = $sub['name'];
-    // }
-    // $uniqueReduced['subTypes'] = $subtypes;
-    // $uniqueReduced['typeline'] = $typeline;
-    // $uniqueReduced['illustrator'] =  $unique['illustrator']['nickName'];
-    // $uniqueReduced['costHand'] = (int) $unique['elements']['MAIN_COST'];
-    // $uniqueReduced['costReserve'] = (int) $unique['elements']['RECALL_COST'];
-    // $uniqueReduced['forest'] = (int) $unique['elements']['FOREST_POWER'];
-    // $uniqueReduced['mountain'] = (int) $unique['elements']['MOUNTAIN_POWER'];
-    // $uniqueReduced['ocean'] = (int) $unique['elements']['OCEAN_POWER'];
-
-    // foreach ($unique['cardElements'] as $i => $cardElement) {
-    //   if (
-    //     $cardElement['cardElementType']['reference'] != 'MAIN_EFFECT' &&
-    //     $cardElement['cardElementType']['reference'] != 'ECHO_EFFECT'
-    //   ) {
-    //     continue;
-    //   }
-    //   foreach ($cardElement['cardEffectDisplays'] as $i2 => $effect) {
-    //     $trinity = [];
-    //     foreach ($effect['cardEffect']['cardEffectElements'] as $i3 => $indivEffect) {
-    //       $trinity[] =  $indivEffect['idGd'];
-    //     }
-    //     if (empty($trinity)) {
-    //       continue;
-    //     }
-    //     if (count($trinity) != 3) {
-    //       continue;
-    //     }
-    //     $uniqueReduced['uniqueReduced'][0]['effects'][] = $trinity;
-    //   }
-    // }
-
-    $uniqueReduced = self::getGenericGameInfos('get_unique_card_definition', ['card_id' => $v]);
-
-    // throw new \feException(print_r($uniqueReduced));
-    $properties = Cards::generateUnique($uniqueReduced['content']);
-    // throw new \feException(print_r($properties));
-
-    Cards::singleCreate([
-      'player_id' => Players::getCurrentId(),
-      'location' => $location,
-      'nbr' => 1,
-      'properties' => $properties,
-    ]);
-    Notifications::refreshUI($this::get()->localGetAllDatas(true));
-    $player = Players::getCurrent();
-    Notifications::refreshHand($player, $player->getHand()->ui(), $player->getManaCards()->ui());
-    Engine::proceed();
-  }
+  //   Cards::singleCreate([
+  //     'player_id' => Players::getCurrentId(),
+  //     'location' => $location,
+  //     'nbr' => 1,
+  //     'properties' => $properties,
+  //   ]);
+  //   Notifications::refreshUI($this::get()->localGetAllDatas(true));
+  //   $player = Players::getCurrent();
+  //   Notifications::refreshHand($player, $player->getHand()->ui(), $player->getManaCards()->ui());
+  //   Engine::proceed();
+  // }
   function testUnique($effect, $location = HAND)
   {
     $ceg = explode("_", $effect);
