@@ -6090,7 +6090,7 @@ abstract class FlowConvertor
         'description' => clienttranslate('Target Character facing me gains <ANCHORED>.'),
         'output' => FT::ACTION(TARGET, [
           'targetType' => [CHARACTER, TOKEN],
-          'targetLocation' => ['oppositeSource'],
+          'targetLocation' => ['opponentSource'],
           'effect' => FT::GAIN(EFFECT, ANCHORED),
         ]),
       ],
