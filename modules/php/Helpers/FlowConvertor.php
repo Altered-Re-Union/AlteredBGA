@@ -920,7 +920,10 @@ abstract class FlowConvertor
         'effect' => FT::ACTION(TARGET, [
           'targetLocation' => ['opponentSource'],
           'upTo' => true,
-          'effect' => FT::SEQ(FT::GAIN(EFFECT, ANCHORED), 'OUTPUT'),
+          'effect' => FT::ACTION(CHECK_CONDITION, [
+            'condition' => 'isTargetNotAnchored',
+            'effect' => FT::SEQ(FT::GAIN(EFFECT, ANCHORED), 'OUTPUT'),
+          ]),
         ]),
         'ifYouDo' => true,
       ],
