@@ -98,6 +98,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # BGA only serves the compiled <slug>.css (the .scss sources are excluded from the
+      # upload), so rebuild it here instead of trusting the committed copy.
+      # Runs before the rename step, which also renames the .scss/.css entrypoints.
+      - name: Compile SCSS
+        run: |
+          set -euo pipefail
+          GAME_PHP=$(ls *.game.php | head -n1)
+          SLUG=${GAME_PHP%.game.php}
+          npx --yes sass@1.77.8 --no-source-map --style=expanded "${SLUG}.scss" "${SLUG}.css"
+          if ! git diff --quiet -- "${SLUG}.css"; then
+            echo "::warning::${SLUG}.css committed was out of date with the SCSS sources; deploying the freshly compiled version."
+            git diff --stat -- "${SLUG}.css"
+          fi
+
       - name: Rename game slug to deployment target
         env:
           TARGET_SLUG: ${{ vars.SFTP_REMOTE_PATH }}
@@ -108,6 +122,13 @@ jobs:
           fi
           if [ -f "${TARGET_SLUG}.game.php" ]; then
             echo "Slug already '${TARGET_SLUG}'; skipping rename."
+            # The rename script also swaps gameoptions.<target>.json over gameoptions.json;
+            # do it here too, otherwise production never gets its specific options.
+            if [ -f "gameoptions.${TARGET_SLUG}.json" ]; then
+              echo "Using gameoptions.${TARGET_SLUG}.json as gameoptions.json"
+              cp "gameoptions.${TARGET_SLUG}.json" gameoptions.json
+              rm "gameoptions.${TARGET_SLUG}.json"
+            fi
             exit 0
           fi
           python3 misc/python-tools/rename-game-slug.py --target "$TARGET_SLUG"
@@ -212,6 +233,11 @@ jobs:
           # --delete also can't wipe the remote hash state since .deploy-hashes is excluded
           # (the fresh hashes are re-uploaded at step 6).
           STATIC_EXCLUDES="--exclude=^\.[^/]+/ --exclude=^node_modules/ --exclude=^misc/ --exclude=^docs/"
+          # BGA Studio SFTP enforces a file-type allowlist and answers "permission denied"
+          # (which aborts the mirror under cmd:fail-exit) for: dotfiles, SCSS sources
+          # (only the compiled .css is used), and env-specific gameoptions.<stem>.json.
+          # No '|' in these regexes: lftp would parse it as a shell pipe.
+          STATIC_EXCLUDES="$STATIC_EXCLUDES --exclude=^\.[^/]+\$ --exclude=/\.[^/]+\$ --exclude=\.scss\$ --exclude=^gameoptions\.[^/]+\.json\$"
 
           DELETE_FLAG=""
           if [ "$SFTP_DELETE_REMOTE" = "true" ]; then
