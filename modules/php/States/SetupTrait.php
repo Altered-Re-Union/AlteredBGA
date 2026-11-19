@@ -303,32 +303,12 @@ trait SetupTrait
     // $request['factions'] = ['AX'];
     $request['hero'] = $request['hero'] ?? '';
 
-    $tableId = (string) $this->table_id;
-    $tournamentInfo = [];
-    if ($this->bga->tournament->isTournament()) {
-      $tournamentInfo = $this->bga->tournament->getInfo();
-    }
-    $ratingMode = $this->tableOptions->get(201);
-    // eventFormat goes in a separate array on purpose: it must never be echoed back in
+    // The payload goes in a separate array on purpose: it must never be echoed back in
     // $content['request'], because the client replays that request verbatim on pagination
-    // and faction changes, and its base64 alphabet (+ / =) is rejected by the
-    // validateJSonAlphaNum() guard in altered.action.php. Keep it server-side only.
+    // and faction changes. Keep it server-side only.
     $apiRequest = $request;
-    $apiRequest['eventFormat'] = base64_encode(json_encode([
-      'v' => 1,
-      'env' => $this->getGameName(),
-      'mode' => $ratingMode,
-      'payload' => [
-        'format' => Globals::getDeckFormat(),
-        'tableId' => $tableId,
-        'tournamentName' => $tournamentInfo['name'] ?? null,
-        'tournamentParentId' => $tournamentInfo['tournament_parent_id'] ?? null,
-        'tournamentGroup' => $tournamentInfo['tournament_group'] ?? null,
-      ],
-    ]));
+    $apiRequest['payload'] = $this->getAlteredApiPayload(true);
 
-    // STANDARD, NO_UNIQUE, SINGLETON
-    // throw new \feException(print_r($apiRequest));
     // Fetch them from MS
     $response = self::getGenericGameInfos('get_player_decks', $apiRequest);
     if ($response['success'] != 1) {
@@ -349,29 +329,47 @@ trait SetupTrait
 
 
 
-  public function actGetDeckInfos($deckNumber)
+  /**
+   * Context sent to the Altered API alongside get_player_decks / get_player_deck_content
+   * (contract agreed with BGA, Nov. 2026). No player identifier on purpose (GDPR).
+   */
+  protected function getAlteredApiPayload($withTournamentStructure)
   {
-    $tableId = (string) $this->table_id;
     $tournamentInfo = [];
     if ($this->bga->tournament->isTournament()) {
       $tournamentInfo = $this->bga->tournament->getInfo();
     }
-    $ratingMode = $this->tableOptions->get(201);
-    $request = base64_encode(json_encode([
-      'v' => 1,
+    $payload = [
       'env' => $this->getGameName(),
-      'mode' => $ratingMode,
-      'payload' => [
-        'playerId' => Players::getCurrentId(),
-        'playerName' => Players::getCurrent()->getName(),
-        'deckId' => $deckNumber,
-        'format' => Globals::getDeckFormat(),
-        'tableId' => $tableId,
-        'tournamentName' => $tournamentInfo['name'] ?? null,
-      ],
-    ]));
+      'mode' => (int) $this->tableOptions->get(201),
+      'format' => Globals::getDeckFormat(),
+      'tableId' => (string) $this->table_id,
+      'tournamentName' => $tournamentInfo['name'] ?? null,
+    ];
+    if ($withTournamentStructure) {
+      $parentId = $tournamentInfo['tournament_parent_id'] ?? null;
+      $group = $tournamentInfo['tournament_group'] ?? null;
+      $payload['tournamentParentId'] = is_null($parentId) ? null : (int) $parentId;
+      $payload['tournamentGroup'] = is_null($group) ? null : (int) $group;
+    }
+    return $payload;
+  }
 
-    $response = self::getGenericGameInfos('get_player_deck_content', ['deck_id' => $request]);
+  public function actGetDeckInfos($deckNumber)
+  {
+    // BGA only accepts a UUID in deck_id. Any version is accepted here: decks created
+    // before decks-api moved to Symfony 7+ may not be v7.
+    if (
+      !is_string($deckNumber) ||
+      !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $deckNumber)
+    ) {
+      throw new \BgaUserException(clienttranslate('Invalid deck identifier'));
+    }
+
+    $response = self::getGenericGameInfos('get_player_deck_content', [
+      'deck_id' => $deckNumber,
+      'payload' => $this->getAlteredApiPayload(false),
+    ]);
     if ($response['success'] != 1) {
       throw new \Bga\GameFramework\VisibleSystemException("API ERROR###" . $response['message'] . "###");
     }

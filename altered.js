@@ -1580,9 +1580,9 @@
      onEnteringStateChooseFetchedDeck(args) {
        this._awaitingAPIReturn = false;
       this._apiRequest = Object.assign({}, args.request);
-      // Server-generated attribution payload; regenerated on every call and rejected by the
+      // Server-generated context payload; regenerated on every call and rejected by the
       // server's alphanumeric input guard, so it must not be echoed back to it.
-      delete this._apiRequest.eventFormat;
+      delete this._apiRequest.payload;
       // Cached so the "Back" button from the deck preview can rebuild this list
       // without another round trip to the deck-list API.
       this._chooseFetchedDeckArgs = args;
