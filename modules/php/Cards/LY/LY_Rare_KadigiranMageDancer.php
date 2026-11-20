@@ -29,7 +29,7 @@ class LY_Rare_KadigiranMageDancer extends \ALT\Models\Card
       'costHand' => 2,
       'costReserve' => 1,
       'effectPassive' => [
-        'RollDie' => ['condition' => 'isMe', 'output' => FT::GAIN(ME, BOOST)],
+        'RollDie' => ['condition' => ['isMe', 'isInStorms'], 'output' => FT::GAIN(ME, BOOST)],
       ],
     ];
   }
