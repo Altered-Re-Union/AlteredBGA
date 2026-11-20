@@ -30,7 +30,7 @@ class BR_Rare_Theseus extends \ALT\Models\Card
       'costReserve' => 8,
       'scout' => 4,
       'effectPlayed' =>  FT::ACTION(TARGET, ['targetType' => [CHARACTER, TOKEN], 'effect' => FT::DISCARD_TO_RESERVE()]),
-      'effectReserve' => FT::GAIN(ME, BOOST, 3)
+      'effectReserve' => FT::GAIN(ME, BOOST, 3, 99, true)
     ];
   }
 }
