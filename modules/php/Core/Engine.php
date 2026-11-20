@@ -454,11 +454,41 @@ class Engine
       }
     }
 
+    // Active player effects run in parallel first, then opponent effects in parallel.
     return self::insertAtRoot([
-      'type' => NODE_PARALLEL,
+      'type' => NODE_SEQ,
       'flag' => \AFTER_FINISHING_ACTION,
-      'childs' => [],
+      'childs' => [
+        ['type' => NODE_PARALLEL, 'flag' => \AFTER_FINISHING_ACTIVE, 'childs' => []],
+        ['type' => NODE_PARALLEL, 'flag' => \AFTER_FINISHING_OPPONENT, 'childs' => []],
+      ],
     ]);
+  }
+
+  /**
+   * Pick the parallel bucket (active or opponent) for an afterFinishing child.
+   */
+  protected static function getAfterFinishingParallelBucket($afterFinishingNode, $child)
+  {
+    $activePId = $afterFinishingNode->getInfos()['activePId'] ?? Players::getActiveId();
+    
+    $childPId = $child['pId'] ?? null;
+    if (is_null($childPId) || $childPId === 'active') {
+      $childPId = $activePId;
+    }
+    if ($childPId === 'source' && isset($child['sourceId'])) {
+      $childPId = Cards::get($child['sourceId'])->getPId();
+    }
+    
+    $targetFlag = $childPId != $activePId ? \AFTER_FINISHING_OPPONENT : \AFTER_FINISHING_ACTIVE;
+
+    foreach ($afterFinishingNode->getChilds() as $parallelNode) {
+      if ($parallelNode->getFlag() == $targetFlag) {
+        return $parallelNode;
+      }
+    }
+
+    throw new \BgaVisibleSystemException('AfterFinishing parallel bucket not found. Should not happen');
   }
 
   /**
@@ -472,7 +502,8 @@ class Engine
 
     $node = self::getAfterFinishingNode();
     foreach ($childs as $child) {
-      $node->pushChild(self::buildTree($child));
+      $bucket = self::getAfterFinishingParallelBucket($node, $child);
+      $bucket->pushChild(self::buildTree($child));
     }
     Engine::save();
   }
@@ -587,9 +618,12 @@ class Engine
       return;
     }
 
-    $node = self::getAfterFinishingNode();
+    $afterFinishingNode = self::getAfterFinishingNode();
+    $nodes = array_merge([$afterFinishingNode], $afterFinishingNode->getChilds());
     foreach ($attributes as $attribute => $value) {
-      $node->setInfo($attribute, $value);
+      foreach ($nodes as $node) {
+        $node->setInfo($attribute, $value);
+      }
     }
     Engine::save();
   }
