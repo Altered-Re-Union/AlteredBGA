@@ -318,9 +318,16 @@ class Cards extends \ALT\Helpers\CachedPieces
 
   public static function getFiltered($pId, $location = null, $type = null, $additionalType = false)
   {
-    return self::getSelectWhere(null, $location, null)
-      ->where('pId', $pId)
-      ->whereType('type', $type, $additionalType);
+    // Card effects read the cards in play for every card evaluated (tough, biomes, costs...):
+    // within an engine evaluation, the same filters are shared instead of rescanning every card
+    $key = 'cards|' . json_encode([$pId, $location, $type, $additionalType]);
+    $cards = \ALT\Helpers\Evaluation::cached($key, function () use ($pId, $location, $type, $additionalType) {
+      return self::getSelectWhere(null, $location, null)
+        ->where('pId', $pId)
+        ->whereType('type', $type, $additionalType);
+    });
+    // A copy, so that a caller changing its collection does not change the shared one
+    return new \ALT\Helpers\Collection($cards->getArrayCopy());
   }
 
   public static function generateRandomDeck($deck, $player, $faction = null)

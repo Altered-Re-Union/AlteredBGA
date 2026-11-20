@@ -2,6 +2,8 @@
 
 namespace ALT\Core\Engine;
 
+use ALT\Helpers\Evaluation;
+
 use ALT\Core\Globals;
 use ALT\Managers\Players;
 use ALT\Managers\Cards;
@@ -407,6 +409,17 @@ class AbstractNode
     return $this->infos['manualChoice'] ?? false;
   }
 
+  /**
+   * getChoices asks each child whether it is doable, optional, automatic and independent, and each
+   * of these walks the child's subtree again: without sharing, the work grows exponentially with
+   * the depth of the tree (e.g. a XOR of SEQs of TARGETs). Results are shared within the
+   * read-only evaluation scope (see Evaluation).
+   */
+  protected function memoized(string $what, $player, callable $compute)
+  {
+    return Evaluation::run('node|' . spl_object_id($this) . '|' . $what . '|' . (is_null($player) ? '' : $player->getId()), $compute);
+  }
+
   public function isAutomatic($player = null)
   {
     $choices = $this->getChoices($player);
@@ -416,14 +429,23 @@ class AbstractNode
   // Allow for automatic resolution in parallel node
   public function isIndependent($player = null)
   {
-    // add of no independant in specific cases of Moyo
-    return !($this->infos['noIndependent'] ?? false) && $this->isAutomatic($player) &&
-      $this->childsReduceAnd(function ($child) use ($player) {
-        return $child->isIndependent($player);
-      }) && Globals::getEngineChoices() <= 20;
+    return $this->memoized('isIndependent', $player, function () use ($player) {
+      // add of no independant in specific cases of Moyo
+      return !($this->infos['noIndependent'] ?? false) && $this->isAutomatic($player) &&
+        $this->childsReduceAnd(function ($child) use ($player) {
+          return $child->isIndependent($player);
+        }) && Globals::getEngineChoices() <= 20;
+    });
   }
 
   public function getChoices($player = null, $displayAllChoices = false)
+  {
+    return $this->memoized('getChoices' . (int) $displayAllChoices, $player, function () use ($player, $displayAllChoices) {
+      return $this->computeChoices($player, $displayAllChoices);
+    });
+  }
+
+  protected function computeChoices($player = null, $displayAllChoices = false)
   {
     $choice = null;
     $choices = [];
