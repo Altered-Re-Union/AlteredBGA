@@ -5459,7 +5459,7 @@ abstract class FlowConvertor
           'targetLocation' => [RESERVE],
           'n' => INFTY,
           'upTo' => true,
-          'compareTargetBiome' => ['biome' => FOREST, 'op' => 'lte', 'source' => 'source'],
+          'compareTargetBiome' => ['biome' => FOREST, 'op' => 'lte', 'source' => 'source', 'total' => true],
           'effect' => FT::ACTION(DISCARD, []),
         ]),
       ],
