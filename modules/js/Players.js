@@ -157,6 +157,18 @@ define(['dojo', 'dojo/_base/declare'], (dojo, declare) => {
             <div class='player-board-separator'></div>
 
             <div class='player-board-landmarks' id='board-landmark-${player.id}'></div>
+            <div id='board-landmark_temple-${pId}' class='landmark-temple-marker' title="${_('Temple (Landmark)')}">
+              <svg viewBox="0 0 64 64" aria-hidden="true">
+                <rect x='7' y='6' width='50' height='6' rx='2'></rect>
+                <rect x='12' y='13' width='40' height='5' rx='1'></rect>
+                <rect x='17' y='19' width='30' height='28'></rect>
+                <rect class='flute' x='22' y='22' width='3' height='22'></rect>
+                <rect class='flute' x='30.5' y='22' width='3' height='22'></rect>
+                <rect class='flute' x='39' y='22' width='3' height='22'></rect>
+                <rect x='12' y='48' width='40' height='5' rx='1'></rect>
+                <rect x='7' y='54' width='50' height='6' rx='2'></rect>
+              </svg>
+            </div>
             <div class='landmark-warning'>
               <i class="fa fa-warning"></i>
               ${_('Max landmark slots at night:')}

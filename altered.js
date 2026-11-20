@@ -2496,6 +2496,10 @@
       if (landmark) {
         landmark.classList.remove('selectable', 'droppable', 'dragged-over');
       }
+      const templeMarker = $(`board-landmark_temple-${this.player_id}`);
+      if (templeMarker) {
+        templeMarker.classList.remove('selectable', 'droppable', 'dragged-over');
+      }
     },
 
      unselectIfNeeded() {
@@ -2517,6 +2521,7 @@
      },
  
      onEnteringStateChooseAssignment(args) {
+       this.clearLandmarkTempleHighlight();
        let t = args._private;
  
        if (t.play) {
@@ -2599,6 +2604,10 @@
        }
      },
  
+     onLeavingStateChooseAssignmentLocation() {
+       this.clearLandmarkTempleHighlight();
+     },
+
      onEnteringStateChooseAssignmentLocation(args) {
        this.addSecondaryActionButton(
          'btnCancel',
@@ -2627,6 +2636,11 @@
        let cardId = args.cardId;
        oCard = $(`card-${cardId}`);
        oCard.classList.add('selected');
+
+       // Temple play: show the column marker on top of the Landmark zone (same idea as the Scout markers)
+       if ((args.play[cardId] || []).includes('landmark_temple')) {
+         $(`board-landmark_temple-${this.player_id}`)?.classList.add('selectable');
+       }
       let supportIcon = oCard.querySelector('.card-support-icon');
       if (args.supportPossible && supportIcon) {
         this.onClick(supportIcon, () => {
@@ -2851,20 +2865,24 @@
      onEnteringStatePlayCard(args) {
        let cardId = args.cardId;
        $(`card-${cardId}`).classList.add('selected');
- 
+
        let onChooseLocation = (location) => {
          return () => this.takeAtomicAction('actPlayCard', [cardId, location]);
        };
- 
+
        const names = {
          stormLeft: _('Hero side'),
          stormRight: _('Companion side'),
          landmark: _('Landmark'),
+         landmark_temple: _('Temple (Landmark)'),
          reserve: _('Reserve'),
          limbo: _('Spell'),
        };
  
        if (args._private.play[cardId] != undefined) {
+         if (args._private.play[cardId].includes('landmark_temple')) {
+           $(`board-landmark_temple-${this.player_id}`)?.classList.add('selectable');
+         }
          args._private.play[cardId].forEach((location, i) => {
            this.addPrimaryActionButton('btnLocation' + i, names[location], onChooseLocation(location));
            this.onClick(`board-${location}-${this.player_id}`, onChooseLocation(location));
@@ -2880,6 +2898,10 @@
        // });
      },
  
+     onLeavingStatePlayCard() {
+       this.clearLandmarkTempleHighlight();
+     },
+
      onEnteringStateInvokeToken(args) {
       const names = {
         stormLeft: _('Hero side'),

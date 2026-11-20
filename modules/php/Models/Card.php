@@ -344,7 +344,9 @@ class Card extends \ALT\Helpers\DB_Model
     }
 
     if ($this->canBePlayed($player, false, false, true)) {
-      return [LANDMARK];
+      // Distinct pseudo-location so the client can show a dedicated Temple marker on the Landmark zone
+      // (same mechanism as the Scout markers on Expeditions). actPlay/playCard strip the suffix.
+      return [LANDMARK . '_temple'];
     }
 
     return [];

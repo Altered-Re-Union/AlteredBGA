@@ -685,6 +685,43 @@
             }
         }
 
+        .landmark-temple-marker {
+            position: absolute;
+            top: -20px;
+            // Centered over the two landmark slots (zone is min-width 276px, right-aligned in the grass)
+            right: 103px;
+            width: 70px;
+            height: 70px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffffef;
+            border-radius: 50%;
+            box-shadow: 1px 1px 5px 3px black;
+            z-index: 5;
+            cursor: pointer;
+
+            &.droppable,
+            &.selectable {
+                display: flex;
+            }
+
+            &.dragged-over {
+                background-color: #d7f5d0;
+            }
+
+            svg {
+                width: 44px;
+                height: 44px;
+                fill: #5b4a2f;
+
+                .flute {
+                    fill: #ffffffef;
+                    opacity: 0.6;
+                }
+            }
+        }
+
         .reserve-warning,
         .landmark-warning {
             position: absolute;

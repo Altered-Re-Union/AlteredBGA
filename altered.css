@@ -14597,6 +14597,36 @@ body.focus-board .altered-player-board .player-board-infos {
 .altered-player-board .player-board-grass .player-board-landmarks.selectable .altered-card, .altered-player-board .player-board-grass .player-board-landmarks.droppable .altered-card {
   pointer-events: none;
 }
+.altered-player-board .player-board-grass .landmark-temple-marker {
+  position: absolute;
+  top: -20px;
+  right: 103px;
+  width: 70px;
+  height: 70px;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.937254902);
+  border-radius: 50%;
+  box-shadow: 1px 1px 5px 3px black;
+  z-index: 5;
+  cursor: pointer;
+}
+.altered-player-board .player-board-grass .landmark-temple-marker.droppable, .altered-player-board .player-board-grass .landmark-temple-marker.selectable {
+  display: flex;
+}
+.altered-player-board .player-board-grass .landmark-temple-marker.dragged-over {
+  background-color: #d7f5d0;
+}
+.altered-player-board .player-board-grass .landmark-temple-marker svg {
+  width: 44px;
+  height: 44px;
+  fill: #5b4a2f;
+}
+.altered-player-board .player-board-grass .landmark-temple-marker svg .flute {
+  fill: rgba(255, 255, 255, 0.937254902);
+  opacity: 0.6;
+}
 .altered-player-board .player-board-grass .reserve-warning,
 .altered-player-board .player-board-grass .landmark-warning {
   position: absolute;
