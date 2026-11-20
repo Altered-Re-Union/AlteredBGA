@@ -28,6 +28,21 @@
       }
     }
   },
+  "153": {
+    "name": "Decks lock for tournament only",
+    "default": 0,
+    "values": {
+      "0": {
+        "name": "Disabled",
+        "tmdisplay": "Decks aren't locked, participants can change between tournament games",
+        "description": "Decks aren't locked, participants can change between tournament games"
+      },
+      "1": {
+        "name": "Enabled",
+        "description": "Decks are locked, participants can't change between tournament games"
+      }
+    }
+  },
   "155": {
     "name": "Deck format",
     "level": "major",
