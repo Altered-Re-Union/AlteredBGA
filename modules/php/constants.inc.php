@@ -449,7 +449,17 @@ const MANUAL_ALT_ART = [
   'ALT_WCS26_P_NE_03_C' => 'ALT_CYCLONE_B_NE_03_C',
   //Mana Convergence
   'ALT_ALIZE_B_NE_01_C' => 'ALT_CORE_B_NE_01_C',
+  'ALT_BISE_B_NE_01_C' => 'ALT_CORE_B_NE_01_C',
   'ALT_WCS26_P_NE_01_C' => 'ALT_CORE_B_NE_01_C',
+  // Reprints the set/number rules in Cards::getMainUid send to the wrong set
+  //Haven, Bravos Bastion (CORE 30, not ALIZE)
+  'ALT_DUSTERTOP_P_BR_30_R1' => 'ALT_CORE_B_BR_30_R1',
+  //Priya, Bravos Signaler (CYCLONE, not CORE)
+  'ALT_MUSUBI_B_BR_74_R1' => 'ALT_CYCLONE_B_BR_74_R1',
+  //Colorful Cuckoo
+  'ALT_MUSUBI_B_MU_70_R1' => 'ALT_CYCLONE_B_MU_70_R1',
+  //The Ugly Duckling
+  'ALT_MUSUBI_B_OR_66_R1' => 'ALT_CYCLONE_B_OR_66_R1',
 ];
 
 /******************
