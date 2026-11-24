@@ -179,6 +179,8 @@ trait NewDayTrait
 
     $nodes = [];
 
+    // Morning draws are reported by the Morning listeners, so the explicit DRAW actions below
+    // must stay silent to avoid extra reactions when the deck is empty or reshuffled.
     foreach (Players::getAll() as $player) {
       $node = [];
       if ($player->getHero()->getUid() == 'ALT_CORE_B_LY_03_C') {
@@ -186,13 +188,13 @@ trait NewDayTrait
           // interrupt as deck is empty
           $node[] = FT::SEQ_OPTIONAL(
             FT::ACTION(SHUFFLE, [], ['pId' => $player->getId(), 'optional' => true]),
-            FT::ACTION(DRAW, ['n' => 1, 'players' => ME], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
+            FT::ACTION(DRAW, ['n' => 1, 'players' => ME, 'skipListeners' => true], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
             FT::ACTION(DRAW_MANA, ['n' => 1, 'tapped' => false], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()])
           );
         } elseif ($player->getDeckCount() == 1) {
           // interrupt as only 1 card in deck
           $node[] = FT::SEQ(
-            FT::ACTION(DRAW, ['n' => 1, 'players' => ME], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
+            FT::ACTION(DRAW, ['n' => 1, 'players' => ME, 'skipListeners' => true], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
             FT::SEQ_OPTIONAL(
               FT::ACTION(SHUFFLE, [], ['pId' => $player->getId(), 'optional' => true]),
               FT::ACTION(DRAW_MANA, ['n' => 1, 'tapped' => false], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()])
@@ -201,7 +203,7 @@ trait NewDayTrait
         } elseif ($player->getDeckCount() == 2) {
           // interrupt as only 1 card in deck
           $node[] = FT::SEQ(
-            FT::ACTION(DRAW, ['n' => 1, 'players' => ME], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
+            FT::ACTION(DRAW, ['n' => 1, 'players' => ME, 'skipListeners' => true], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
             FT::ACTION(DRAW_MANA, ['n' => 1, 'tapped' => false], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
             FT::SEQ_OPTIONAL(FT::ACTION(SHUFFLE, [], ['pId' => $player->getId(), 'optional' => true]),),
           );
@@ -222,21 +224,21 @@ trait NewDayTrait
         if ($player->getDeckCount() == 0) {
           $node[] = FT::SEQ_OPTIONAL(
             FT::ACTION(SHUFFLE, [], ['pId' => $player->getId(), 'optional' => true]),
-            FT::ACTION(DRAW, ['n' => 2, 'players' => ME], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()])
+            FT::ACTION(DRAW, ['n' => 2, 'players' => ME, 'skipListeners' => true], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()])
           );
         } elseif ($player->getDeckCount() == 1) {
           // interrupt as only 1 card in deck
           $node[] = FT::SEQ(
-            FT::ACTION(DRAW, ['n' => 1, 'players' => ME], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
+            FT::ACTION(DRAW, ['n' => 1, 'players' => ME, 'skipListeners' => true], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
             FT::SEQ_OPTIONAL(
               FT::ACTION(SHUFFLE, [], ['pId' => $player->getId(), 'optional' => true]),
-              FT::ACTION(DRAW, ['n' => 1, 'players' => ME], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
+              FT::ACTION(DRAW, ['n' => 1, 'players' => ME, 'skipListeners' => true], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
             )
           );
         } elseif ($player->getDeckCount() == 2) {
           // interrupt as only 1 card in deck
           $node[] = FT::SEQ(
-            FT::ACTION(DRAW, ['n' => 2, 'players' => ME], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
+            FT::ACTION(DRAW, ['n' => 2, 'players' => ME, 'skipListeners' => true], ['pId' => $player->getId(), 'sourceId' => $player->getHero()->getId()]),
             FT::SEQ_OPTIONAL(FT::ACTION(SHUFFLE, [], ['pId' => $player->getId(), 'optional' => true]),),
           );
         } else {
