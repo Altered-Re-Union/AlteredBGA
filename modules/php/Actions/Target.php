@@ -58,7 +58,7 @@ class Target extends \ALT\Models\Action
     'ascendedOnly' => false,
     'monoBiome' => false, // Rare Lyra Origamium
     'isNotTapped' => false,
-    'compareTargetBiome' => null, // e.g. ['biome' => FOREST, 'op' => 'lte', 'source' => 'source' or 'cardId']
+    'compareTargetBiome' => null, // e.g. ['biome' => FOREST, 'op' => 'lte', 'source' => 'source' or 'cardId', 'total' => true]
     'noBoostIfBoosted' => false, // Eole: e.g. Deploy the Shields; omit from card defs unless true
   ];
 
@@ -406,7 +406,7 @@ class Target extends \ALT\Models\Action
         }
       }
 
-      if ($compareFilter !== null) {
+      if ($compareFilter !== null && !($compareFilter['total'] ?? false)) {
         $targetVal = (int) ($biomes[$compareFilter['biome']] ?? 0);
         if ($targetVal > $compareFilter['cap']) {
           return false;
@@ -506,6 +506,8 @@ class Target extends \ALT\Models\Action
     $args = $this->argsTarget();
     $totalCost = $this->getArg('totalCost');
     $totalMountain = $this->getArg('totalMountain');
+    $compareFilter = $this->resolveCompareTargetBiomeFilter();
+    $totalBiomeRemaining = ($compareFilter['total'] ?? false) ? $compareFilter['cap'] : null;
 
     if (!empty(array_diff($cardIds, $args['cardIds']))) {
       throw new \Bga\GameFramework\VisibleSystemException('You cannot target these cards. Should not happen');
@@ -586,6 +588,9 @@ class Target extends \ALT\Models\Action
 
         $biomes = $card->getBiomes(true,  $increaseBiome);
         $totalMountain -= $biomes[MOUNTAIN];
+        if ($totalBiomeRemaining !== null) {
+          $totalBiomeRemaining -= (int) ($biomes[$compareFilter['biome']] ?? 0);
+        }
       }
 
       if ($totalCost < 0) {
@@ -593,6 +598,9 @@ class Target extends \ALT\Models\Action
       }
       if ($totalMountain < 0) {
         throw new \BgaUserException(clienttranslate('Total mountain attribute exceeds the limit of the effect'));
+      }
+      if ($totalBiomeRemaining !== null && $totalBiomeRemaining < 0) {
+        throw new \BgaUserException(clienttranslate('Total statistic exceeds the limit of the effect'));
       }
 
       $cards = Cards::getMany($cardIds);
@@ -628,7 +636,7 @@ class Target extends \ALT\Models\Action
   }
 
   /**
-   * @return array{biome: string, cap: int}|null
+   * @return array{biome: string, cap: int, total: bool}|null
    */
   private function resolveCompareTargetBiomeFilter()
   {
@@ -702,7 +710,7 @@ class Target extends \ALT\Models\Action
     $refBiomes = $refCard->getBiomes(true);
     $cap = (int) ($refBiomes[$biome] ?? 0);
 
-    return ['biome' => $biome, 'cap' => $cap];
+    return ['biome' => $biome, 'cap' => $cap, 'total' => ($spec['total'] ?? false) === true];
   }
 
   private function getCompareBiomeDescriptionLabel($biome)
