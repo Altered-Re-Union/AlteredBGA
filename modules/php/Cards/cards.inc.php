@@ -592,7 +592,9 @@ const MAP_REFS_CLASSES = [
   'ALT_CORE_B_MU_30_C' => 'MU/MU_Common_TheSpindleMunaBastion',
   'ALT_CORE_B_MU_30_R1' => 'MU/MU_Rare_TheSpindleMunaBastion',
   'ALT_CORE_B_MU_30_R2' => 'BR/BR_Rare_TheSpindleMunaBastion',
-  // 'ALT_CORE_B_NE_1_C' => 'NE/NE_Common_ManaConvergence',
+  'ALT_CORE_B_NE_01_C' => 'NE/NE_Common_ManaConvergence',
+  // KS print is numbered "1", not "01": the COREKS -> CORE rewrite would miss it.
+  'ALT_COREKS_B_NE_1_C' => 'NE/NE_Common_ManaConvergence',
   'ALT_CORE_B_OR_01_C' => 'OD/OD_Common_SigismarWingspan',
   'ALT_CORE_B_OR_02_C' => 'OD/OD_Common_WaruMack',
   'ALT_CORE_B_OR_03_C' => 'OD/OD_Common_GulrangTocsin',

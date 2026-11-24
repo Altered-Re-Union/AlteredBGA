@@ -163,6 +163,13 @@ class Cards extends \ALT\Helpers\CachedPieces
       $expUid[1] = 'CORE';
     } elseif (in_array($expUid[1], ['WCS26'])) {
       $expUid[1] = 'DUSTER';
+    } elseif ($expUid[1] == 'EOLETOP' && $expUid[2] == 'P' && $expUid[4] < 64) {
+      // EOLE TOP promos are reprints of older cards, not EOLE ones:
+      // 49-63 come from BISE (ALT_EOLETOP_P_MU_52_C = ALT_BISE_B_MU_52_C)...
+      $expUid[1] = 'BISE';
+    } elseif ($expUid[1] == 'EOLETOP' && $expUid[2] == 'P' && $expUid[4] < 85) {
+      // ...and 64-84 from CYCLONE (ALT_EOLETOP_P_MU_66_C = ALT_CYCLONE_B_MU_66_C).
+      $expUid[1] = 'CYCLONE';
     } elseif (in_array($expUid[1], ['EOLETOP', 'EOLECB', 'EOLEOP'])) {
       $expUid[1] = 'EOLE';
     }

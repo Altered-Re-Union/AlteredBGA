@@ -303,32 +303,14 @@ trait SetupTrait
     // $request['factions'] = ['AX'];
     $request['hero'] = $request['hero'] ?? '';
 
-    $tableId = (string) $this->table_id;
-    $tournamentInfo = [];
-    if ($this->bga->tournament->isTournament()) {
-      $tournamentInfo = $this->bga->tournament->getInfo();
-    }
-    $ratingMode = $this->tableOptions->get(201);
-    // eventFormat goes in a separate array on purpose: it must never be echoed back in
+    // The context goes in a separate array on purpose: it must never be echoed back in
     // $content['request'], because the client replays that request verbatim on pagination
-    // and faction changes, and its base64 alphabet (+ / =) is rejected by the
-    // validateJSonAlphaNum() guard in altered.action.php. Keep it server-side only.
-    $apiRequest = $request;
-    $apiRequest['eventFormat'] = base64_encode(json_encode([
-      'v' => 1,
-      'env' => $this->getGameName(),
-      'mode' => $ratingMode,
-      'payload' => [
-        'format' => Globals::getDeckFormat(),
-        'tableId' => $tableId,
-        'tournamentName' => $tournamentInfo['name'] ?? null,
-        'tournamentParentId' => $tournamentInfo['tournament_parent_id'] ?? null,
-        'tournamentGroup' => $tournamentInfo['tournament_group'] ?? null,
-      ],
-    ]));
+    // and faction changes (and validateJSonAlphaNum() would reject e.g. tournament names).
+    // eventFormat keeps carrying the plain format (STANDARD, SEALED...), as it did before
+    // the base64 envelope: decks-api filters on it directly.
+    $apiRequest = array_merge($request, $this->getAlteredApiPayload(true));
+    $apiRequest['eventFormat'] = Globals::getDeckFormat();
 
-    // STANDARD, NO_UNIQUE, SINGLETON
-    // throw new \feException(print_r($apiRequest));
     // Fetch them from MS
     $response = self::getGenericGameInfos('get_player_decks', $apiRequest);
     if ($response['success'] != 1) {
@@ -349,29 +331,52 @@ trait SetupTrait
 
 
 
-  public function actGetDeckInfos($deckNumber)
+  /**
+   * Context sent to the Altered API alongside get_player_decks / get_player_deck_content
+   * (contract agreed with BGA, Nov. 2026). No player identifier on purpose (GDPR).
+   */
+  protected function getAlteredApiPayload($forDeckList)
   {
-    $tableId = (string) $this->table_id;
     $tournamentInfo = [];
     if ($this->bga->tournament->isTournament()) {
       $tournamentInfo = $this->bga->tournament->getInfo();
     }
-    $ratingMode = $this->tableOptions->get(201);
-    $request = base64_encode(json_encode([
-      'v' => 1,
+    // mode and tournamentGroup are not read by anything on our side yet: they are sent so
+    // that the history is there if we ever need it (e.g. telling arena games apart).
+    $payload = [
       'env' => $this->getGameName(),
-      'mode' => $ratingMode,
-      'payload' => [
-        'playerId' => Players::getCurrentId(),
-        'playerName' => Players::getCurrent()->getName(),
-        'deckId' => $deckNumber,
-        'format' => Globals::getDeckFormat(),
-        'tableId' => $tableId,
-        'tournamentName' => $tournamentInfo['name'] ?? null,
-      ],
-    ]));
+      'mode' => (int) $this->tableOptions->get(201),
+      'format' => Globals::getDeckFormat(),
+      'tableId' => (string) $this->table_id,
+      'tournamentName' => $tournamentInfo['name'] ?? null,
+    ];
+    if ($forDeckList) {
+      // Lets altered-bga-api bind one sealed pool across every stage of a tournament
+      $parentId = $tournamentInfo['tournament_parent_id'] ?? null;
+      $payload['tournamentParentId'] = is_null($parentId) ? null : (int) $parentId;
+      // BGA group ID associated with the tournament
+      $group = $tournamentInfo['tournament_group'] ?? null;
+      $payload['tournamentGroup'] = is_null($group) ? null : (int) $group;
+    }
+    // Null fields are left out rather than sent empty
+    return array_filter($payload, fn($value) => !is_null($value));
+  }
 
-    $response = self::getGenericGameInfos('get_player_deck_content', ['deck_id' => $request]);
+  public function actGetDeckInfos($deckNumber)
+  {
+    // BGA only accepts a UUID in deck_id. Any version is accepted here: decks created
+    // before decks-api moved to Symfony 7+ may not be v7.
+    if (
+      !is_string($deckNumber) ||
+      !preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $deckNumber)
+    ) {
+      throw new \BgaUserException(clienttranslate('Invalid deck identifier'));
+    }
+
+    $response = self::getGenericGameInfos(
+      'get_player_deck_content',
+      array_merge(['deck_id' => $deckNumber], $this->getAlteredApiPayload(false))
+    );
     if ($response['success'] != 1) {
       throw new \Bga\GameFramework\VisibleSystemException("API ERROR###" . $response['message'] . "###");
     }
