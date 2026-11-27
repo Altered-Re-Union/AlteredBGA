@@ -26,7 +26,7 @@ const PRECON_OR = [
 const PRECON_OR_UNIQUES = [
   [
     'reference' => 'ALT_DUSTER_B_AX_87_U_5480',
-    'mainFaction' => ['reference' => 'OD'],
+    'mainFaction' => ['reference' => 'OR'],
     'name' => 'Axiom Machinist',
     'cardType' => ['reference' => 'CHARACTER'],
     'subTypes' => ['ENGINEER'],
@@ -41,7 +41,7 @@ const PRECON_OR_UNIQUES = [
   ],
   [
     'reference' => 'ALT_DUSTER_B_AX_87_U_2938',
-    'mainFaction' => ['reference' => 'OD'],
+    'mainFaction' => ['reference' => 'OR'],
     'name' => 'Axiom Machinist',
     'cardType' => ['reference' => 'CHARACTER'],
     'subTypes' => ['ENGINEER'],
@@ -56,7 +56,7 @@ const PRECON_OR_UNIQUES = [
   ],
   [
     'reference' => 'ALT_DUSTER_B_OR_94_U_94',
-    'mainFaction' => ['reference' => 'OD'],
+    'mainFaction' => ['reference' => 'OR'],
     'name' => 'Reka Caterer',
     'cardType' => ['reference' => 'CHARACTER'],
     'subTypes' => ['CITIZEN'],
@@ -72,7 +72,7 @@ const PRECON_OR_UNIQUES = [
 
 const PRECON_MU = [
   'MU_Common_KauriPuff' => 1,
-  'MU_Common_CountingSheep' => 3,
+  'MU_Common_CountingSheep' => 2,
   'MU_Common_ResentfulRobin' => 3,
   'MU_Rare_Gargoyle' => 3,
   'MU_Common_ColorfulCuckoo' => 3,
@@ -85,6 +85,7 @@ const PRECON_MU = [
   'MU_Rare_Pasiphae' => 3,
   'MU_Common_Bumblebeet' => 2,
   'MU_Common_Requiem' => 3,
+  'MU_Exalted_SoundtheHowl' => 1,
 ];
 
 const PRECON_MU_UNIQUES = [
@@ -119,17 +120,17 @@ const PRECON_MU_UNIQUES = [
     ],
   ],
   [
-    'reference' => 'ALT_EOLE_B_MU_112_U_4357',
+    'reference' => 'ALT_EOLE_B_BR_107_U_3037',
     'mainFaction' => ['reference' => 'MU'],
-    'name' => "Nikau, Kauri's Father",
+    'name' => 'Guiding Ocelot',
     'cardType' => ['reference' => 'CHARACTER'],
-    'subTypes' => ['CITIZEN'],
-    'typeline' => 'Character - Citizen',
-    'illustrator' => 'Kevin Sidharta',
-    'elements' => ['MAIN_COST' => 2, 'RECALL_COST' => 2, 'FOREST_POWER' => 1, 'MOUNTAIN_POWER' => 1, 'OCEAN_POWER' => 0],
+    'subTypes' => ['ANIMAL'],
+    'typeline' => 'Character - Animal',
+    'illustrator' => 'Julien Carrasco',
+    'elements' => ['MAIN_COST' => 3, 'RECALL_COST' => 3, 'FOREST_POWER' => 3, 'MOUNTAIN_POWER' => 2, 'OCEAN_POWER' => 2],
     'uniqueReduced' => [
-      ['effects' => [801, 191, 56]],
-      ['effects' => [24, 191, 559]],
+      ['effects' => [24, 179, 494]],
+      ['effects' => [24, 910, 744]],
     ],
   ],
 ];
