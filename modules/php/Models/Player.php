@@ -1141,6 +1141,10 @@ class Player extends \ALT\Helpers\DB_Model
     // if deck format is DEMO, setup the demo decks
     if (Globals::getDeckFormat() == 'DEMO') {
       $decks = array_merge($decks, Cards::setupDemoDeck($this, $i, $decks));
+    } elseif (Globals::getDeckFormat() == 'PRECON') {
+      // PRECON_DECKS is evaluated before setupDemoDeck() loads the card list, so load it here.
+      require_once dirname(__FILE__) . '/../Cards/cards.inc.php';
+      $decks = array_merge($decks, Cards::setupDemoDeck($this, $i, $decks, PRECON_DECKS));
     } else {
       $decks = array_merge($decks, Cards::setupPrecoDeck($this, $i, $decks));
     }
