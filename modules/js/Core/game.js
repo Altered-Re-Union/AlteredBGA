@@ -431,49 +431,58 @@ define([
     },
 
     /*
-     * Preference polyfill
+     * User preferences, through the BGA API (this.bga.userPreferences).
+     * The preference controls themselves are rendered by BGA and must not be accessed directly.
+     * this.prefs[prefId].value mirrors the current values, and every change is synced to the
+     * server (actChangePref) because the PHP side reads them from its own user_preferences table.
      */
-    setPreferenceValue(number, newValue) {
-      var optionSel = 'option[value="' + newValue + '"]';
-      dojo
-        .query('#preference_control_' + number + ' > ' + optionSel + ', #preference_fontrol_' + number + ' > ' + optionSel)
-        .attr('selected', true);
-      var select = $('preference_control_' + number);
-      if (dojo.isIE) {
-        select.fireEvent('onchange');
-      } else {
-        var event = document.createEvent('HTMLEvents');
-        event.initEvent('change', false, true);
-        select.dispatchEvent(event);
+    getUserPreferencesApi() {
+      return this.bga && this.bga.userPreferences ? this.bga.userPreferences : null;
+    },
+
+    setPreferenceValue(prefId, newValue) {
+      let api = this.getUserPreferencesApi();
+      if (api) {
+        api.set(prefId, newValue);
+      }
+      // In case set() does not notify onChange, apply the change ourselves
+      if (!this.prefs[prefId] || this.prefs[prefId].value != newValue) {
+        this.onUserPreferenceChanged(prefId, newValue);
       }
     },
 
-    initPreferencesObserver() {
-      dojo.query('.preference_control, preference_fontrol').on('change', (e) => {
-        var match = e.target.id.match(/^preference_[fc]ontrol_(\d+)$/);
-        if (!match) {
-          return;
-        }
-        var pref = match[1];
-        var newValue = e.target.value;
-        this.prefs[pref].value = newValue;
-        if (this.prefs[pref].attribute) {
-          $('ebd-body').setAttribute('data-' + this.prefs[pref].attribute, newValue);
-        }
+    onUserPreferenceChanged(pref, newValue) {
+      if (!this.prefs[pref]) {
+        this.prefs[pref] = {};
+      }
+      this.prefs[pref].value = newValue;
+      if (this.prefs[pref].attribute) {
+        $('ebd-body').setAttribute('data-' + this.prefs[pref].attribute, newValue);
+      }
 
-        $('preference_control_' + pref).value = newValue;
-        if ($('preference_fontrol_' + pref)) {
-          $('preference_fontrol_' + pref).value = newValue;
-        }
-        data = {
+      // Keep the copy displayed in our settings modal in sync
+      let select = $('setting-pref-' + pref);
+      if (select) {
+        select.value = newValue;
+      }
+
+      if (!this.isReadOnly()) {
+        let data = {
           pref: pref,
           lock: false,
           value: newValue,
           player: this.player_id,
         };
         this.takeAction('actChangePref', data, false, false);
-        this.onPreferenceChange(pref, newValue);
-      });
+      }
+      this.onPreferenceChange(pref, newValue);
+    },
+
+    initPreferencesObserver() {
+      let api = this.getUserPreferencesApi();
+      if (api) {
+        api.onChange = (prefId, prefValue) => this.onUserPreferenceChanged(prefId, prefValue);
+      }
     },
 
     checkPreferencesConsistency(backPrefs) {
@@ -493,30 +502,33 @@ define([
 
     onPreferenceChange(pref, newValue) {},
 
-    // Init preferences will setup local preference and put the corresponding data-attribute on overall-content div if needed
+    // Init preferences: read the current values and put the corresponding data-attribute on ebd-body if needed
     initPreferences() {
-      // Attach data attribute on overall-content div
-      Object.keys(this.prefs).forEach((prefId) => {
+      this.prefs = this.prefs || {};
+      let api = this.getUserPreferencesApi();
+      let prefIds = new Set(Object.keys(this.prefs));
+      (this.gamedatas.prefs || []).forEach((prefInfo) => prefIds.add(String(prefInfo.pref_id)));
+
+      prefIds.forEach((prefId) => {
+        if (!this.prefs[prefId]) {
+          this.prefs[prefId] = {};
+        }
         let pref = this.prefs[prefId];
+        if (api) {
+          try {
+            let value = api.get(isNaN(prefId) ? prefId : Number(prefId));
+            if (value !== undefined && value !== null) {
+              pref.value = value;
+            }
+          } catch (e) {
+            // Not a BGA user preference: keep the value we already have
+          }
+        }
+        // Attach data attribute on ebd-body
         if (pref.attribute) {
           $('ebd-body').setAttribute('data-' + pref.attribute, pref.value);
         }
       });
-
-      if (!this.isReadOnly() && this.gamedatas.localPrefs) {
-        // Create local prefs
-        Object.keys(this.gamedatas.localPrefs).forEach((prefId) => {
-          let pref = this.gamedatas.localPrefs[prefId];
-          pref.id = prefId;
-          let selectedValue = this.gamedatas.prefs.find((pref2) => pref2.pref_id == pref.id).pref_value;
-          pref.value = selectedValue;
-          this.prefs[prefId] = pref;
-          if (pref.attribute) {
-            $('ebd-body').setAttribute('data-' + pref.attribute, selectedValue);
-          }
-          this.place('tplPreferenceSelect', pref, 'local-prefs-container');
-        });
-      }
 
       this.initPreferencesObserver();
       if (!this.isReadOnly()) {
@@ -526,6 +538,7 @@ define([
       this.setupSettings();
     },
 
+    // Copy of a BGA user preference shown in our settings modal (the BGA control itself stays in the BGA menu)
     tplPreferenceSelect(pref) {
       let values = Object.keys(pref.values)
         .map(
@@ -534,13 +547,11 @@ define([
         .join('');
 
       return `
-        <div class="preference_choice">
+        <div class="setting_choice" data-id='pref-${pref.id}'>
           <div class="row-data row-data-large">
             <div class="row-label">${_(pref.name)}</div>
             <div class="row-value">
-              <select id="preference_control_${
-                pref.id
-              }" class="preference_control game_local_preference_control" style="display: block;">
+              <select id="setting-pref-${pref.id}" class="setting_control" style="display: block;">
                 ${values}
               </select>
             </div>
@@ -548,8 +559,6 @@ define([
         </div>
       `;
     },
-
-    onPreferenceChange(pref, newValue) {},
 
     /************************
      ******* SETTINGS ********
@@ -595,8 +604,15 @@ define([
           if (config.local == true && this.isReadOnly()) {
             return;
           }
-          // Pref type => just move the user pref around
-          dojo.place($('preference_control_' + config.prefId).parentNode.parentNode, localContainer);
+          // Pref type => show a copy of the BGA user pref, changed through the userPreferences API
+          let pref = this.prefs[config.prefId];
+          if (!pref || !pref.values) {
+            return; // No metadata available: the pref stays reachable from the BGA preferences menu
+          }
+          this.place('tplPreferenceSelect', Object.assign({}, pref, { id: config.prefId }), localContainer);
+          $('setting-pref-' + config.prefId).addEventListener('change', (e) =>
+            this.setPreferenceValue(config.prefId, e.target.value)
+          );
           return;
         }
 
@@ -697,11 +713,11 @@ define([
         .join('');
 
       return `
-        <div class="preference_choice" data-id='${setting.id}'>
+        <div class="setting_choice" data-id='${setting.id}'>
           <div class="row-data row-data-large">
             <div class="row-label">${_(setting.name)}</div>
             <div class="row-value">
-              <select id="setting-${setting.id}" class="preference_control game_local_preference_control" style="display: block;">
+              <select id="setting-${setting.id}" class="setting_control" style="display: block;">
                 ${values}
               </select>
             </div>
