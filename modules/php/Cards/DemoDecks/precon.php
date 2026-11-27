@@ -79,13 +79,13 @@ const PRECON_MU = [
   'MU_Common_DrowsyDodo' => 3,
   'MU_Rare_Soar' => 3,
   'MU_Rare_TheUglyDuckling' => 3,
-  'MU_Common_Raksha' => 2,
+  'MU_Common_Raksha' => 3,
   'MU_Rare_WhiteFang' => 3,
   'MU_Common_HerdingPuli' => 2,
-  'MU_Rare_Pasiphae' => 3,
-  'MU_Common_Bumblebeet' => 2,
-  'MU_Common_Requiem' => 3,
   'MU_Exalted_SoundtheHowl' => 1,
+  'MU_Rare_Pasiphae' => 3,
+  'MU_Common_Requiem' => 2,
+  'MU_Common_CharitableReka' => 2,
 ];
 
 const PRECON_MU_UNIQUES = [
